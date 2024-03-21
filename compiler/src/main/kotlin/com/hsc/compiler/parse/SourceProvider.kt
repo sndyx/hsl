@@ -5,7 +5,7 @@ import com.hsc.compiler.span.Span
 
 class SourceProvider(private val file: SourceFile) {
 
-    private val virtualSrc = mutableMapOf<String, String>()
+    private val macros = mutableListOf<MacroProvider>()
 
     private val srcStack = mutableListOf(file.src)
     private val posStack = mutableListOf<Int>()
@@ -13,22 +13,21 @@ class SourceProvider(private val file: SourceFile) {
     val fid = file.fid
 
     var pos = 0
-    var prev: Char = ' '
 
     val src: String get() = srcStack.last()
     val isVirtual: Boolean get() = srcStack.size > 1
     var virtualSpan: Span? = null
 
     fun bump(): Char? {
-        if (srcStack.lastOrNull()?.length == pos) {
+        if (srcStack.lastOrNull()?.length?.let { it <= pos} == true) {
             srcStack.removeLast()
-            if (isEmpty()) return null // out of src
+            if (isEmpty()) {
+                return null
+            } // out of src
             pos = posStack.removeLast()
-            prev = srcStack.last().getOrNull(pos) ?: ' '
-            return prev
+            return srcStack.last().getOrNull(pos) ?: ' '
         } else {
-            prev = srcStack.lastOrNull()?.getOrNull(pos++) ?: return null
-            return prev
+            return srcStack.lastOrNull()?.getOrNull(pos++)
         }
     }
 
@@ -44,20 +43,24 @@ class SourceProvider(private val file: SourceFile) {
         }
     }
 
-    fun isVirtualSource(ident: String): Boolean {
-        return virtualSrc.containsKey(ident)
+    fun isMacro(ident: String): Boolean {
+        return macros.any { it.name == ident }
     }
 
-    fun addSource(ident: String, src: String) {
-        virtualSrc[ident] = src
+    fun macroArgCount(ident: String): Int {
+        return macros.first { it.name == ident }.args.size
     }
 
-    fun setSource(span: Span, name: String) {
+    fun addMacro(provider: MacroProvider) {
+        macros.add(provider)
+    }
+
+    fun enterMacro(span: Span, name: String, args: List<String>) {
         if (!isVirtual) {
             virtualSpan = span
         }
         posStack.add(pos)
-        srcStack.add(virtualSrc[name]!!)
+        srcStack.add(macros.first { it.name == name }.invoke(args))
         pos = 0
     }
 

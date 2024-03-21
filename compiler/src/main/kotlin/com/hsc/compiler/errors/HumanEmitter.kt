@@ -88,13 +88,13 @@ class HumanEmitter(
                 t.print(" ${bold("|")} ")
                 t.print(" ".repeat(max(0, col - 1)))
                 if (!isReference) {
-                    t.print(color("^".repeat(hi - span.lo + 1)))
+                    t.print(color("^".repeat(max(1, hi - span.lo + 1))))
                     msg?.let {
                         t.print(" ")
                         t.print(color(it))
                     }
                 } else {
-                    t.print(blue("-".repeat(hi - span.lo + 1)))
+                    t.print(blue("-".repeat(max(1, hi - span.lo + 1))))
                     msg?.let {
                         t.print(" ")
                         t.print(blue(italicizeBackticks(it)))

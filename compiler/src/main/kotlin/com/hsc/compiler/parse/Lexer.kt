@@ -1,8 +1,12 @@
 package com.hsc.compiler.parse
 
+import com.hsc.compiler.driver.CompileSess
+import com.hsc.compiler.errors.CompileException
+import com.hsc.compiler.errors.Level
 import com.hsc.compiler.span.Span
 
 class Lexer(
+    private val sess: CompileSess,
     private val srcp: SourceProvider,
 ): Iterable<Token> {
 
@@ -117,7 +121,7 @@ class Lexer(
             in '0'..'9' -> number(currentChar)
             else -> {
                 if (isIdStart(currentChar)) {
-                    identKwBool(currentChar)
+                    identKwBoolMacro(currentChar)
                 } else {
                     TokenKind.Unknown(currentChar)
                 }
@@ -152,7 +156,8 @@ class Lexer(
         return advanceToken()
     }
 
-    private fun identKwBool(start: Char): TokenKind {
+    // Yes it is absolutely necessary to include all of this functionality in one function. :-)
+    private fun identKwBoolMacro(start: Char): TokenKind {
         val startPos = pos
 
         val sb = StringBuilder("$start")
@@ -186,14 +191,66 @@ class Lexer(
             "null" -> TokenKind.Literal(Lit(LitKind.I64, "0"))
 
             else -> {
-                if (srcp.isVirtualSource(sb.toString())) {
-                    srcp.setSource(Span(startPos, pos, fid), sb.toString())
+                val ident = sb.toString()
+
+                if (srcp.isMacro(ident)) {
+                    // Handle macro invocation
+                    parseMacro(startPos, ident)
                     advanceToken0().kind // It's OK to discard the span, will become virtual.
                 } else {
-                    TokenKind.Ident(sb.toString())
+                    // Just handle ident normally
+                    TokenKind.Ident(ident)
                 }
             }
         }
+    }
+
+    private fun parseMacro(startPos: Int, ident: String) {
+        val argCount = srcp.macroArgCount(ident)
+        val args = mutableListOf<String>()
+        if (first() == '(') { // It's fine to use parens even with 0 args
+            val argStart = pos
+            bump()
+            eatWhile(Char::isWhitespace)
+
+            while (first() != ')' && !isEof()) {
+                val arg = StringBuilder()
+                while (first() != ',' && !isEof() && first() != ')') {
+                    arg.append(bump())
+                }
+
+                if (arg.isEmpty()) {
+                    val err = sess.dcx().err("unexpected token") // Best way to describe it I think...
+                    err.span(Span.single(pos, fid))
+                    throw CompileException(err)
+                }
+
+                args.add(arg.toString())
+                if (first() == ',') bump() // Bump ,
+
+                eatWhile(Char::isWhitespace)
+            }
+            bump() // Bump )
+
+            if (args.size != argCount) {
+                // Fuck grammar!!!
+                val s1 = if (argCount == 1) "" else "s"
+                val s2 = if (args.size == 1) "" else "s"
+                val was = if (args.size == 1) "was" else "were"
+
+                val err = sess.dcx().err("this macro takes $argCount parameter$s1 but ${args.size} parameter$s2 $was supplied")
+                err.span(Span(argStart, pos - 1, fid))
+                throw CompileException(err)
+            }
+        } else {
+            if (argCount > 0) { // No invocation & args expected
+                val err = sess.dcx().err("expected (")
+                err.span(Span.single(pos - 1, fid))
+                err.note(Level.Error, "expecting macro invocation")
+                throw CompileException(err)
+            }
+        }
+        srcp.enterMacro(Span(startPos, pos, fid), ident, args)
     }
 
 
@@ -249,7 +306,7 @@ class Lexer(
     private fun second(): Char = srcp.second()
 
     private fun eatWhile(predicate: (Char) -> Boolean) {
-        while (predicate(first()) && !isEof()) {
+        while (!isEof() && predicate(first())) {
             bump()
         }
     }

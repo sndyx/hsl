@@ -39,18 +39,21 @@ class Driver(val opt: CompileOptions) {
         val file = sourceMap.loadFile(path)
         val provider = SourceProvider(file)
 
-        Preprocessor(dcx, provider).run()
-
-        val lexer = Lexer(provider)
-        val tokenStream = TokenStream(lexer.iterator())
         val map = AstMap()
-
         val sess = CompileSess(dcx, sourceMap, map)
-
-        val parser = Parser(tokenStream, sess)
 
         var success = false
         try {
+            val pre = Preprocessor(sess, provider)
+            pre.run()
+            // MUST run before the Lexer is even created
+            // due to how the Lexer is initialized, this is fine I suppose
+
+            val lexer = Lexer(sess, provider)
+
+            val tokenStream = TokenStream(lexer.iterator())
+            val parser = Parser(tokenStream, sess)
+
             var ptime = System.currentTimeMillis()
             var item = parser.parseItem()
             while (item != null) {
