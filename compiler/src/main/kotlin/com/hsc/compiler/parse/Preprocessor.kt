@@ -44,6 +44,7 @@ class Preprocessor(private val dcx: DiagCtx, private val srcp: SourceProvider) {
                 it.isWhitespace()
             }
 
+            // this will throw an error. You're welcome. =)
             while (src.substring(pos, pos + 7) == "#define") {
                 pos += 8
                 eatWhile { it == ' ' }
