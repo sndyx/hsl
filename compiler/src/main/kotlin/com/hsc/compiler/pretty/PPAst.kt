@@ -73,6 +73,14 @@ object PrettyPrintVisitor : AstVisitor {
             }
             is StmtKind.Break -> t.println(blue("${i}break"))
             is StmtKind.Continue -> t.println(blue("${i}continue"))
+            is StmtKind.Action -> {
+                t.print("${i}${(bold + italic)(kind.name)}${white("(")}")
+                kind.exprs.forEachIndexed { idx, it ->
+                    visitExpr(it)
+                    if (idx != kind.exprs.size - 1) t.print(white(", "))
+                }
+                t.println(white(")"))
+            }
             is StmtKind.While -> {
                 t.print("${i}${blue("while")} ${white("(")}")
                 visitExpr(kind.cond)
@@ -103,7 +111,7 @@ object PrettyPrintVisitor : AstVisitor {
                 }
             }
             is ExprKind.Call -> {
-                t.print("${bold(kind.ident.toString())}${white("(")}")
+                t.print("${kind.ident}${white("(")}")
                 kind.args.args.forEachIndexed { idx, it ->
                     visitExpr(it)
                     if (idx != kind.args.args.size - 1) t.print(white(", "))

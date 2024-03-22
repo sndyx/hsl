@@ -64,7 +64,7 @@ private class InlineFunctionVisitor(val map: AstMap) : BlockAwareVisitor() {
                         kind.args.args.clear()
 
                         expr.kind = ExprKind.Var(Ident(false, "_return"))
-                        //currentBlock.stmts.removeAt(currentPosition)
+                        // currentBlock.stmts.removeAt(currentPosition)
 
                         currentBlock.stmts.addAll(currentPosition, inlineBlock.stmts)
                         added(inlineBlock.stmts.size)

@@ -1,10 +1,6 @@
-fn main() {
-    x = 5
-    y = 10
-    z = x * y - 5 + 1000
-}
+#define HELLO_WORLD "Hello world!"
+#define TWICE(toks) $toks $toks
 
-#inline
-fn multiply(_x, _y, _z) {
-    return _x * _y * _z
+fn do_something() {
+    TWICE(send_message("Hello world!"))
 }

@@ -7,6 +7,7 @@ import com.hsc.compiler.span.SourceMap
 
 class CompileSess (
     private val dcx: DiagCtx,
+    val opts: CompileOptions,
     val sourceMap: SourceMap,
     val map: AstMap,
 ) {

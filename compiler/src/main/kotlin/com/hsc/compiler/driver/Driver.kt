@@ -1,9 +1,8 @@
 package com.hsc.compiler.driver
 
-import com.hsc.compiler.codegen.passes.AstToActionPass
+import com.hsc.compiler.codegen.AstToActionTransformer
 import com.hsc.compiler.errors.*
 import com.hsc.compiler.ir.ast.AstMap
-import com.hsc.compiler.pretty.prettyPrintActions
 import com.hsc.compiler.ir.ast.Item
 import com.hsc.compiler.parse.*
 import com.hsc.compiler.pretty.prettyPrintActionsWebview
@@ -13,13 +12,13 @@ import kotlinx.serialization.json.Json
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
-class Driver(val opt: CompileOptions) {
+class Driver(val opts: CompileOptions) {
 
     val sourceMap: SourceMap = SourceMap()
 
-    private val passes = passesForMode(opt.mode)
+    private val passes = passesForMode(opts.mode)
 
-    val emitter: Emitter = when(opt.output) {
+    val emitter: Emitter = when(opts.output) {
         Output.Terminal -> HumanEmitter(sourceMap)
         Output.Minecraft -> HumanEmitter(sourceMap)
         Output.Internal -> DiagEmitter(sourceMap)
@@ -40,7 +39,7 @@ class Driver(val opt: CompileOptions) {
         val provider = SourceProvider(file)
 
         val map = AstMap()
-        val sess = CompileSess(dcx, sourceMap, map)
+        val sess = CompileSess(dcx, opts, sourceMap, map)
 
         var success = false
         try {
@@ -69,9 +68,9 @@ class Driver(val opt: CompileOptions) {
                     if (!emitter.emittedError) {
                         val elapsed = System.currentTimeMillis() - ptime
                         val name = it::class.simpleName!!.removeSuffix("Pass")
-                        if (opt.verbose) emitter.pass(name, elapsed)
+                        if (opts.verbose) emitter.pass(name, elapsed)
                         val items = map.query<Item>()
-                        if (opt.verbose) prettyPrintAst(items)
+                        if (opts.verbose) prettyPrintAst(items)
                         ptime = System.currentTimeMillis()
                     }
                 }
@@ -83,7 +82,7 @@ class Driver(val opt: CompileOptions) {
                 val items = map.query<Item>()
                 //prettyPrintAst(items)
 
-                val pass2 = AstToActionPass(sess)
+                val pass2 = AstToActionTransformer(sess)
                 val functions = pass2.run()
 
                 if (!emitter.emittedError) {

@@ -1,5 +1,6 @@
 package com.hsc.compiler.driver
 
+import LimitCheckPass
 import com.hsc.compiler.codegen.passes.*
 
 fun passesForMode(mode: Mode): List<AstPass> {
@@ -10,15 +11,17 @@ fun passesForMode(mode: Mode): List<AstPass> {
             OwnedRecursiveCallCheckPass,
             ReturnAssignPass,
             InlineFunctionPass,
-            InlineFunctionParametersPass,
             RemoveParenPass,
             EvaluateConstantEquationsPass,
             FlattenComplexExpressionsPass,
+            MapCallActionsPass,
+            InlineFunctionParametersPass,
             InlineFunctionCallAssignmentPass,
             FlattenTempReassignPass,
             EmptyBlockCheckPass,
             // CleanupTempVarsPass,
-        )
+            LimitCheckPass,
+            )
         Mode.Optimized -> TODO()
     }
 }

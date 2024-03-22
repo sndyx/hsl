@@ -130,6 +130,8 @@ sealed class Action {
         val actions: List<Action>,
     )
     @Serializable
+    data class SendMessage(val message: String) : Action()
+    @Serializable
     data class ExecuteFunction(val name: String, val global: Boolean) : Action()
 
 }

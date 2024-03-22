@@ -114,6 +114,10 @@ sealed class StmtKind {
     data class Ret(var expr: com.hsc.compiler.ir.ast.Expr?) : StmtKind() {
         override fun deepCopy(): StmtKind = copy(expr = expr?.deepCopy())
     }
+    // Can't store as actions directly or further optimizations will not apply!
+    data class Action(val name: String, val exprs: List<com.hsc.compiler.ir.ast.Expr>) : StmtKind() {
+        override fun deepCopy(): StmtKind = copy(exprs = exprs.map { it.deepCopy() })
+    }
 }
 
 data class Expr(
@@ -153,6 +157,26 @@ sealed class ExprKind  {
     data class Paren(var expr: Expr) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy())
     }
+
+    fun str(): String =
+        when (this) {
+            is Var -> "var"
+            is Call -> "function call"
+            is Binary -> "binary op"
+            is Unary -> "unary op"
+            is Lit -> when (this.lit) {
+                is com.hsc.compiler.ir.ast.Lit.Bool -> "bool"
+                is com.hsc.compiler.ir.ast.Lit.I64 -> "integer"
+                is com.hsc.compiler.ir.ast.Lit.Str -> "string"
+                is com.hsc.compiler.ir.ast.Lit.Item -> "item"
+                else -> "literal"
+            }
+            is If -> "if"
+            is Match -> "match"
+            is Block -> "block"
+            is Paren -> "paren"
+        }
+
 }
 
 sealed class Lit {

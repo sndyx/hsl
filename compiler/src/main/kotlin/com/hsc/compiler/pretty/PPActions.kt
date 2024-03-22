@@ -18,6 +18,8 @@ val actionMap = mapOf(
      Action.ChangePlayerGroup::class to "change player group",
      Action.ChangePlayerStat::class to "change player stat",
      Action.ExecuteFunction::class to "execute function",
+     Action.SendMessage::class to "send message",
+     Action.FailParkour::class to "fail parkour",
 )
 
 fun prettyPrintActions(functions: List<com.hsc.compiler.ir.action.Function>) {

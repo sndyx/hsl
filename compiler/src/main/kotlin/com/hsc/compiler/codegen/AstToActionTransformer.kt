@@ -1,4 +1,4 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.codegen
 
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.errors.Level
@@ -9,7 +9,7 @@ import com.hsc.compiler.ir.action.Function
 import com.hsc.compiler.ir.action.StatOp
 import com.hsc.compiler.ir.ast.*
 
-class AstToActionPass(private val sess: CompileSess) {
+class AstToActionTransformer(private val sess: CompileSess) {
 
     fun run(): List<Function> {
         return sess.map.query<Item>().filter { it.kind is ItemKind.Fn }.map {
@@ -33,7 +33,7 @@ class AstToActionPass(private val sess: CompileSess) {
 
     private fun block(block: Block): List<Action> {
         return block.stmts.map {
-            when (it.kind) {
+            when (val stmtKind = it.kind) {
                 is StmtKind.Assign -> {
                     val assign = (it.kind as StmtKind.Assign)
                     val value = expectExprValue(assign.expr)
@@ -67,23 +67,19 @@ class AstToActionPass(private val sess: CompileSess) {
                 StmtKind.Continue -> TODO()
                 is StmtKind.Expr -> {
                     val expr = (it.kind as StmtKind.Expr).expr
-                    when (expr.kind) {
+                    when (val kind = expr.kind) {
                         is ExprKind.Binary -> TODO()
                         is ExprKind.Block -> TODO()
                         is ExprKind.Call -> {
-                            val call = (expr.kind as ExprKind.Call)
-                            if (call.args.args.isNotEmpty()) {
+                            if (kind.args.args.isNotEmpty()) {
                                 val err = sess.dcx().err("unsupported operation in `strict` mode")
-                                err.span(call.args.span)
+                                err.span(kind.args.span)
                                 throw CompileException(err)
                             }
-                            Action.ExecuteFunction(call.ident.name, call.ident.global)
+                            Action.ExecuteFunction(kind.ident.name, kind.ident.global)
                         }
                         is ExprKind.If -> {
-                            val cond = (expr.kind as ExprKind.If)
-                            // val conditional = cond.cond
-
-                            val expr = cond.cond
+                            val expr = kind.cond
                             if (expr.kind is ExprKind.Binary) {
                                 val binary = (expr.kind as ExprKind.Binary)
                                 val comparator = when (binary.kind) {
@@ -111,6 +107,17 @@ class AstToActionPass(private val sess: CompileSess) {
                         is ExprKind.Paren -> TODO()
                         is ExprKind.Unary -> TODO()
                         is ExprKind.Var -> TODO()
+                    }
+                }
+                is StmtKind.Action -> {
+                    when (stmtKind.name) {
+                        "send_message" -> {
+                            Action.SendMessage(((stmtKind.exprs[0].kind as ExprKind.Lit).lit as Lit.Str).value)
+                        }
+                        "fail_parkour" -> {
+                            Action.FailParkour(((stmtKind.exprs[0].kind as ExprKind.Lit).lit as Lit.Str).value)
+                        }
+                        else -> TODO()
                     }
                 }
                 is StmtKind.For -> TODO()

@@ -28,7 +28,7 @@ class CompileCommand : CliktCommand() {
         .default(Mode.Normal)
         .help("Set compiler ruleset")
 
-    private val output: Output by option("--ouput", "-o")
+    private val output: Output by option("--output", "-o")
         .enum<Output> { it.label }
         .default(Output.Terminal)
         .help("Set output emitter mode")

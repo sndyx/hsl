@@ -99,6 +99,9 @@ fun walkStmt(v: AstVisitor, stmt: Stmt) {
             v.visitExpr(kind.cond)
             v.visitBlock(kind.block)
         }
+        is StmtKind.Action -> {
+            kind.exprs.forEach(v::visitExpr)
+        }
         StmtKind.Break, StmtKind.Continue -> { /* Ignore */ }
     }
 }

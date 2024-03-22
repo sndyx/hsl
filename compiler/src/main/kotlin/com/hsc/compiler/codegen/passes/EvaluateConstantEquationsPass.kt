@@ -62,7 +62,7 @@ private class EvaluateConstantEquationsVisitor : BlockAwareVisitor() {
                     visitExpr(kind.b)
                 }
             }
-            else -> { }
+            else -> super.visitExpr(expr)
         }
     }
 

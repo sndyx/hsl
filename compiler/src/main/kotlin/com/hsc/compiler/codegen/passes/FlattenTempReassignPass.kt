@@ -66,6 +66,11 @@ private object FlattenTempReassignVisitor : BlockAwareVisitor() {
                 }
             }
             else -> {
+                if (kind is StmtKind.Expr && kind.expr.kind is ExprKind.Var) {
+                    // Remove useless vars
+                    currentBlock.stmts.removeAt(currentPosition)
+                    added(-1)
+                }
                 prevTempAssign = null
             }
         }
