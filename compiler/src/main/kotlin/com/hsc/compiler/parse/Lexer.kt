@@ -212,10 +212,13 @@ class Lexer(
             val argStart = pos
             bump()
             eatWhile(Char::isWhitespace)
+            var level = 1
 
-            while (first() != ')' && !isEof()) {
+            while (!(first() == ')' && level == 1) && !isEof()) {
                 val arg = StringBuilder()
-                while (first() != ',' && !isEof() && first() != ')') {
+                while (first() != ',' && !isEof() && !(first() == ')' && level == 1)) {
+                    if (first() == '(') level++
+                    else if (first() == ')') level--
                     arg.append(bump())
                 }
 
