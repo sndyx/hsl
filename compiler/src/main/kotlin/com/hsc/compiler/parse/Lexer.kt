@@ -34,10 +34,10 @@ class Lexer(
 
         val currentChar = bump() ?: return Token(TokenKind.Eof, Span.single(pos, fid))
 
-        if (first() == '/') {
-            when (second()) {
-                '/' -> eatLineComment()
-                '*' -> eatBlockComment()
+        if (currentChar == '/') {
+            when (first()) {
+                '/' -> return eatLineComment()
+                '*' -> return eatBlockComment()
             }
         }
 
