@@ -1,12 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "1.9.22"
 }
 
 group = "com.hsc"
 version = "1.0.0"
-
 
 repositories {
     mavenCentral()
