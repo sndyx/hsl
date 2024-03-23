@@ -1,6 +1,5 @@
 package com.hsc.compiler.driver
 
-import LimitCheckPass
 import com.hsc.compiler.codegen.passes.*
 
 fun passesForMode(mode: Mode): List<AstPass> {

@@ -1,10 +1,11 @@
+package com.hsc.compiler.codegen.passes
+
 import com.hsc.compiler.codegen.limits
-import com.hsc.compiler.codegen.passes.AstPass
-import com.hsc.compiler.codegen.passes.BlockAwareVisitor
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.ast.Block
+import com.hsc.compiler.ir.ast.BlockAwareVisitor
 import com.hsc.compiler.ir.ast.Item
 import com.hsc.compiler.ir.ast.ItemKind
 

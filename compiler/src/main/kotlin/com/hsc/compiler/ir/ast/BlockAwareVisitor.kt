@@ -1,8 +1,4 @@
-package com.hsc.compiler.codegen.passes
-
-import com.hsc.compiler.ir.ast.AstVisitor
-import com.hsc.compiler.ir.ast.Block
-import com.hsc.compiler.ir.ast.Stmt
+package com.hsc.compiler.ir.ast
 
 open class BlockAwareVisitor : AstVisitor {
 
