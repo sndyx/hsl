@@ -3,7 +3,7 @@ plugins {
     kotlin("plugin.serialization")
 }
 
-group = "com.hsc.compiler"
+group = "com.hsc.mason"
 version = "1.0"
 
 repositories {
@@ -11,18 +11,20 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    // implementation(project(":compiler"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+
     implementation("com.github.ajalt.clikt:clikt:4.2.2")
     implementation("com.github.ajalt.mordant:mordant:2.4.0")
+    // ktoml has too many bugs... god bless peanuuutz
+    implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
 }
 
 tasks {
     jar {
-        archiveBaseName = "HSC"
+        archiveBaseName = "Mason"
         manifest {
-            attributes["Main-Class"] = "com.hsc.compiler.MainKt"
+            attributes["Main-Class"] = "com.hsc.mason.MainKt"
         }
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         from(configurations.runtimeClasspath.get()

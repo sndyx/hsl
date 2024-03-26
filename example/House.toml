@@ -1,0 +1,6 @@
+[package]
+name = "example"
+version = "0.0.1"
+
+[dependencies]
+test = { git = "github.com/sndyx/hsl-test", version = "3.0.0" } # dependencies sourced from link
