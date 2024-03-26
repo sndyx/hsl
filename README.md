@@ -60,10 +60,11 @@ be a minimal companion to the built-in functions provided by Housing.
 This project is only possible due to the hard work put in by members of
 the Housing community!
 
-Special thanks to HousingEditor and [HousingDevs](https://github.com/housingdevs)
-for the well-established foundations and action schemas.
+Special thanks to [HousingEditor](https://github.com/ImaDoofus/HousingEditor)
+ and [HousingDevs](https://github.com/housingdevs) for the well-established
+ foundations and action schemas.
 
 # License
 
-HSL is distributed under the terms of the MIT license. See
+HSC, Mason are distributed under the terms of the MIT license. See
 [LICENSE.txt](LICENSE.txt) for the full license.
