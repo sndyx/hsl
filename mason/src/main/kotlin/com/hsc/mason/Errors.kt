@@ -14,57 +14,62 @@ fun errorInvalidManifest(err: Throwable): Nothing {
     // Why is UnknownKeyException private?
     if (err::class.simpleName == "UnknownKeyException" || err is IllegalStateException) {
         // err.message is always key name
-        t.println(TextStyles.bold("${TextColors.red("error")}: unknown manifest property `${err.message}`"))
+        t.println(TextStyles.bold("${TextColors.red("failed")}: unknown manifest property `${err.message}`"))
     } else if (err is MissingFieldException) {
         if (err.missingFields.size > 1) {
             val fields = err.missingFields.joinToString { "`${it}`" }
-            t.println(TextStyles.bold("${TextColors.red("error")}: missing required manifest properties $fields"))
+            t.println(TextStyles.bold("${TextColors.red("failed")}: missing required manifest properties $fields"))
         } else {
-            t.println(TextStyles.bold("${TextColors.red("error")}: missing required manifest property `${err.missingFields.single()}`"))
+            t.println(TextStyles.bold("${TextColors.red("failed")}: missing required manifest property `${err.missingFields.single()}`"))
         }
     } else {
         err.printStackTrace()
-        t.println(TextStyles.bold("${TextColors.red("error")}: failed parsing manifest"))
+        t.println(TextStyles.bold("${TextColors.red("failed")}: failed parsing manifest"))
     }
     exitProcess(0)
 }
 
 fun errorInvalidLockfile(): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: invalid lockfile"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: invalid lockfile"))
     exitProcess(0)
 }
 
 fun errorWrongName(name: String, remote: String): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: package `$name` does not match remote name `$remote`"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: package `$name` does not match remote name `$remote`"))
     exitProcess(0)
 }
 
 fun errorMalformedURL(url: String): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: malformed URL `$url`"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: malformed URL `$url`"))
     exitProcess(0)
 }
 
 fun errorProtocolURL(url: String): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: URL contains protocol `$url`"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: URL contains protocol `$url`"))
     exitProcess(0)
 }
 
 fun errorMissingGit(): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: git installation not found."))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: git installation not found."))
+    exitProcess(0)
+}
+
+fun errorMissingHsc(): Nothing {
+    t.println(TextStyles.bold("${TextColors.red("failed")}: hsc installation not found."))
     exitProcess(0)
 }
 
 fun errorNotAPackage(name: String): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: not a package `$name`"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: not a package `$name`"))
     exitProcess(0)
 }
 
 fun errorDependencyConflict(name: String): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: conflicting dependencies for `$name`"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: conflicting dependencies for `$name`"))
     exitProcess(0)
 }
 
 fun errorCannotDelete(): Nothing {
-    t.println(TextStyles.bold("${TextColors.red("error")}: cannot delete directory"))
+    t.println(TextStyles.bold("${TextColors.red("failed")}: cannot delete directory"))
     exitProcess(0)
 }

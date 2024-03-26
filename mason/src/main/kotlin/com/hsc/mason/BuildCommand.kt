@@ -9,12 +9,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import net.peanuuutz.tomlkt.Toml
-import java.io.IOException
-import java.io.UncheckedIOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import kotlin.io.path.*
 
 
@@ -26,16 +23,18 @@ class BuildCommand : CliktCommand() {
     }
     private val mutex = Mutex()
 
+    private val collectedFiles = mutableListOf<Path>()
+
     override fun run(): Unit = runBlocking {
         if (!Git.isInstalled()) { errorMissingGit() } // Ensure git is in PATH!
+        if (!Hsc.isInstalled()) { errorMissingHsc() } // Ensure hsc is in PATH!
 
-       build(path)
+        val config = build(path)
+
+        Hsc.compile(collectedFiles, config.pkg.mode ?: Mode.Normal)
     }
 
-
-    private suspend fun build(local: Path, house: House? = null): Unit = coroutineScope {
-        println("Building $local")
-
+    private suspend fun build(local: Path, house: House? = null): House = coroutineScope {
         val config = if (house != null) house else {
             val houseFile = local.resolve("House.toml")
             runCatching {
@@ -57,10 +56,24 @@ class BuildCommand : CliktCommand() {
                 fetchDependency(lock, prevLock, name, value)
             }
         }?.awaitAll()?.forEach {
-            build(path.resolve("libs").resolve(it.pkg.name), it)
+            build(path.resolve("build/libs").resolve(it.pkg.name), it)
         }
 
         lockFile.writeText(toml.encodeToString(lock))
+
+        collectSrc(local)
+
+        config
+    }
+
+    @OptIn(ExperimentalPathApi::class)
+    private fun collectSrc(path: Path) {
+        val src = path.resolve("src")
+        if (src.exists()) {
+            src.walk().forEach {
+                if (it.extension == "hsl") collectedFiles.add(it)
+            }
+        }
     }
 
     @OptIn(ExperimentalPathApi::class)
@@ -109,7 +122,7 @@ class BuildCommand : CliktCommand() {
                 }
             }
 
-            val newPath = path.resolve("libs").resolve(name)
+            val newPath = path.resolve("build/libs").resolve(name)
             runCatching {
                 newPath.deleteRecursively()
             }.onFailure { errorCannotDelete() }
@@ -118,7 +131,7 @@ class BuildCommand : CliktCommand() {
 
             manifest
         } else {
-            val depPath = path.resolve("libs").resolve(name)
+            val depPath = path.resolve("build/libs").resolve(name)
 
             lock.dependencies.add(prevLock.dependencies.find { it.name == name }!!)
 
