@@ -11,9 +11,5 @@ repositories {
 }
 
 kotlin {
-    jvm()
-    mingwX64()
-    linuxX64()
-    macosX64()
-    macosArm64()
+    jvm() // Pretty sure this has to be here
 }
