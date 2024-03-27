@@ -1,5 +1,5 @@
 plugins {
-    kotlin("jvm") version "1.9.22"
+    kotlin("multiplatform") version "1.9.22"
     kotlin("plugin.serialization") version "1.9.22"
 }
 
@@ -10,7 +10,10 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter:5.9.0")
-    testImplementation(kotlin("test"))
+kotlin {
+    jvm()
+    mingwX64()
+    linuxX64()
+    macosX64()
+    macosArm64()
 }

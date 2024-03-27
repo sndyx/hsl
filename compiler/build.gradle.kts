@@ -1,31 +1,60 @@
 plugins {
-    kotlin("jvm")
+    kotlin("multiplatform")
     kotlin("plugin.serialization")
 }
 
 group = "com.hsc.compiler"
-version = "1.0"
+version = "0.0.1"
 
 repositories {
     mavenCentral()
 }
 
-dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.22")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("com.github.ajalt.clikt:clikt:4.2.2")
-    implementation("com.github.ajalt.mordant:mordant:2.4.0")
-}
+kotlin {
 
-tasks {
-    jar {
-        archiveBaseName = "HSC"
-        manifest {
-            attributes["Main-Class"] = "com.hsc.compiler.MainKt"
+    jvm()
+    mingwX64 {
+        binaries {
+            executable {
+                baseName = "hsc"
+                entryPoint = "com.hsc.compiler.main"
+            }
         }
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from(configurations.runtimeClasspath.get()
-            .map { if (it.isDirectory) it else zipTree(it) })
     }
+    linuxX64 {
+        binaries {
+            executable {
+                baseName = "hsc"
+                entryPoint = "com.hsc.compiler.main"
+            }
+        }
+    }
+    macosX64 {
+        binaries {
+            executable {
+                baseName = "hsc"
+                entryPoint = "com.hsc.compiler.main"
+            }
+        }
+    }
+    macosArm64 {
+        binaries {
+            executable {
+                baseName = "hsc"
+                entryPoint = "com.hsc.compiler.main"
+            }
+        }
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0-RC.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.3.2")
+            implementation("com.github.ajalt.clikt:clikt:4.2.2")
+            implementation("com.github.ajalt.mordant:mordant:2.4.0")
+        }
+    }
+
 }

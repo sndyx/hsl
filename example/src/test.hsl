@@ -1,6 +1,4 @@
-#define HELLO_WORLD "Hello world!"
-#define TWICE(toks) $toks $toks
-
 fn do_something() {
-    TWICE(send_message("Hello world!"))
+    do_absolutely_fucking_nothing()
+    x = test()
 }
