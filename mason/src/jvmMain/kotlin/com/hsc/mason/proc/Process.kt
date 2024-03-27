@@ -1,4 +1,4 @@
-package com.hsc.mason
+package com.hsc.mason.proc
 
 actual fun process(command: String): String {
     return Runtime.getRuntime()

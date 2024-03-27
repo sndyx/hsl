@@ -1,8 +1,10 @@
-package com.hsc.mason
+package com.hsc.mason.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.optional
+import com.hsc.mason.*
+import com.hsc.mason.proc.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

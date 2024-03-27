@@ -1,4 +1,4 @@
-package com.hsc.mason
+package com.hsc.mason.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 

@@ -1,5 +1,6 @@
-package com.hsc.mason
+package com.hsc.mason.proc
 
+import com.hsc.mason.Mode
 import kotlinx.coroutines.coroutineScope
 import okio.Path
 
