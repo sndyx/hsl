@@ -8,7 +8,7 @@ This is a collection of basic syntax elements with examples. You can find
  more examples [here](https://github.com/sndyx/hsl/tree/master/examples).
 
 You can also get a detailed list of all built-in functions
- [here](../reference/built-ins).
+ [here](../reference/built-ins.md).
 
 ## Comments
 
