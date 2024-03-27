@@ -14,7 +14,6 @@ name = "example"
 version = "1.0.0"
 
 # Optional properties
-
 mode = "strict"
 target = "housing+"
 ```
