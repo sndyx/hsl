@@ -1,5 +1,9 @@
 package com.hsc.mason.proc
 
+actual fun exitProcess(code: Int): Nothing {
+    kotlin.system.exitProcess(code)
+}
+
 actual fun process(command: String): String {
     return Runtime.getRuntime()
         .exec(command)

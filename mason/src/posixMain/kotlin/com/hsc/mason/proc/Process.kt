@@ -5,6 +5,10 @@ import platform.posix.*
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 
+actual fun exitProcess(code: Int): Nothing {
+    kotlin.system.exitProcess(code)
+}
+
 @OptIn(ExperimentalForeignApi::class)
 actual fun process(command: String): String {
     val fp = popen(command, "r") ?: error("Failed to run command: dir")
