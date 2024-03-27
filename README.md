@@ -26,7 +26,7 @@ TODO
 
 ## Language Documentation
 
-Documentation can be found [here](/docs/getting-started/creating-a-project).
+Documentation can be found [here](/docs/getting-started/creating-a-project.md).
 
 ## Compiler
 
