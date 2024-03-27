@@ -6,13 +6,13 @@ Macros are a set of processors that can alter your code in various ways.
 
 The `define` macro is declared as follows:
 
-```rs
+```rust
 #define NAME value
 ```
 
 Using this macro, we can insert `value` wherever `NAME` is used.
 
-```rs
+```rust
 #define HELLO_WORLD "Hello, world!"
 
 fn test() {
@@ -24,7 +24,7 @@ fn test() {
 To pass arguments into a `define` statement, use parenthesis `(args...)`, and use
  `$arg` (or `${arg}` when necessary) to capture it in the value.
 
-```rs
+```rust
 #define TWICE(stmt) $stmt $stmt
 
 fn test() {
@@ -32,7 +32,7 @@ fn test() {
 }
 ```
 
-```rs
+```rust
 // Expands to:
 fn test() {
     x *= 5
@@ -48,7 +48,7 @@ The `inline` macro always preceeds a function and tells the compiler that the
  contents of the following function should be inserted into its callsites and
  removed.
 
-```rs
+```rust
 fn test() {
   x = multiply(10, 20)
 }
@@ -59,7 +59,7 @@ fn multiply(_x, _y) {
 }
 ```
 
-```rs
+```rust
 // Expands to:
 fn test() {
   x = 10 * 20
