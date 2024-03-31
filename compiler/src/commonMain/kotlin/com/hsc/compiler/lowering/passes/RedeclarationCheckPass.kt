@@ -1,20 +1,20 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.Item
 import com.hsc.compiler.ir.ast.ItemKind
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 object RedeclarationCheckPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }.sortedBy { it.span.lo }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }.sortedBy { it.span.lo }
         val fnNames = mutableMapOf<String, Span>()
 
         functions.forEach {
             val fn = (it.kind as ItemKind.Fn).fn
             if (fnNames.containsKey(it.ident.name)) {
-                val err = sess.dcx().err("function declared twice")
+                val err = ctx.dcx().err("function declared twice")
                 err.reference(fnNames[it.ident.name]!!, "previously declared here")
                 err.spanLabel(Span(it.span.lo, fn.sig.span.hi, it.span.fid), "redeclared here")
                 err.emit()

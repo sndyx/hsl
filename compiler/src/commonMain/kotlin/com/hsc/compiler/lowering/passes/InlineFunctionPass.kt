@@ -1,14 +1,14 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 
 object InlineFunctionPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
-            val visitor = InlineFunctionVisitor(sess.map)
+            val visitor = InlineFunctionVisitor(ctx)
             do {
                 visitor.changes = 0
                 visitor.visitItem(it)
@@ -16,14 +16,15 @@ object InlineFunctionPass : AstPass {
         }
         functions.forEach {
             if ((it.kind as ItemKind.Fn).fn.processors?.list?.contains("inline") == true) {
-                sess.map.cache.remove(it.id.id)
+                ctx.ast.items.remove(it)
             }
         }
+        ctx.clearQuery<Item>()
     }
 
 }
 
-private class InlineFunctionVisitor(val map: AstMap) : BlockAwareVisitor() {
+private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     var changes = 0
     var cident: Ident? = null
@@ -48,7 +49,7 @@ private class InlineFunctionVisitor(val map: AstMap) : BlockAwareVisitor() {
         when (val kind = expr.kind) {
             is ExprKind.Call -> {
                 val calleeName = kind.ident.name
-                val callee = map.query<Item>().find { it.kind is ItemKind.Fn && it.ident.name == calleeName }
+                val callee = ctx.query<Item>().find { it.kind is ItemKind.Fn && it.ident.name == calleeName }
                 if (callee != null) {
                     val fn = (callee.kind as ItemKind.Fn).fn
                     if (fn.processors?.list?.contains("inline") == true) {

@@ -1,7 +1,7 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 /**
@@ -19,8 +19,8 @@ import com.hsc.compiler.span.Span
  */
 object InlineFunctionCallAssignmentPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
             InlineFunctionCallAssignmentVisitor.visitItem(it)
         }
@@ -35,7 +35,7 @@ object InlineFunctionCallAssignmentPass : AstPass {
                         InlineFunctionCallAssignmentVisitor.functionsUsedAsExpressions
                             .filter { it.first == name }
                             .forEach { pair ->
-                                val err = sess.dcx().err("function with no `return` used as expression")
+                                val err = ctx.dcx().err("function with no `return` used as expression")
                                 err.spanLabel(pair.second, "called here")
                                 // Guys we did the funny span creation again
                                 err.reference(

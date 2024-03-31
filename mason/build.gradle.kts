@@ -18,7 +18,7 @@ kotlin {
     jvm {
         withJava()
         mainRun {
-            args("build", "C:\\Users\\Sandy\\IdeaProjects\\hsc\\example")
+            args("build", "C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\external-dependencies")
             mainClass.set("com.hsc.mason.MainKt")
         }
     }

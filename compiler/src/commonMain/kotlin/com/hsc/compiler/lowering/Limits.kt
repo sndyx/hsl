@@ -1,4 +1,4 @@
-package com.hsc.compiler.codegen
+package com.hsc.compiler.lowering
 
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.ir.ast.Stmt

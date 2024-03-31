@@ -1,22 +1,21 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
-import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 object OwnedRecursiveCallCheckPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
-            OwnedRecursiveCallVisitor(sess.dcx(), it.ident).visitItem(it)
+            OwnedRecursiveCallVisitor(ctx, it.ident).visitItem(it)
         }
     }
 
 }
 
-private class OwnedRecursiveCallVisitor(val dcx: DiagCtx, val ident: Ident) : AstVisitor {
+private class OwnedRecursiveCallVisitor(val ctx: LoweringCtx, val ident: Ident) : AstVisitor {
     var currentFnDeclSpan: Span? = null
     override fun visitItem(item: Item) {
         if (item.kind is ItemKind.Fn) {
@@ -29,7 +28,7 @@ private class OwnedRecursiveCallVisitor(val dcx: DiagCtx, val ident: Ident) : As
         when (val kind = expr.kind) {
             is ExprKind.Call -> {
                 if (kind.ident == ident) {
-                    val err = dcx.err("owned recursive call")
+                    val err = ctx.dcx().err("owned recursive call")
                     err.reference(currentFnDeclSpan!!, "function declared here")
                     err.spanLabel(expr.span, "self referential call")
                     err.emit()

@@ -1,30 +1,20 @@
 package com.hsc.compiler.ir.ast
 
-import com.github.ajalt.mordant.rendering.TextColors
-import com.github.ajalt.mordant.rendering.TextStyles
 import com.hsc.compiler.span.Span
-import kotlin.reflect.KClass
+
+
+data class Ast(
+    val items: MutableList<Item>,
+    val id: NodeId,
+) {
+
+    constructor() : this(mutableListOf(), NodeId(0uL, 0uL))
+
+}
 
 data class Ident(
     var global: Boolean,
     var name: String
-) {
-    override fun toString(): String {
-        return if (name.startsWith("_")) (TextStyles.italic)("${if (global) "@" else ""}${TextColors.gray(name.take(1))}${name.drop(1)}")
-        else (TextStyles.italic)("${if (global) "@" else ""}$name")
-    }
-}
-
-class Node<T : Any>(
-    val value: T,
-    val type: KClass<T>,
-)
-
-inline fun <reified T : Any> Node(value: T): Node<T> = Node(value, T::class)
-
-data class Root(
-    val items: List<Item>,
-    val id: NodeId,
 )
 
 data class Item(
@@ -35,7 +25,6 @@ data class Item(
 ) {
     fun deepCopy(): Item = copy(kind = kind.deepCopy())
 }
-
 sealed class ItemKind {
 
     abstract fun deepCopy(): ItemKind

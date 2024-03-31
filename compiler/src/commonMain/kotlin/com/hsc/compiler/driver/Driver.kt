@@ -2,8 +2,9 @@ package com.hsc.compiler.driver
 
 import com.hsc.compiler.codegen.AstToActionTransformer
 import com.hsc.compiler.errors.*
-import com.hsc.compiler.ir.ast.AstMap
-import com.hsc.compiler.ir.ast.Item
+import com.hsc.compiler.ir.ast.Ast
+import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.*
 import com.hsc.compiler.pretty.prettyPrintActionsWebview
 import com.hsc.compiler.pretty.prettyPrintAst
@@ -15,17 +16,13 @@ import kotlinx.serialization.json.Json
 class Driver(private val opts: CompileOptions) {
 
     private val sourceMap: SourceMap = SourceMap()
-
-    private val passes = passesForMode(opts.mode)
-
-    private val emitter: Emitter = when(opts.output) {
-        Output.Terminal -> HumanEmitter(sourceMap)
-        Output.Minecraft -> HumanEmitter(sourceMap)
-        Output.Internal -> DiagEmitter(sourceMap)
-        Output.Webview -> WebviewEmitter
+    private val emitter: Emitter = when(opts.emitter) {
+        EmitterType.Terminal -> HumanEmitter(sourceMap)
+        EmitterType.Minecraft -> HumanEmitter(sourceMap)
+        EmitterType.Internal -> DiagEmitter(sourceMap)
+        EmitterType.Webview -> WebviewEmitter
     }
     private val dcx: DiagCtx = DiagCtx(emitter)
-
     private val json = Json { prettyPrint = true }
 
     fun run(files: List<Path>) {
@@ -36,8 +33,8 @@ class Driver(private val opts: CompileOptions) {
 
         var success = false
         try {
-            val map = AstMap()
-            val sess = CompileSess(dcx, opts, sourceMap, map)
+            val sess = CompileSess(dcx, opts, sourceMap)
+            val ast = Ast()
 
             files.forEach { path ->
                 val file = sourceMap.loadFile(path)
@@ -53,29 +50,20 @@ class Driver(private val opts: CompileOptions) {
                 val tokenStream = TokenStream(lexer.iterator())
                 val parser = Parser(tokenStream, sess)
 
-                var item = parser.parseItem()
-                while (item != null) {
-                    // println(pprint(item))
-                    item = parser.parseItem()
-                }
-                // emitter.pass("Parse", System.currentTimeMillis() - ptime)
-
+                parser.parseCompletely(ast)
+                // emitter.pass("Parse", bumpTime())
             }
 
-            passes.forEach {
-                if (!emitter.emittedError) {
-                    it.run(sess)
-                }
-            }
+            val lcx = LoweringCtx(ast, sess)
+            lower(lcx)
 
             success = !emitter.emittedError
 
             if (success) {
-                val items = map.query<Item>()
-                prettyPrintAst(items)
+                prettyPrintAst(ast)
 
-                val pass2 = AstToActionTransformer(sess)
-                val functions = pass2.run()
+                val transformer = AstToActionTransformer(lcx)
+                val functions = transformer.run()
 
                 if (!emitter.emittedError) {
                     val elapsed = Clock.System.now() - startTime

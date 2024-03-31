@@ -1,15 +1,15 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 object CleanupTempVarsPass : AstPass {
 
-    override fun run(sess: CompileSess) {
+    override fun run(ctx: LoweringCtx) {
         val cleanUp = mutableSetOf<Ident>()
 
-        sess.map.query<Stmt>().forEach { stmt ->
+        ctx.query<Stmt>().forEach { stmt ->
             when (val kind = stmt.kind) {
                 is StmtKind.Assign -> {
                     if (kind.ident.name.startsWith("_")) cleanUp.add(kind.ident)
@@ -35,7 +35,8 @@ object CleanupTempVarsPass : AstPass {
         val fn = Fn(null, FnSig(Span.none, emptyList()), block)
         val item = Item(fnId, Span.none, Ident(false, "cleanup"), ItemKind.Fn(fn))
 
-        sess.map.add(item, item.id)
+        ctx.ast.items.add(item)
+        ctx.clearQuery<Item>() // Remove cached queries as we have inserted a new element
     }
 
 }

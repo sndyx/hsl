@@ -6,8 +6,8 @@ import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.ir.ast.*
 
-fun prettyPrintAst(items: List<Item>) {
-    items.forEach {
+fun prettyPrintAst(ast: Ast) {
+    ast.items.forEach {
         PrettyPrintVisitor.visitItem(it)
     }
 }
@@ -54,17 +54,17 @@ object PrettyPrintVisitor : AstVisitor {
                 t.println()
             }
             is StmtKind.Assign -> {
-                t.print("${i}${kind.ident} ${white("=")} ")
+                t.print("${i}${kind.ident.str} ${white("=")} ")
                 visitExpr(kind.expr)
                 t.println()
             }
             is StmtKind.AssignOp -> {
-                t.print("${i}${kind.ident} ${white("${kind.kind.str}=")} ")
+                t.print("${i}${kind.ident.str} ${white("${kind.kind.str}=")} ")
                 visitExpr(kind.expr)
                 t.println()
             }
             is StmtKind.For -> {
-                t.print("${i}${blue("for")} ${white("(")}${kind.label} ${blue("in")} ")
+                t.print("${i}${blue("for")} ${white("(")}${kind.label.str} ${blue("in")} ")
                 visitExpr(kind.range.lo)
                 t.print(white(".."))
                 visitExpr(kind.range.hi)
@@ -112,7 +112,7 @@ object PrettyPrintVisitor : AstVisitor {
                 }
             }
             is ExprKind.Call -> {
-                t.print("${kind.ident}${white("(")}")
+                t.print("${kind.ident.str}${white("(")}")
                 kind.args.args.forEachIndexed { idx, it ->
                     visitExpr(it)
                     if (idx != kind.args.args.size - 1) t.print(white(", "))
@@ -176,7 +176,7 @@ object PrettyPrintVisitor : AstVisitor {
                 visitExpr(kind.expr)
             }
             is ExprKind.Var -> {
-                t.print(kind.ident)
+                t.print(kind.ident.str)
             }
         }
     }
@@ -197,6 +197,11 @@ object PrettyPrintVisitor : AstVisitor {
         BinOpKind.In -> "in"
         BinOpKind.And -> "&&"
         BinOpKind.Or -> "||"
+    }
+
+    private val Ident.str: String get() {
+        return if (name.startsWith("_")) (italic)("${if (global) "@" else ""}${gray(name.take(1))}${name.drop(1)}")
+        else (italic)("${if (global) "@" else ""}$name")
     }
 
 }

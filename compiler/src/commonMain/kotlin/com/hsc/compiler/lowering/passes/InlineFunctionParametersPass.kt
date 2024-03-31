@@ -1,9 +1,8 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
-import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 /**
@@ -23,10 +22,10 @@ import com.hsc.compiler.span.Span
  */
 object InlineFunctionParametersPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
-            val visitor = InlineFunctionParametersVisitor(sess.map, sess.dcx())
+            val visitor = InlineFunctionParametersVisitor(ctx)
             do {
                 visitor.changes = 0
                 visitor.visitItem(it)
@@ -40,7 +39,7 @@ object InlineFunctionParametersPass : AstPass {
 
 }
 
-private class InlineFunctionParametersVisitor(val map: AstMap, val dcx: DiagCtx) : BlockAwareVisitor() {
+private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     var changes = 0
     val alreadyInlined = mutableListOf<ExprKind>()
@@ -50,12 +49,12 @@ private class InlineFunctionParametersVisitor(val map: AstMap, val dcx: DiagCtx)
         when (val kind = expr.kind) {
             is ExprKind.Call -> {
                 var emitted = false
-                val item = map.query<Item>()
+                val item = ctx.query<Item>()
                     .filter { it.kind is ItemKind.Fn }
                     .find { it.ident.name == kind.ident.name }
 
                 if (item == null && kind.args.args.isNotEmpty()) {
-                    val err = dcx.err("cannot call unresolved function with parameters")
+                    val err = ctx.dcx().err("cannot call unresolved function with parameters")
                     err.span(expr.span)
                     err.emit()
                     emitted = true
@@ -67,7 +66,7 @@ private class InlineFunctionParametersVisitor(val map: AstMap, val dcx: DiagCtx)
                         val s1 = if (fn.sig.args.size == 1) "" else "s"
                         val s2 = if (kind.args.args.size == 1) "" else "s"
                         val was = if (kind.args.args.size == 1) "was" else "were"
-                        val err = dcx.err("this function takes ${fn.sig.args.size} parameter$s1 but ${kind.args.args.size} parameter$s2 $was supplied")
+                        val err = ctx.dcx().err("this function takes ${fn.sig.args.size} parameter$s1 but ${kind.args.args.size} parameter$s2 $was supplied")
                         err.span(kind.args.span)
                         throw CompileException(err) // This will probably mess up future passes if not thrown
                     }
@@ -91,7 +90,7 @@ private class InlineFunctionParametersVisitor(val map: AstMap, val dcx: DiagCtx)
                 // do NOT let him cook with this one... this span creation is 1: incorrect, 2: terrible...
                 if (!emitted) { // Only run if we haven't already emitted an error for this
                     val span = Span(kind.args.span.lo - kind.ident.name.length, kind.args.span.hi, kind.args.span.fid)
-                    val warn = dcx.warn("unresolved function")
+                    val warn = ctx.dcx().warn("unresolved function")
                     warn.span(span)
                     warn.emit()
                 }

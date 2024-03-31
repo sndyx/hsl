@@ -1,7 +1,7 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 
 /**
  * A pass that will flatten temp vars that are immediately reassigned.
@@ -20,8 +20,8 @@ import com.hsc.compiler.ir.ast.*
  */
 object FlattenTempReassignPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
             FlattenTempReassignVisitor.visitItem(it)
         }

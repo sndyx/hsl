@@ -1,6 +1,5 @@
 package com.hsc.compiler.codegen
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.ir.action.Action
@@ -8,19 +7,20 @@ import com.hsc.compiler.ir.action.Comparator
 import com.hsc.compiler.ir.action.Function
 import com.hsc.compiler.ir.action.StatOp
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 
-class AstToActionTransformer(private val sess: CompileSess) {
+class AstToActionTransformer(private val ctx: LoweringCtx) {
 
     fun run(): List<Function> {
-        return sess.map.query<Item>().filter { it.kind is ItemKind.Fn }.map {
+        return ctx.query<Item>().filter { it.kind is ItemKind.Fn }.map {
             val fn = (it.kind as ItemKind.Fn).fn
             if (fn.processors != null) {
-                val err = sess.dcx().err("cannot use processors in `strict` mode")
+                val err = ctx.dcx().err("cannot use processors in `strict` mode")
                 err.span(it.kind.fn.processors!!.span)
                 throw CompileException(err)
             }
             if (fn.sig.args.isNotEmpty()) {
-                val err = sess.dcx().err("cannot use function arguments in `strict` mode")
+                val err = ctx.dcx().err("cannot use function arguments in `strict` mode")
                 err.span(it.kind.fn.sig.span)
                 throw CompileException(err)
             }
@@ -51,7 +51,7 @@ class AstToActionTransformer(private val sess: CompileSess) {
                         BinOpKind.Mul -> StatOp.Mul
                         BinOpKind.Div -> StatOp.Div
                         else -> {
-                            val err = sess.dcx().err("unsupported operator in `strict` mode")
+                            val err = ctx.dcx().err("unsupported operator in `strict` mode")
                             err.span(assign.expr.span)
                             throw CompileException(err)
                         }
@@ -72,7 +72,7 @@ class AstToActionTransformer(private val sess: CompileSess) {
                         is ExprKind.Block -> TODO()
                         is ExprKind.Call -> {
                             if (kind.args.args.isNotEmpty()) {
-                                val err = sess.dcx().err("unsupported operation in `strict` mode")
+                                val err = ctx.dcx().err("unsupported operation in `strict` mode")
                                 err.span(kind.args.span)
                                 throw CompileException(err)
                             }
@@ -89,14 +89,14 @@ class AstToActionTransformer(private val sess: CompileSess) {
                                     BinOpKind.Ge -> Comparator.Ge
                                     BinOpKind.Gt -> Comparator.Gt
                                     else -> {
-                                        val err = sess.dcx().err("expected comparison")
+                                        val err = ctx.dcx().err("expected comparison")
                                         err.span(expr.span)
                                         throw CompileException(err)
                                     }
                                 }
 
                             } else {
-                                val err = sess.dcx().err("complex conditional argument in `strict` mode")
+                                val err = ctx.dcx().err("complex conditional argument in `strict` mode")
                                 err.span(expr.span)
                                 throw CompileException(err)
                             }
@@ -138,7 +138,7 @@ class AstToActionTransformer(private val sess: CompileSess) {
                 }
             }
             else -> {
-                val err = sess.dcx().err("expected literal or variable")
+                val err = ctx.dcx().err("expected literal or variable")
                 err.span(expr.span)
                 err.note(Level.Error, "cannot use complex expressions in `strict` mode")
                 throw CompileException(err)
@@ -157,7 +157,7 @@ class AstToActionTransformer(private val sess: CompileSess) {
                         lit.value
                     }
                     else -> {
-                        val err = sess.dcx().err("cannot assign non-integer variable in `strict` mode")
+                        val err = ctx.dcx().err("cannot assign non-integer variable in `strict` mode")
                         err.span(expr.span)
                         throw CompileException(err)
                     }
@@ -172,7 +172,7 @@ class AstToActionTransformer(private val sess: CompileSess) {
                 }
             }
             else -> {
-                val err = sess.dcx().err("expected variable")
+                val err = ctx.dcx().err("expected variable")
                 err.span(expr.span)
                 err.note(Level.Error, "cannot use complex expressions in `strict` mode")
                 throw CompileException(err)

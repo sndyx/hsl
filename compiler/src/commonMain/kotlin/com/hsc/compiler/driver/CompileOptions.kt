@@ -1,9 +1,12 @@
 package com.hsc.compiler.driver
 
+import kotlinx.io.files.Path
+
 data class CompileOptions(
     val target: Target,
     val mode: Mode,
-    val output: Output,
+    val emitter: EmitterType,
+    val output: Path,
 )
 
 enum class Target(val label: String) {
@@ -17,7 +20,7 @@ enum class Mode(val label: String) {
     Optimized("optimized");
 }
 
-enum class Output(val label: String) {
+enum class EmitterType(val label: String) {
     Terminal("terminal"),
     Minecraft("minecraft"),
     Internal("internal"),

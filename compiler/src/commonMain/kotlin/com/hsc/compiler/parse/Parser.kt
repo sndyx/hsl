@@ -25,7 +25,14 @@ class Parser(
 
     private fun dcx(): DiagCtx = sess.dcx()
 
-    fun parseItem(): Item? {
+    fun parseCompletely(ast: Ast) {
+        var item: Item? = null
+        while (parseItem()?.also { item = it } != null) {
+            ast.items.add(item!!)
+        }
+    }
+
+    private fun parseItem(): Item? {
         return if (check(TokenKind.Eof::class)) {
             null
         } else if (eat(TokenKind.Kw(Keyword.Fn))) {
@@ -76,7 +83,7 @@ class Parser(
                     return parseFnItem()
                 }
                 "let", "val", "var" -> {
-                    err.note(Level.Hint, "did you mean `const`?")
+                    err.note(Level.Hint, "did you mean `#define`?")
                     // Don't recover this.
                     throw CompileException(err)
                 }
@@ -95,7 +102,7 @@ class Parser(
         val sig = parseFnSig()
         val block = parseBlock(id)
         val hi = prev.span.hi
-        return Item(id, Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block))).also { sess.map.add(it, id) }
+        return Item(id, Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block)))
     }
 
     private fun parseBlock(parent: NodeId): Block {
@@ -115,7 +122,7 @@ class Parser(
             }
         }
         val hi = prev.span.hi
-        return Block(id, Span(startSpan.lo, hi, fid), stmts).also { sess.map.add(it, id) }
+        return Block(id, Span(startSpan.lo, hi, fid), stmts)
     }
 
     private fun parseFnSig(): FnSig {
@@ -132,14 +139,14 @@ class Parser(
         val lo = token.span.lo
 
         if (eat(TokenKind.Kw(Keyword.For))) {
-            return parseForLoop(id).also { sess.map.add(it, id) }
+            return parseForLoop(id)
         } else if (eat(TokenKind.Kw(Keyword.While))) {
-            return parseWhileLoop(id).also { sess.map.add(it, id) }
+            return parseWhileLoop(id)
         } else if (check(TokenKind.Ident::class) || check(TokenKind.At::class)) {
             val ident = parseIdent()
             if (eat(TokenKind.Eq::class)) {
                 val expr = parseExpr(id)
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Assign(ident, expr)).also { sess.map.add(it, id) }
+                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Assign(ident, expr))
             } else if (eat(TokenKind.BinOpEq::class)) {
                 val kind = when (prev.kind.binOpEq.type) {
                     BinOpToken.Plus -> BinOpKind.Add
@@ -150,7 +157,7 @@ class Parser(
                     BinOpToken.Caret -> BinOpKind.Pow
                 }
                 val expr = parseExpr(id)
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.AssignOp(kind, ident, expr)).also { sess.map.add(it, id) }
+                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.AssignOp(kind, ident, expr))
             } else if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
                 val loArgs = token.span.lo
                 val id2 = NodeId.from(id)
@@ -159,25 +166,25 @@ class Parser(
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
 
-                val expr = Expr(id2, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs))).also { sess.map.add(it, id2) }
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr)).also { sess.map.add(it, id) }
+                val expr = Expr(id2, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
+                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
             } else {
                 return Stmt(id, prev.span, StmtKind.Expr(Expr(NodeId.from(id), prev.span, ExprKind.Var(ident))))
             }
         } else if (eat(TokenKind.Kw(Keyword.Break))) {
-            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Break).also { sess.map.add(it, id) }
+            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Break)
         } else if (eat(TokenKind.Kw(Keyword.Continue))) {
-            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Continue).also { sess.map.add(it, id) }
+            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Continue)
         } else if (eat(TokenKind.Kw(Keyword.Return))) {
             if (check(TokenKind.CloseDelim(Delimiter.Brace))) {
-                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(null)).also { sess.map.add(it, id) }
+                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(null))
             } else {
                 val expr = parseExpr(id)
-                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(expr)).also { sess.map.add(it, id) }
+                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(expr))
             }
         }
         val expr = parseExpr(id)
-        return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr)).also { sess.map.add(it, id) }
+        return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
     }
 
     private fun parseForLoop(parent: NodeId): Stmt {
@@ -213,25 +220,7 @@ class Parser(
         val exprStack = mutableListOf(parseExpr0(parent))
         val opStack = mutableListOf<Pair<BinOpKind, Int>>()
 
-        while (checkBinOp()) {
-            val op = parseBinOp()
-
-            while ((opStack.lastOrNull()?.second ?: -1) >= op.second) {
-                val kind = opStack.removeLast().first
-                val expr2 = exprStack.removeLast()
-                val expr1 = exprStack.removeLast()
-                val newExpr = Expr(
-                    NodeId.from(parent),
-                    Span(expr1.span.lo, expr2.span.hi, fid),
-                    ExprKind.Binary(kind, expr1, expr2)
-                )
-                exprStack.add(newExpr)
-
-            }
-            exprStack.add(parseExpr0(parent))
-            opStack.add(op)
-        }
-        while (opStack.isNotEmpty()) {
+        fun popStack() {
             val kind = opStack.removeLast().first
             val expr2 = exprStack.removeLast()
             val expr1 = exprStack.removeLast()
@@ -241,6 +230,18 @@ class Parser(
                 ExprKind.Binary(kind, expr1, expr2)
             )
             exprStack.add(newExpr)
+        }
+
+        while (checkBinOp()) {
+            val op = parseBinOp()
+            while ((opStack.lastOrNull()?.second ?: -1) >= op.second) {
+                popStack()
+            }
+            exprStack.add(parseExpr0(parent))
+            opStack.add(op)
+        }
+        while (opStack.isNotEmpty()) {
+            popStack()
         }
 
         return exprStack.single() // scary
@@ -253,16 +254,15 @@ class Parser(
         if (eat(TokenKind.BinOp(BinOpToken.Minus))) {
             val expr = parseExpr(id)
             return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Neg, expr))
-                .also { sess.map.add(it, id) }
         }
         if (check(TokenKind.Ident::class)) { // We are trolling with this one :-)
             if (token.kind.ident.value == "Item") {
                 val lit = parseLiteral()
-                return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit)).also { sess.map.add(it, id) }
+                return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
             }
         } else if (check(TokenKind.Literal::class)) {
             val lit = parseLiteral()
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit)).also { sess.map.add(it, id) }
+            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
         }
         if (check(TokenKind.At::class) || check(TokenKind.Ident::class)) {
             val ident = parseIdent()
@@ -273,9 +273,9 @@ class Parser(
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
 
-                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs))).also { sess.map.add(it, id) }
+                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
             } else {
-                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Var(ident)).also { sess.map.add(it, id) }
+                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Var(ident))
             }
         }
         else if (eat(TokenKind.Kw(Keyword.If))) {
@@ -284,11 +284,11 @@ class Parser(
             return parseMatch(id)
         } else if (check(TokenKind.OpenDelim(Delimiter.Brace))) {
             val block = parseBlock(id)
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Block(block)).also { sess.map.add(it, id) }
+            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Block(block))
         } else if (eat(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
             val expr = parseExpr(id)
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Paren(expr)).also { sess.map.add(it, id) }
+            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Paren(expr))
         }
         val err = dcx().err("expected expression")
         err.span(token.span)
@@ -355,7 +355,7 @@ class Parser(
         } else null
         return Expr(id, Span(lo, prev.span.hi, fid),
             ExprKind.If(cond ?: Expr(id, Span(0, 0, 0), ExprKind.Lit(Lit.I64(0))), block, other)
-        ).also { sess.map.add(it, id) }
+        )
     }
 
     private fun parseMatch(id: NodeId): Expr {
@@ -366,7 +366,7 @@ class Parser(
         val arms = parseDelimited(Delimiter.Brace) {
             parseMatchArm(id)
         }.getOrThrow()
-        return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms)).also { sess.map.add(it, id) }
+        return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
     }
 
     private fun parseMatchArm(id: NodeId): Arm {
@@ -572,7 +572,7 @@ class Parser(
 
     private fun parseLiteral(kind: LitKind): String {
         // Muh muh parse literal muh muh
-        // wfw when i stumble back here looking for the bump call again:
+        // mfw when i stumble back here looking for the bump call again:
         // https://www.youtube.com/watch?v=lmbJP1yObZc
         when (token.kind) {
             is TokenKind.Literal -> {

@@ -26,10 +26,13 @@ class CompileCommand : CliktCommand() {
         .default(Mode.Normal)
         .help("Set compiler ruleset")
 
-    private val output: Output by option("--output", "-o")
-        .enum<Output> { it.label }
-        .default(Output.Terminal)
+    private val emitter: EmitterType by option("--emitter", "-e")
+        .enum<EmitterType> { it.label }
+        .default(EmitterType.Terminal)
         .help("Set output emitter mode")
+
+    private val output: String by option("--output", "-o")
+        .default("")
 
     private val version: Boolean by option("--version", "-v").flag()
         .help("Show version")
@@ -39,7 +42,7 @@ class CompileCommand : CliktCommand() {
             println("hsc v1.0.0")
             return
         }
-        val opts = CompileOptions(target, mode, output)
+        val opts = CompileOptions(target, mode, emitter, Path(output))
         Driver(opts).run(paths.map { Path(it) })
     }
 

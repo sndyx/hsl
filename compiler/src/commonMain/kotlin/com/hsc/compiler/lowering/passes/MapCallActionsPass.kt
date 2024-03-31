@@ -1,18 +1,18 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 
 object MapCallActionsPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
-            .forEach { MapCallActionsVisitor(sess).visitItem(it) }
+    override fun run(ctx: LoweringCtx) {
+        ctx.query<Item>().filter { it.kind is ItemKind.Fn }
+            .forEach { MapCallActionsVisitor(ctx).visitItem(it) }
     }
 
 }
 
-private class MapCallActionsVisitor(val sess: CompileSess) : AstVisitor {
+private class MapCallActionsVisitor(val ctx: LoweringCtx) : AstVisitor {
 
     override fun visitStmt(stmt: Stmt) {
         val stmtKind = stmt.kind
@@ -42,7 +42,7 @@ private class MapCallActionsVisitor(val sess: CompileSess) : AstVisitor {
             val s1 = if (types.size == 1) "" else "s"
             val s2 = if (args.args.size == 1) "" else "s"
             val was = if (args.args.size == 1) "was" else "were"
-            val err = sess.dcx().err("this function takes ${types.size} parameter$s1 but ${args.args.size} parameter$s2 $was supplied")
+            val err = ctx.dcx().err("this function takes ${types.size} parameter$s1 but ${args.args.size} parameter$s2 $was supplied")
             err.span(args.span)
             err.emit()
             return
@@ -69,7 +69,7 @@ private class MapCallActionsVisitor(val sess: CompileSess) : AstVisitor {
             }
 
             if (!matches) {
-                val err = sess.dcx().err("expected ${type.str}, found ${expr.kind.str()}")
+                val err = ctx.dcx().err("expected ${type.str}, found ${expr.kind.str()}")
                 err.span(expr.span)
                 err.emit()
             }

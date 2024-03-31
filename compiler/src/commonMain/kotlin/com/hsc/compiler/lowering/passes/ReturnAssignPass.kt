@@ -1,22 +1,21 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
-import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 object ReturnAssignPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
-            ReturnAssignVisitor(sess.map, sess.dcx()).visitItem(it)
+            ReturnAssignVisitor(ctx).visitItem(it)
         }
     }
 
 }
 
-private class ReturnAssignVisitor(val map: AstMap, val dcx: DiagCtx) : BlockAwareVisitor() {
+private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     var flagNextStmt = false
 
@@ -28,13 +27,13 @@ private class ReturnAssignVisitor(val map: AstMap, val dcx: DiagCtx) : BlockAwar
     // Whole lotta of question marks in this function I've noticed! :-)
     override fun visitStmt(stmt: Stmt) {
         if (flagNextStmt) {
-            val err = dcx.warn("unreachable statement")
+            val err = ctx.dcx().warn("unreachable statement")
             err.span(stmt.span)
             err.emit()
         }
         when (val kind = stmt.kind) {
             is StmtKind.Ret -> {
-                val blockOwner = map.node<Any>(currentBlock.id.ownerId)
+                val blockOwner = ctx.node<Any>(currentBlock.id.ownerId)
 
                 // change _return to return value
                 if (kind.expr != null) {

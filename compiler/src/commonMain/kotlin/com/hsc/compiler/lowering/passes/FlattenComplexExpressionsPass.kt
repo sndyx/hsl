@@ -1,7 +1,7 @@
-package com.hsc.compiler.codegen.passes
+package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
 /**
@@ -23,8 +23,8 @@ import com.hsc.compiler.span.Span
  */
 object FlattenComplexExpressionsPass : AstPass {
 
-    override fun run(sess: CompileSess) {
-        val functions = sess.map.query<Item>().filter { it.kind is ItemKind.Fn }
+    override fun run(ctx: LoweringCtx) {
+        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         functions.forEach {
             val visitor = FlattenComplexExpressionsVisitor()
             do {
@@ -44,12 +44,12 @@ private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
     var cident: Ident? = null
 
     override fun visitStmt(stmt: Stmt) {
-        when (val kind = stmt.kind) {
+        cident = when (val kind = stmt.kind) {
             is StmtKind.Assign -> {
-                cident = kind.ident
+                kind.ident
             }
             else -> {
-                cident = null
+                null
             }
         }
         super.visitStmt(stmt)
