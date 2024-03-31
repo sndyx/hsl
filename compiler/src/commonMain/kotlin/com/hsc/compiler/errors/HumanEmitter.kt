@@ -22,7 +22,7 @@ class HumanEmitter(
 
         t.println("${(bold + color)(label)}: ${bold(italicizeBackticks(diagnostic.message))}")
 
-        diagnostic.spans.getOrNull(0)?.let { (span, msg) ->
+        diagnostic.spans.getOrNull(0)?.let { (span, _) ->
             sourceMap.files[span.fid]?.let { file ->
 
                 val (line, col) = file.lookupPos(span.lo)
@@ -71,7 +71,7 @@ class HumanEmitter(
                     text.replace(
                         Regex("\\s(else|enum|fn|for|if|in|match|while|break|continue|return|const)\\s"),
                         bold("\$0")
-                    )
+                    ).trimEnd() // sneaky newline characters! :-(
                 )
                 t.print(" ".repeat(digits))
                 t.print(" ${bold("|")} ")
