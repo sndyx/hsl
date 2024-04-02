@@ -6,18 +6,17 @@ import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.ir.ast.*
 
-fun prettyPrintAst(ast: Ast) {
+fun prettyPrintAst(t: Terminal, ast: Ast) {
+    val visitor = PrettyPrintVisitor(t)
     ast.items.forEach {
-        PrettyPrintVisitor.visitItem(it)
+        visitor.visitItem(it)
     }
 }
 
-object PrettyPrintVisitor : AstVisitor {
+class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
 
-    private val t = Terminal(ansiLevel = AnsiLevel.ANSI256)
     private var indent = 0
-
-    val i: String get() = " ".repeat(indent * 2)
+    private val i: String get() = " ".repeat(indent * 2)
 
     override fun visitItem(item: Item) {
         when (val kind = item.kind) {

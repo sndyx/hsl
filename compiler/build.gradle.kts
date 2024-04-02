@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -15,7 +17,7 @@ kotlin {
     jvm()
     mingwX64 {
         binaries {
-            executable {
+            executable(listOf(NativeBuildType.RELEASE)) {
                 baseName = "hsc"
                 entryPoint = "com.hsc.compiler.main"
             }
@@ -23,7 +25,7 @@ kotlin {
     }
     linuxX64 {
         binaries {
-            executable {
+            executable(listOf(NativeBuildType.RELEASE)) {
                 baseName = "hsc"
                 entryPoint = "com.hsc.compiler.main"
             }
@@ -31,7 +33,7 @@ kotlin {
     }
     macosX64 {
         binaries {
-            executable {
+            executable(listOf(NativeBuildType.RELEASE)) {
                 baseName = "hsc"
                 entryPoint = "com.hsc.compiler.main"
             }
@@ -39,7 +41,7 @@ kotlin {
     }
     macosArm64 {
         binaries {
-            executable {
+            executable(listOf(NativeBuildType.RELEASE)) {
                 baseName = "hsc"
                 entryPoint = "com.hsc.compiler.main"
             }

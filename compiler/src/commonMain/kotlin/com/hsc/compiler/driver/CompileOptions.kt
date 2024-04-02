@@ -7,6 +7,7 @@ data class CompileOptions(
     val mode: Mode,
     val emitter: EmitterType,
     val output: Path,
+    val forceColor: Boolean,
 )
 
 enum class Target(val label: String) {

@@ -11,10 +11,9 @@ import kotlin.math.min
 import kotlin.time.Duration
 
 class HumanEmitter(
+    private val t: Terminal,
     private val sourceMap: SourceMap
 ) : Emitter() {
-
-    private val t = Terminal(ansiLevel = AnsiLevel.ANSI256)
 
     override fun print(diagnostic: Diagnostic) {
 

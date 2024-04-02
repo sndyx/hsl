@@ -36,7 +36,7 @@ class BuildCommand : CliktCommand() {
 
         val config = build(path)
 
-        Hsc.compile(collectedFiles, config.pkg.mode ?: Mode.Normal)
+        Hsc.compile(collectedFiles, path.resolve("build/out.json"), config.pkg.mode ?: Mode.Normal)
     }
 
     private suspend fun build(local: Path, house: House? = null): House = coroutineScope {

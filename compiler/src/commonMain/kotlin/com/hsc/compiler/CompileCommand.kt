@@ -34,6 +34,8 @@ class CompileCommand : CliktCommand() {
     private val output: String by option("--output", "-o")
         .default("")
 
+    private val forceColor: Boolean by option("--force-color", "-c").flag()
+
     private val version: Boolean by option("--version", "-v").flag()
         .help("Show version")
 
@@ -42,7 +44,7 @@ class CompileCommand : CliktCommand() {
             println("hsc v1.0.0")
             return
         }
-        val opts = CompileOptions(target, mode, emitter, Path(output))
+        val opts = CompileOptions(target, mode, emitter, Path(output), forceColor)
         Driver(opts).run(paths.map { Path(it) })
     }
 

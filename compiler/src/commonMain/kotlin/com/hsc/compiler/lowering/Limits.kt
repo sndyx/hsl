@@ -52,25 +52,25 @@ val limits by lazy {
 }
 
 fun stmtActionKind(stmt: Stmt): String {
-    when (val kind = stmt.kind) {
+    return when (val kind = stmt.kind) {
         is StmtKind.Assign -> {
-            return if (kind.ident.global) "change_global_stat"
+            if (kind.ident.global) "change_global_stat"
             else "change_player_stat"
         }
         is StmtKind.AssignOp -> {
-            return if (kind.ident.global) "change_global_stat"
+            if (kind.ident.global) "change_global_stat"
             else "change_player_stat"
         }
-        StmtKind.Break -> error("cannot map break stmt")
-        StmtKind.Continue -> error("cannot map continue stmt")
+        StmtKind.Break -> ""
+        StmtKind.Continue -> ""
         is StmtKind.Expr -> {
             //
-            return "none"
+            ""
         }
-        is StmtKind.For -> error("cannot map for stmt")
-        is StmtKind.Ret -> error("cannot map return stmt")
-        is StmtKind.While -> error("cannot map while stmt")
-        is StmtKind.Action -> return "todo"
+        is StmtKind.For -> ""
+        is StmtKind.Ret -> ""
+        is StmtKind.While -> ""
+        is StmtKind.Action -> "todo"
     }
 }
 
