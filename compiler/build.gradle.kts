@@ -49,6 +49,7 @@ kotlin {
     }
 
     sourceSets {
+        // Kotlin Multiplatform? More like: Kotlin other-people-Multi and I freeload platform!!!!
         commonMain.dependencies {
             implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0-RC.2")
             implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
