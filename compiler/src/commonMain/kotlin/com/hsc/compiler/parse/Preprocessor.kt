@@ -5,6 +5,7 @@ import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.span.Span
 
+// Do not look at this file prior to commit 1cc3ed689db328a30458cda78702218be3ae1c81 :aware:
 class Preprocessor(private val sess: CompileSess, private val srcp: SourceProvider) {
 
     private val src = srcp.src
