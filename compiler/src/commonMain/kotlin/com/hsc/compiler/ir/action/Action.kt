@@ -3,11 +3,51 @@ package com.hsc.compiler.ir.action
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 sealed class Action {
+
+    companion object {
+        val builtins = setOf(
+            "apply_layout",
+            "potion_effect",
+            "balance_player_team",
+            "cancel_event",
+            "change_health",
+            "change_hunger_level",
+            "change_max_health",
+            "change_player_group",
+            "clear_effects",
+            "close_menu",
+            "action_bar",
+            "display_menu",
+            "title",
+            "enchant_held_item",
+            "exit",
+            "fail_parkour",
+            "full_heal",
+            "give_exp_levels",
+            "give_item",
+            "spawn",
+            "kill",
+            "parkour_checkpoint",
+            "pause",
+            "play_sound",
+            // "random_action",
+            "send_message",
+            "reset_inventory",
+            "remove_item",
+            "set_player_team",
+            "use_held_item",
+            "set_gamemode",
+            "set_compass_target",
+            "teleport_player",
+            "send_to_lobby"
+        )
+    }
 
     @Serializable
     @SerialName("APPLY_LAYOUT")
@@ -22,7 +62,7 @@ sealed class Action {
         val override: Boolean
     ) : Action()
     @Serializable
-    @SerialName("BALANCE_TEAM")
+    @SerialName("BALANCE_PLAYER_TEAM")
     data object BalancePlayerTeam : Action()
     @Serializable
     @SerialName("CANCEL_EVENT")
@@ -35,19 +75,19 @@ sealed class Action {
         val amount: StatValue
     ) : Action()
     @Serializable
-    @SerialName("SET_HEALTH")
+    @SerialName("CHANGE_HEALTH")
     data class ChangeHealth(
         @SerialName("mode") val op: StatOp,
         @SerialName("health") val value: String
     ) : Action()
     @Serializable
-    @SerialName("SET_HUNGER_LEVEL")
+    @SerialName("CHANGE_HUNGER_LEVEL")
     data class ChangeHungerLevel(
         @SerialName("mode") val op: StatOp,
         @SerialName("hunger") val value: String
     ) : Action()
     @Serializable
-    @SerialName("SET_MAX_HEALTH")
+    @SerialName("CHANGE_MAX_HEALTH")
     data class ChangeMaxHealth(
         @SerialName("mode") val op: StatOp,
         @SerialName("max_health") val value: String,
@@ -67,7 +107,7 @@ sealed class Action {
         val amount: StatValue
     ) : Action()
     @Serializable
-    @SerialName("change_team_stat")
+    @SerialName("CHANGE_TEAM_STAT")
     data class ChangeTeamStat(
         val stat: String,
         @SerialName("mode") val op: StatOp,
@@ -113,7 +153,7 @@ sealed class Action {
     @SerialName("EXIT")
     data object Exit : Action()
     @Serializable
-    @SerialName("BAIL_PARKOUR")
+    @SerialName("FAIL_PARKOUR")
     data class FailParkour(val reason: String) : Action()
     @Serializable
     @SerialName("FULL_HEAL")
@@ -163,19 +203,46 @@ sealed class Action {
     @Serializable
     @SerialName("TRIGGER_FUNCTION")
     data class ExecuteFunction(val name: String, val global: Boolean) : Action()
-
+    @Serializable
+    @SerialName("RESET_INVENTORY")
+    data object ResetInventory : Action()
+    @Serializable
+    @SerialName("REMOVE_ITEM")
+    data class RemoveItem(val item: ItemStack) : Action()
+    @Serializable
+    @SerialName("SET_PLAYER_TEAM")
+    data class SetPlayerTeam(val team: String) : Action()
+    @Serializable
+    @SerialName("USE_HELD_ITEM")
+    data object UseHeldItem : Action()
+    @Serializable
+    @SerialName("SET_GAMEMODE")
+    data class SetGameMode(val gamemode: GameMode) : Action()
+    @Serializable
+    @SerialName("SET_COMPASS_TARGET")
+    data class SetCompassTarget(val location: Location) : Action()
+    @Serializable
+    @SerialName("TELEPORT_PLAYER")
+    data class TeleportPlayer(val location: Location) : Action()
+    @Serializable
+    @SerialName("SEND_TO_LOBBY")
+    data class SendToLobby(val location: Lobby) : Action()
 }
 
 @Serializable
 class ItemStack : MutableMap<String, Any> by mutableMapOf()
 
-enum class Location {
-    @SerialName("house_spawn") HouseSpawn,
-    // We probably should never be using this
-    @SerialName("current_location") CurrentLocation,
-    @SerialName("invokers_location") InvokersLocation,
-    @SerialName("custom_coordinates") CustomCoordinates,
-}
+@Serializable
+data class Location(
+    val relX: Long,
+    val relY: Long,
+    val relZ: Long,
+    val x: Long,
+    val y: Long,
+    val z: Long,
+    val pitch: Float,
+    val yaw: Float,
+)
 
 enum class PotionEffect {
     @SerialName("strength") Strength,
@@ -188,6 +255,36 @@ enum class Enchantment {
 enum class Sound {
     @SerialName("meow") Meow;
 }
+
+enum class GameMode {
+    Adventure,
+    Survival,
+    Creative;
+}
+
+enum class Lobby {
+    @SerialName("Main Lobby") MainLobby,
+    @SerialName("Tournament Hall") TournamentHall,
+    @SerialName("Blitz SG") BlitzSG,
+    @SerialName("The TNT Games") TNTGames,
+    @SerialName("Mega Walls") MegaWalls,
+    @SerialName("Arcade Games") ArcadeGames,
+    @SerialName("Cops and Crims") CopsAndCrims,
+    @SerialName("UHC Champions") UHCChampions,
+    @SerialName("Warlords") Warlords,
+    @SerialName("Smash Heroes") SmashHeroes,
+    @SerialName("Housing") Housing,
+    @SerialName("SkyWars") SkyWars,
+    @SerialName("Speed UHC") SpeedUHC,
+    @SerialName("Classic Games") ClassicGames,
+    @SerialName("Prototype") Prototype,
+    @SerialName("Bed Wars") BedWars,
+    @SerialName("Murder Mystery") MurderMystery,
+    @SerialName("Build Battle") BuildBattle,
+    @SerialName("Duels") Duels,
+    @SerialName("Wool Wars") WoolWars;
+}
+
 enum class StatOp {
     @SerialName("SET") Set,
     @SerialName("INCREMENT") Inc,
@@ -196,12 +293,30 @@ enum class StatOp {
     @SerialName("DIVIDE") Div,
 }
 
-@Serializable
+@Serializable(with = StatValueBaseSerializer::class)
 sealed class StatValue {
     @Serializable(with = StatI64Serializer::class)
     data class I64(val value: Long) : StatValue()
     @Serializable(with = StatStrSerializer::class)
     data class Str(val value: String) : StatValue()
+}
+
+// For the love of god, Kotlin will not choose a fucking polymorphic serializer
+// for my sealed class (or tell me fucking why)!!!!! We have to do this garbage.
+object StatValueBaseSerializer : KSerializer<StatValue> {
+    override val descriptor: SerialDescriptor =
+        buildClassSerialDescriptor("StatValueHellfireDespairPitsSerializer")
+
+    override fun deserialize(decoder: Decoder): StatValue { error("Not implemented!") }
+
+    override fun serialize(encoder: Encoder, value: StatValue) {
+        if (value is StatValue.I64) {
+            StatI64Serializer.serialize(encoder, value)
+        } else {
+            StatStrSerializer.serialize(encoder, value as StatValue.Str)
+        }
+    }
+
 }
 
 object StatI64Serializer : KSerializer<StatValue.I64> {

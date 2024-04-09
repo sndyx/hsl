@@ -1,5 +1,5 @@
-fn say_hello() {
-    if (x && y + z && w) {
-        send_message("Hello, world!")
+fn say_hello_if_true() {
+    if (x in 1..y) {
+        send_message("Hello world!")
     }
 }

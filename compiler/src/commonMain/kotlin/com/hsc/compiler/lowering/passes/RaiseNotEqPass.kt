@@ -6,8 +6,8 @@ import com.hsc.compiler.lowering.LoweringCtx
 object RaiseNotEqPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Expr>()
-        functions.forEach {
+        val exprs = ctx.query<Expr>()
+        exprs.forEach {
             RaiseNotEqVisitor.visitExpr(it)
         }
     }

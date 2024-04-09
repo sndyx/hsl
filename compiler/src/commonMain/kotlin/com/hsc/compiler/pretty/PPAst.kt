@@ -23,7 +23,7 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 kind.fn.processors?.list?.forEach {
                     t.println(brightYellow("#$it"))
                 }
-                t.println("${blue("fn")} ${bold(item.ident.name)}${white("(")}${kind.fn.sig.args.joinToString()}${white(")")} ${white("{")}")
+                t.println("${blue("fn")} ${bold(item.ident.name)}${white("(")}${kind.fn.sig.args.joinToString { it.str }}${white(")")} ${white("{")}")
             }
         }
         super.visitItem(item)
@@ -72,14 +72,6 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
             }
             is StmtKind.Break -> t.println(blue("${i}break"))
             is StmtKind.Continue -> t.println(blue("${i}continue"))
-            is StmtKind.Action -> {
-                t.print("${i}${(bold + italic)(kind.name)}${white("(")}")
-                kind.exprs.forEachIndexed { idx, it ->
-                    visitExpr(it)
-                    if (idx != kind.exprs.size - 1) t.print(white(", "))
-                }
-                t.println(white(")"))
-            }
             is StmtKind.While -> {
                 t.print("${i}${blue("while")} ${white("(")}")
                 visitExpr(kind.cond)
@@ -91,6 +83,14 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
 
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
+            is ExprKind.Action -> {
+                t.print("${(bold + italic)(kind.name)}${white("(")}")
+                kind.exprs.forEachIndexed { idx, it ->
+                    visitExpr(it)
+                    if (idx != kind.exprs.size - 1) t.print(white(", "))
+                }
+                t.print(white(")"))
+            }
             is ExprKind.Binary -> {
                 t.print(gray("["))
                 visitExpr(kind.a)
@@ -156,6 +156,11 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 }
                 indent--
                 t.println(white("${i}}"))
+            }
+            is ExprKind.Range -> {
+                visitExpr(kind.range.lo)
+                t.print(white(".."))
+                visitExpr(kind.range.hi)
             }
             is ExprKind.Paren -> {
                 t.print(white("("))

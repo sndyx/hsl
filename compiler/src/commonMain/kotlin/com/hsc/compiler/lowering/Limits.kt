@@ -70,7 +70,6 @@ fun stmtActionKind(stmt: Stmt): String {
         is StmtKind.For -> ""
         is StmtKind.Ret -> ""
         is StmtKind.While -> ""
-        is StmtKind.Action -> "todo"
     }
 }
 

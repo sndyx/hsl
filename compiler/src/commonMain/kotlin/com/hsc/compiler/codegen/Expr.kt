@@ -9,6 +9,9 @@ import com.hsc.compiler.ir.ast.Ident
 
 fun ActionTransformer.transformExpr(expr: Expr): Action {
     return when (val kind = expr.kind) {
+        is ExprKind.Action -> {
+            unwrapAction(expr)
+        }
         is ExprKind.Binary -> {
             val err = sess.dcx().err("expected statement, found binary expression")
             err.span(expr.span)
@@ -54,6 +57,11 @@ fun ActionTransformer.transformExpr(expr: Expr): Action {
         is ExprKind.Unary -> {
             strict(expr.span) {
                 unsupported("unary expressions", expr.span)
+            }
+        }
+        is ExprKind.Range -> {
+            strict(expr.span) {
+                unsupported("ranges", expr.span)
             }
         }
         is ExprKind.Lit, is ExprKind.Var -> {

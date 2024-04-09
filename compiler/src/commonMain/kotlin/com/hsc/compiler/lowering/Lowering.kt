@@ -17,14 +17,15 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         ReturnAssignPass,
         InlineFunctionPass,
         RemoveParenPass,
+        ExpandInPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
         ConstantFoldingPass,
         FlattenComplexExpressionsPass,
-        MapCallActionsPass,
         InlineFunctionParametersPass,
         InlineFunctionCallAssignmentPass,
         FlattenTempReassignPass,
+        MapCallActionsPass,
         EmptyBlockCheckPass,
         // CleanupTempVarsPass,
         LimitCheckPass,
@@ -41,7 +42,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
         it.run(ctx)
-        prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 

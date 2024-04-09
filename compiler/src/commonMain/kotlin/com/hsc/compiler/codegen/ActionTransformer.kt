@@ -49,8 +49,7 @@ class ActionTransformer(internal val sess: CompileSess) {
                     StatValue.Str(lit.value)
                 }
                 else -> {
-                    val err = sess.dcx().err("expected integer or placeholder")
-                    throw CompileException(err)
+                    throw sess.dcx().err("expected integer or placeholder")
                 }
             }
         }
@@ -67,12 +66,51 @@ class ActionTransformer(internal val sess: CompileSess) {
             if (sess.opts.mode == Mode.Strict) {
                 err.note(Level.Error, "cannot use complex expressions in `strict` mode")
             }
-            throw CompileException(err)
+            throw err
         }
     }
 
+    fun ActionTransformer.expectArgs(span: Span, args: List<Expr>, expected: Int) {
+        if (args.size != expected) {
+            val s1 = if (expected == 1) "" else "s"
+            val s2 = if (args.size == 1) "" else "s"
+            val was = if (args.size == 1) "was" else "were"
+            val err = sess.dcx().err("this function takes $expected parameter$s1 but ${args.size} parameter$s2 $was supplied")
+            err.span(span)
+        }
+    }
+
+    fun ActionTransformer.unwrapString(expr: Expr): String =
+        when (val kind = expr.kind) {
+            is ExprKind.Lit -> when (val lit = kind.lit) {
+                is Lit.Str -> lit.value
+                else -> {
+                    sess.dcx()
+                        .err("expected string, found ${lit.str()}", expr.span)
+                        .emit()
+                    "error"
+                }
+            }
+            is ExprKind.Var -> {
+                identString(kind.ident)
+            }
+            else -> {
+                sess.dcx().err("expected string, found ${expr.kind.str()}")
+                "error"
+            }
+        }
+
+
     internal fun unwrapStatOp(op: BinOpKind): StatOp {
-        TODO("unwrapStatOp")
+        return when (op) {
+            BinOpKind.Add -> StatOp.Inc
+            BinOpKind.Sub -> StatOp.Dec
+            BinOpKind.Mul -> StatOp.Mul
+            BinOpKind.Div -> StatOp.Div
+            else -> {
+                throw sess.dcx().err("unexpected operator")
+            }
+        }
     }
 
     internal fun identString(ident: Ident): String =

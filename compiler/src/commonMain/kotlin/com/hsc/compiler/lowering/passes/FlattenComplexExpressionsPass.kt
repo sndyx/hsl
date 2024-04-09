@@ -80,10 +80,10 @@ private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
                         added(if (cident != null) 1 else 2)
                         changes++
                     }
-                    else -> { } // Don't flatten conditions
+                    else -> super.visitExpr(expr) // Do(n't) flatten conditions
                 }
             }
-            else -> { }
+            else -> super.visitExpr(expr)
         }
     }
 

@@ -1,6 +1,7 @@
 package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.errors.CompileException
+import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
@@ -48,6 +49,10 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
         if (alreadyInlined.contains(expr.kind)) return
         when (val kind = expr.kind) {
             is ExprKind.Call -> {
+                if (kind.ident.name in Action.builtins) {
+                    super.visitExpr(expr); return
+                }
+
                 var emitted = false
                 val item = ctx.query<Item>()
                     .filter { it.kind is ItemKind.Fn }

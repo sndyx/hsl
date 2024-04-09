@@ -4,10 +4,14 @@ import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.codegen.ActionTransformer
 import com.hsc.compiler.errors.*
+import com.hsc.compiler.ir.action.Comparison
+import com.hsc.compiler.ir.action.Condition
+import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.Ast
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.*
+import com.hsc.compiler.pretty.prettyPrintActions
 import com.hsc.compiler.pretty.prettyPrintActionsWebview
 import com.hsc.compiler.span.SourceMap
 import kotlinx.datetime.Clock
@@ -42,6 +46,8 @@ class Driver(private val opts: CompileOptions) {
 
         var success = false
         try {
+            val value = StatValue.Str("hello!")
+            val test = Condition.PlayerStatRequirement("hello", Comparison.Le, value)
             val sess = CompileSess(dcx, opts, sourceMap)
             val ast = Ast()
 
@@ -73,6 +79,7 @@ class Driver(private val opts: CompileOptions) {
 
                 val transformer = ActionTransformer(sess)
                 val functions = transformer.transform(ast)
+                // prettyPrintActions(functions)
 
                 if (!emitter.emittedError) {
                     val elapsed = Clock.System.now() - startTime

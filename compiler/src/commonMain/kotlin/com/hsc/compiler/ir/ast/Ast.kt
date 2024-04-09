@@ -105,10 +105,6 @@ sealed class StmtKind {
     data class Ret(var expr: com.hsc.compiler.ir.ast.Expr?) : StmtKind() {
         override fun deepCopy(): StmtKind = copy(expr = expr?.deepCopy())
     }
-    // Can't store as actions directly or further optimizations will not apply!
-    data class Action(val name: String, val exprs: List<com.hsc.compiler.ir.ast.Expr>) : StmtKind() {
-        override fun deepCopy(): StmtKind = copy(exprs = exprs.map { it.deepCopy() })
-    }
 }
 
 data class Expr(
@@ -136,6 +132,9 @@ sealed class ExprKind  {
     data class Lit(var lit: com.hsc.compiler.ir.ast.Lit) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(lit = lit.deepCopy())
     }
+    data class Range(var range: com.hsc.compiler.ir.ast.Range) : ExprKind() {
+        override fun deepCopy(): ExprKind = copy(range = range.deepCopy())
+    }
     data class If(var expr: Expr, var block: com.hsc.compiler.ir.ast.Block, var other: com.hsc.compiler.ir.ast.Block?) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy(), block = block.deepCopy(), other = other?.deepCopy())
     }
@@ -148,13 +147,24 @@ sealed class ExprKind  {
     data class Paren(var expr: Expr) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy())
     }
+    // Inline actions and conditions
+    data class Action(val action: com.hsc.compiler.ir.action.Action) : ExprKind() {
+        override fun deepCopy(): ExprKind = copy()
+    }
+
+    data class Condition(val condition: com.hsc.compiler.ir.action.Condition) : ExprKind() {
+        override fun deepCopy(): ExprKind = copy()
+    }
 
     fun str(): String =
         when (this) {
+            is Action -> "action"
+            is Condition -> "condition"
             is Var -> "var"
             is Call -> "function call"
             is Binary -> "binary op"
             is Unary -> "unary op"
+            is Range -> "range"
             is Lit -> when (this.lit) {
                 is com.hsc.compiler.ir.ast.Lit.Bool -> "bool"
                 is com.hsc.compiler.ir.ast.Lit.I64 -> "integer"

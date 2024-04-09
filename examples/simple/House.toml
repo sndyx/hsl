@@ -2,4 +2,4 @@
 name = "simple-example"
 version = "0.0.1"
 
-mode = "strict"
+mode = "normal"

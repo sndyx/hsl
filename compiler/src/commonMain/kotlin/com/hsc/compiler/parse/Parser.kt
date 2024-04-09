@@ -216,8 +216,31 @@ class Parser(
     }
 
     private fun parseExpr(parent: NodeId): Expr {
+        val expr = parseExpr0(parent)
+        if (eat(TokenKind.Kw(Keyword.In))) {
+            val other = parseExpr(parent)
+            return Expr(
+                NodeId.from(parent),
+                Span(expr.span.lo, other.span.hi, fid),
+                ExprKind.Binary(BinOpKind.In, expr, other)
+            )
+        }
+        if (eat(TokenKind.DotDot)) {
+            val other = parseExpr0(parent) // We should stop chained ranges, probably
+            val range = Range(expr, other)
+            return Expr(
+                NodeId.from(parent),
+                Span(expr.span.lo, other.span.hi, fid),
+                ExprKind.Range(range)
+            )
+        } else {
+            return expr
+        }
+    }
+
+    private fun parseExpr0(parent: NodeId, canBeRange: Boolean = true): Expr {
         // Simple shunting-yard impl
-        val exprStack = mutableListOf(parseExpr0(parent))
+        val exprStack = mutableListOf(parseExpr00(parent))
         val opStack = mutableListOf<Pair<BinOpKind, Int>>()
 
         fun popStack() {
@@ -237,17 +260,18 @@ class Parser(
             while ((opStack.lastOrNull()?.second ?: -1) >= op.second) {
                 popStack()
             }
-            exprStack.add(parseExpr0(parent))
+            exprStack.add(parseExpr00(parent))
             opStack.add(op)
         }
         while (opStack.isNotEmpty()) {
             popStack()
         }
 
-        return exprStack.single() // scary
+        return exprStack.single()
     }
 
-    private fun parseExpr0(parent: NodeId): Expr {
+    // parseExpr000 when
+    private fun parseExpr00(parent: NodeId): Expr {
         val id = NodeId.from(parent)
         val lo = token.span.lo
 
@@ -296,10 +320,10 @@ class Parser(
     }
 
     private fun checkBinOp(): Boolean {
+        // Don't handle in here, it sucks :(
         return check(TokenKind.BinOp::class)
                 || check(TokenKind.AndAnd)
                 || check(TokenKind.OrOr)
-                || check(TokenKind.Kw(Keyword.In))
                 || check(TokenKind.Gt) || check(TokenKind.Ge)
                 || check(TokenKind.EqEq)
                 || check(TokenKind.Lt) || check(TokenKind.Le)
@@ -308,12 +332,12 @@ class Parser(
     private fun parseBinOp(): Pair<BinOpKind, Int> {
         val kind = when (token.kind) {
             is TokenKind.BinOp -> when (token.kind.binOp.type) {
-                BinOpToken.Plus -> Pair(BinOpKind.Add, 2)
-                BinOpToken.Minus -> Pair(BinOpKind.Sub, 2)
-                BinOpToken.Star -> Pair(BinOpKind.Mul, 3)
-                BinOpToken.Slash -> Pair(BinOpKind.Div, 3)
-                BinOpToken.Percent -> Pair(BinOpKind.Rem, 3)
-                BinOpToken.Caret -> { Pair(BinOpKind.Pow, 4) }
+                BinOpToken.Plus -> Pair(BinOpKind.Add, 4)
+                BinOpToken.Minus -> Pair(BinOpKind.Sub, 4)
+                BinOpToken.Star -> Pair(BinOpKind.Mul, 5)
+                BinOpToken.Slash -> Pair(BinOpKind.Div, 5)
+                BinOpToken.Percent -> Pair(BinOpKind.Rem, 5)
+                BinOpToken.Caret -> { Pair(BinOpKind.Pow, 6) }
             }
 
             TokenKind.AndAnd -> Pair(BinOpKind.And, 1)
@@ -323,7 +347,7 @@ class Parser(
             TokenKind.EqEq -> Pair(BinOpKind.Eq, 2)
             TokenKind.Lt -> Pair(BinOpKind.Lt, 2)
             TokenKind.Le -> Pair(BinOpKind.Le, 2)
-            else -> { error("unreachable") }
+            else -> error("unreachable bin op")
         }
         bump()
         return kind

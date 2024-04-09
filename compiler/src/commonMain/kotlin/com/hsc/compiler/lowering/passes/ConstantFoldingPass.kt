@@ -50,7 +50,11 @@ private class EvaluateConstantEquationsVisitor : BlockAwareVisitor() {
                         BinOpKind.Le -> if (a <= b) 1L else 0L
                         BinOpKind.Ge -> if (a >= b) 1L else 0L
                         BinOpKind.Gt -> if (a > b) 1L else 0L
-                        BinOpKind.In -> { error("unreachable") }
+                        BinOpKind.In -> {
+                            // Ranges should not be simplified
+                            super.visitExpr(expr)
+                            return
+                        }
                     }
                     expr.kind = ExprKind.Lit(
                         Lit.I64(result)
