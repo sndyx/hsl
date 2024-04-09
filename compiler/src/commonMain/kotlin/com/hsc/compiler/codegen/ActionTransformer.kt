@@ -15,12 +15,17 @@ import com.hsc.compiler.span.Span
 class ActionTransformer(internal val sess: CompileSess) {
 
     fun transform(ast: Ast): List<Function> {
-        TODO()
+        return ast.items.filter{
+            it.kind is ItemKind.Fn
+        }.map { item ->
+            val fn = (item.kind as ItemKind.Fn).fn
+
+            Function(item.ident.name, transformBlock(fn.block))
+        }
     }
 
-    fun transformBlock(block: Block): List<Action> {
-        TODO()
-    }
+    fun transformBlock(block: Block): List<Action> =
+        block.stmts.map(::transformStmt)
 
     internal fun strict(span: Span, block: () -> Exception): Nothing {
         if (sess.opts.mode == Mode.Strict) {
@@ -67,7 +72,11 @@ class ActionTransformer(internal val sess: CompileSess) {
     }
 
     internal fun unwrapStatOp(op: BinOpKind): StatOp {
-        TODO()
+        TODO("unwrapStatOp")
     }
+
+    internal fun identString(ident: Ident): String =
+        if (ident.global) "%stat.global/${ident.name}%"
+        else "%stat.player/${ident.name}%"
 
 }

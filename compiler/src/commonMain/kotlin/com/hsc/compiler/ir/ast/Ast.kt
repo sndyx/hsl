@@ -191,6 +191,16 @@ sealed class Lit {
     data object Null : Lit() {
         override fun deepCopy(): Lit = this
     }
+
+    fun str(): String =
+        when (this) {
+            is Lit.Str -> "string"
+            is Lit.I64 -> "integer"
+            is Lit.Item -> "item"
+            is Lit.Bool -> "boolean"
+            is Lit.Null -> "null"
+        }
+
 }
 
 data class ItemStack(

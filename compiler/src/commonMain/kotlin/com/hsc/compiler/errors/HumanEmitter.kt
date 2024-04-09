@@ -20,7 +20,6 @@ class HumanEmitter(
         val (label, color) = style(diagnostic.level)
 
         t.println("${(bold + color)(label)}: ${bold(italicizeBackticks(diagnostic.message))}")
-
         diagnostic.spans.getOrNull(0)?.let { (span, _) ->
             sourceMap.files[span.fid]?.let { file ->
 

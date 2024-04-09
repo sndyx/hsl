@@ -33,12 +33,27 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
             }
         }
     }
-    val list = mutableListOf<Expr>()
-    TODO()
+
+    val dfs = mutableListOf(cond.expr)
+    while (dfs.isNotEmpty()) {
+        val expr = dfs.removeLast()
+        when (val kind = expr.kind) {
+            is ExprKind.Binary -> {
+                if (kind.kind == BinOpKind.And || kind.kind == BinOpKind.Or) {
+                    TODO()
+                }
+            }
+            else -> {
+                throw sess.dcx().err("expected binary expression, found ${kind.str()}", expr.span)
+            }
+        }
+    }
+
+    TODO("transformCond")
 }
 
 private fun ActionTransformer.unwrapCond(expr: Expr): Condition {
-    TODO()
+    TODO("unwrapCond")
 }
 
 // Note: && holds higher precedence than || in parser

@@ -18,7 +18,7 @@ kotlin {
     jvm {
         withJava()
         mainRun {
-            args("build", "C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\external-dependencies")
+            args("build", "C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\simple")
             mainClass.set("com.hsc.mason.MainKt")
         }
     }
@@ -67,6 +67,11 @@ kotlin {
                 implementation("net.peanuuutz.tomlkt:tomlkt:0.3.7")
             }
         }
+        val jvmMain by sourceSets.getting {
+            dependencies {
+                runtimeOnly(project(":compiler"))
+            }
+        }
 
         val posixMain by sourceSets.creating {
             dependsOn(commonMain)
@@ -84,4 +89,5 @@ kotlin {
             dependsOn(posixMain)
         }
     }
+
 }

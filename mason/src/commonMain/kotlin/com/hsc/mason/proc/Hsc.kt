@@ -28,8 +28,6 @@ object Hsc {
             else -> "--force-color"
         }
 
-        println("COLOR: $colorString")
-
         printProcess("hsc ${src.joinToString(" ")} $modeString --force-color --output $out")
     }
 

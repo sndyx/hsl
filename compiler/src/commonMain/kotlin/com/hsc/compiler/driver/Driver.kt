@@ -2,7 +2,7 @@ package com.hsc.compiler.driver
 
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
-import com.hsc.compiler.codegen.AstToActionTransformer
+import com.hsc.compiler.codegen.ActionTransformer
 import com.hsc.compiler.errors.*
 import com.hsc.compiler.ir.ast.Ast
 import com.hsc.compiler.lowering.LoweringCtx
@@ -71,8 +71,8 @@ class Driver(private val opts: CompileOptions) {
             if (success) {
                 // prettyPrintAst(terminal, ast)
 
-                val transformer = AstToActionTransformer(lcx)
-                val functions = transformer.run()
+                val transformer = ActionTransformer(sess)
+                val functions = transformer.transform(ast)
 
                 if (!emitter.emittedError) {
                     val elapsed = Clock.System.now() - startTime

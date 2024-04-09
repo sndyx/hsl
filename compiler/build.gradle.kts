@@ -14,7 +14,9 @@ repositories {
 
 kotlin {
 
-    jvm()
+    jvm {
+        withJava()
+    }
     mingwX64 {
         binaries {
             executable(listOf(NativeBuildType.RELEASE)) {
@@ -59,5 +61,21 @@ kotlin {
             implementation("com.github.ajalt.mordant:mordant:2.4.0")
         }
     }
+
+    tasks.withType<Jar> {
+        doFirst {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            val main by kotlin.jvm().compilations.getting
+            manifest {
+                attributes(
+                    "Main-Class" to "com.hsc.compiler.MainKt",
+                )
+            }
+            from({
+                main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) }
+            })
+        }
+    }
+
 
 }

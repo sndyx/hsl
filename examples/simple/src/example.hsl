@@ -1,3 +1,5 @@
 fn say_hello() {
-    send_message("Hello world!")
+    if (x && y + z && w) {
+        send_message("Hello, world!")
+    }
 }
