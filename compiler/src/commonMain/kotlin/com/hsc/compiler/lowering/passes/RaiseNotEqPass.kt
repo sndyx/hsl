@@ -3,24 +3,26 @@ package com.hsc.compiler.lowering.passes
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
 
-object RemoveParenPass : AstPass {
+object RaiseNotEqPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val functions = ctx.query<Expr>()
         functions.forEach {
-            RemoveParenVisitor.visitExpr(it)
+            RaiseNotEqVisitor.visitExpr(it)
         }
     }
 
 }
 
-private object RemoveParenVisitor : AstVisitor {
+private object RaiseNotEqVisitor : AstVisitor {
 
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
-            is ExprKind.Paren -> {
-                expr.kind = kind.expr.kind
-                expr.span = kind.expr.span
+            is ExprKind.Binary -> {
+                if (kind.kind == BinOpKind.Ne) {
+                    kind.kind = BinOpKind.Eq
+                    expr.kind = ExprKind.Paren(expr)
+                }
             }
             else -> { }
         }

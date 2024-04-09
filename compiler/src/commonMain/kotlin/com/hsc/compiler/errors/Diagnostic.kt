@@ -5,10 +5,10 @@ import com.hsc.compiler.span.Span
 data class Diagnostic(
     private val dcx: DiagCtx,
     val level: Level,
-    val message: String,
+    override val message: String,
     val spans: MutableList<Triple<Span, Boolean, String?>>,
     val notes: MutableList<Pair<Level, String>>,
-) {
+) : RuntimeException() {
 
     fun span(span: Span) {
         spans.add(Triple(span, false, null))

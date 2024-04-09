@@ -59,6 +59,8 @@ data class FnSig(
 
 data class Args(val span: Span, var args: MutableList<Expr>) {
     fun deepCopy(): Args = copy(args = args.toMutableList())
+
+    fun isEmpty() = args.isEmpty()
 }
 
 data class Block(
@@ -134,8 +136,8 @@ sealed class ExprKind  {
     data class Lit(var lit: com.hsc.compiler.ir.ast.Lit) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(lit = lit.deepCopy())
     }
-    data class If(var cond: Expr, var block: com.hsc.compiler.ir.ast.Block, var other: com.hsc.compiler.ir.ast.Block?) : ExprKind() {
-        override fun deepCopy(): ExprKind = copy(cond = cond.deepCopy(), block = block.deepCopy(), other = other?.deepCopy())
+    data class If(var expr: Expr, var block: com.hsc.compiler.ir.ast.Block, var other: com.hsc.compiler.ir.ast.Block?) : ExprKind() {
+        override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy(), block = block.deepCopy(), other = other?.deepCopy())
     }
     data class Match(var expr: Expr, var arms: List<Arm>) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy(), arms = arms.map { it.deepCopy() })

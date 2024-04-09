@@ -1,6 +1,5 @@
 package com.hsc.compiler.pretty
 
-import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
@@ -120,7 +119,7 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
             }
             is ExprKind.If -> {
                 t.print("${blue("if")} ${white("(")}")
-                visitExpr(kind.cond)
+                visitExpr(kind.expr)
                 t.println(white(") {"))
                 visitBlock(kind.block)
                 t.print(white("${i}}"))

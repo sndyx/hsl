@@ -8,7 +8,7 @@ import kotlin.math.pow
  * A pass that evaluates constant equations.
  * Must run before complex expressions are flattened.
  */
-object EvaluateConstantEquationsPass : AstPass {
+object ConstantFoldingPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }

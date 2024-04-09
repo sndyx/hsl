@@ -104,7 +104,7 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
             kind.args.args.forEach(v::visitExpr)
         }
         is ExprKind.If -> {
-            v.visitExpr(kind.cond)
+            v.visitExpr(kind.expr)
             v.visitBlock(kind.block)
             kind.other?.let(v::visitBlock)
         }

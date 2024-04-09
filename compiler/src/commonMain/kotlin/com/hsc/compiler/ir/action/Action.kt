@@ -1,140 +1,148 @@
 package com.hsc.compiler.ir.action
 
 import kotlinx.serialization.*
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 sealed class Action {
 
     @Serializable
-    @SerialName("apply_inventory_layout")
+    @SerialName("APPLY_LAYOUT")
     data class ApplyInventoryLayout(val layout: String) : Action()
     @Serializable
-    @SerialName("apply_potion_effect")
+    @SerialName("POTION_EFFECT")
     data class ApplyPotionEffect(
         val effect: PotionEffect,
         val duration: Int,
-        val amplifier: Int,
-        @SerialName("overrideExistingEffects")
+        val level: Int,
+        @SerialName("override_existing_effects")
         val override: Boolean
     ) : Action()
     @Serializable
-    @SerialName("balance_player_team")
+    @SerialName("BALANCE_TEAM")
     data object BalancePlayerTeam : Action()
     @Serializable
-    @SerialName("cancel_event")
+    @SerialName("CANCEL_EVENT")
     data object CancelEvent : Action()
     @Serializable
-    @SerialName("change_global_stat")
+    @SerialName("CHANGE_GLOBAL_STAT")
     data class ChangeGlobalStat(
-        val name: String,
+        val stat: String,
         @SerialName("mode") val op: StatOp,
-        val value: String
+        val amount: StatValue
     ) : Action()
     @Serializable
-    @SerialName("change_health")
+    @SerialName("SET_HEALTH")
     data class ChangeHealth(
         @SerialName("mode") val op: StatOp,
         @SerialName("health") val value: String
     ) : Action()
     @Serializable
-    @SerialName("change_hunger_level")
+    @SerialName("SET_HUNGER_LEVEL")
     data class ChangeHungerLevel(
         @SerialName("mode") val op: StatOp,
         @SerialName("hunger") val value: String
     ) : Action()
     @Serializable
-    @SerialName("change_max_health")
+    @SerialName("SET_MAX_HEALTH")
     data class ChangeMaxHealth(
         @SerialName("mode") val op: StatOp,
-        @SerialName("health") val value: String,
-        @SerialName("healOnChange") val heal: Boolean
+        @SerialName("max_health") val value: String,
+        @SerialName("heal_on_change") val heal: Boolean
     ) : Action()
     @Serializable
-    @SerialName("change_player_group")
-    data class ChangePlayerGroup(val group: String, val protectDemotion: Boolean) : Action()
+    @SerialName("CHANGE_PLAYER_GROUP")
+    data class ChangePlayerGroup(
+        val group: String,
+        @SerialName("demotion_protection") val protectDemotion: Boolean
+    ) : Action()
     @Serializable
-    @SerialName("change_player_stat")
+    @SerialName("CHANGE_STAT")
     data class ChangePlayerStat(
-        val name: String,
+        val stat: String,
         @SerialName("mode") val op: StatOp,
-        val value: String
+        val amount: StatValue
     ) : Action()
     @Serializable
     @SerialName("change_team_stat")
     data class ChangeTeamStat(
-        val name: String,
+        val stat: String,
         @SerialName("mode") val op: StatOp,
-        val value: String
+        val amount: StatValue,
+        val team: String,
     ) : Action()
     @Serializable
-    @SerialName("clear_all_potion_effects")
+    @SerialName("CLEAR_EFFECTS")
     data object ClearAllPotionEffects : Action()
     @Serializable
-    @SerialName("close_menu")
+    @SerialName("CLOSE_MENU")
     data object CloseMenu : Action()
     @Serializable
-    @SerialName("conditional")
+    @SerialName("CONDITIONAL")
     data class Conditional(
         val conditions: List<Condition>,
-        val matchAnyCondition: Boolean,
-        @SerialName("if") val ifActions: List<Action>,
-        @SerialName("else") val elseActions: List<Action>,
+        @SerialName("match_any_condition") val matchAnyCondition: Boolean,
+        @SerialName("if_actions") val ifActions: List<Action>,
+        @SerialName("else_actions") val elseActions: List<Action>,
     ) : Action()
     @Serializable
-    @SerialName("display_action_bar")
+    @SerialName("ACTION_BAR")
     data class DisplayActionBar(val message: String) : Action()
     @Serializable
-    @SerialName("display_menu")
+    @SerialName("DISPLAY_MENU")
     data class DisplayMenu(val menu: String) : Action()
     @Serializable
-    @SerialName("display_title")
+    @SerialName("TITLE")
     data class DisplayTitle(
         val title: String,
         val subtitle: String,
-        val fadeIn: Int,
+        @SerialName("fade_in") val fadeIn: Int,
         val stay: Int,
-        val fadeOut: Int,
+        @SerialName("fade_out") val fadeOut: Int,
     ) : Action()
     @Serializable
-    @SerialName("enchant_held_item")
+    @SerialName("ENCHANT_HELD_ITEM")
     data class EnchantHeldItem(
         val enchantment: Enchantment,
         val level: Int,
     ) : Action()
     @Serializable
-    @SerialName("exit")
+    @SerialName("EXIT")
     data object Exit : Action()
     @Serializable
-    @SerialName("fail_parkour")
+    @SerialName("BAIL_PARKOUR")
     data class FailParkour(val reason: String) : Action()
     @Serializable
-    @SerialName("full_heal")
+    @SerialName("FULL_HEAL")
     data object FullHeal : Action()
     @Serializable
-    @SerialName("give_experience_levels")
+    @SerialName("GIVE_EXP_LEVELS")
     data class GiveExperienceLevels(val levels: Int) : Action()
     @Serializable
-    @SerialName("give_item")
+    @SerialName("GIVE_ITEM")
     data class GiveItem(
         val item: ItemStack,
-        val allowMultiple: Boolean,
-        val inventorySlot: Int,
-        val replaceExistingItem: Boolean,
+        @SerialName("allow_multiple") val allowMultiple: Boolean,
+        @SerialName("inventory_slot") val inventorySlot: Int,
+        @SerialName("replace_existing_item") val replaceExistingItem: Boolean,
     )
     @Serializable
-    @SerialName("go_to_house_spawn")
+    @SerialName("SPAWN")
     data object GoToHouseSpawn : Action()
     @Serializable
-    @SerialName("kill_player")
+    @SerialName("KILL")
     data object KillPlayer : Action()
     @Serializable
-    @SerialName("parkour_checkpoint")
+    @SerialName("PARKOUR_CHECKPOINT")
     data object ParkourCheckpoint : Action()
     @Serializable
-    @SerialName("pause_execution")
-    data class PauseExecution(val ticks: Int) : Action()
+    @SerialName("PAUSE")
+    data class PauseExecution(@SerialName("ticks_to_wait") val ticks: Int) : Action()
     @Serializable
-    @SerialName("play_sound")
+    @SerialName("PLAY_SOUND")
     data class PlaySound(
         val sound: Sound,
         val volume: Float,
@@ -145,15 +153,15 @@ sealed class Action {
         val coordinates: String?,
     )
     @Serializable
-    @SerialName("random_action")
+    @SerialName("RANDOM_ACTION")
     data class RandomAction(
         val actions: List<Action>,
     )
     @Serializable
-    @SerialName("send_message")
+    @SerialName("SEND_MESSAGE")
     data class SendMessage(val message: String) : Action()
     @Serializable
-    @SerialName("execute_function")
+    @SerialName("TRIGGER_FUNCTION")
     data class ExecuteFunction(val name: String, val global: Boolean) : Action()
 
 }
@@ -181,9 +189,33 @@ enum class Sound {
     @SerialName("meow") Meow;
 }
 enum class StatOp {
-    @SerialName("set") Set,
-    @SerialName("increment") Inc,
-    @SerialName("decrement") Dec,
-    @SerialName("multiply") Mul,
-    @SerialName("divide") Div,
+    @SerialName("SET") Set,
+    @SerialName("INCREMENT") Inc,
+    @SerialName("DECREMENT") Dec,
+    @SerialName("MULTIPLY") Mul,
+    @SerialName("DIVIDE") Div,
+}
+
+@Serializable
+sealed class StatValue {
+    @Serializable(with = StatI64Serializer::class)
+    data class I64(val value: Long) : StatValue()
+    @Serializable(with = StatStrSerializer::class)
+    data class Str(val value: String) : StatValue()
+}
+
+object StatI64Serializer : KSerializer<StatValue.I64> {
+    override val descriptor: SerialDescriptor = Int.serializer().descriptor
+    override fun serialize(encoder: Encoder, value: StatValue.I64) {
+        encoder.encodeLong(value.value)
+    }
+    override fun deserialize(decoder: Decoder): StatValue.I64 { error("Not implemented!") }
+}
+
+object StatStrSerializer : KSerializer<StatValue.Str> {
+    override val descriptor: SerialDescriptor = Int.serializer().descriptor
+    override fun serialize(encoder: Encoder, value: StatValue.Str) {
+        encoder.encodeString(value.value)
+    }
+    override fun deserialize(decoder: Decoder): StatValue.Str { error("Not implemented!") }
 }

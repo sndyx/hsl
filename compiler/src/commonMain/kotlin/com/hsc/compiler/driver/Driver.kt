@@ -90,6 +90,8 @@ class Driver(private val opts: CompileOptions) {
             }
         } catch (e: CompileException) {
             e.diag.emit()
+        } catch (e: Diagnostic) {
+            e.emit()
         } catch (e: Exception) {
             val err = dcx.bug(e)
             err.emit()

@@ -1,11 +1,9 @@
 package com.hsc.compiler.codegen
 
+import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.errors.CompileException
-import com.hsc.compiler.ir.action.Action
-import com.hsc.compiler.ir.action.Comparator
-import com.hsc.compiler.ir.action.Function
-import com.hsc.compiler.ir.action.StatOp
+import com.hsc.compiler.ir.action.*
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
 
@@ -36,7 +34,7 @@ class AstToActionTransformer(private val ctx: LoweringCtx) {
             when (val stmtKind = it.kind) {
                 is StmtKind.Assign -> {
                     val assign = (it.kind as StmtKind.Assign)
-                    val value = expectExprValue(assign.expr)
+                    val value = unwrapStatValue(assign.expr)
                     if (assign.ident.global) {
                         Action.ChangeGlobalStat(assign.ident.name, StatOp.Set, value)
                     } else {
@@ -56,7 +54,7 @@ class AstToActionTransformer(private val ctx: LoweringCtx) {
                             throw CompileException(err)
                         }
                     }
-                    val value = expectExprValue(assign.expr)
+                    val value = unwrapStatValue(assign.expr)
                     if (assign.ident.global) {
                         Action.ChangeGlobalStat(assign.ident.name, op, value)
                     } else {
@@ -79,7 +77,7 @@ class AstToActionTransformer(private val ctx: LoweringCtx) {
                             Action.ExecuteFunction(kind.ident.name, kind.ident.global)
                         }
                         is ExprKind.If -> {
-                            val expr = kind.cond
+                            val expr = kind.expr
                             if (expr.kind is ExprKind.Binary) {
                                 val binary = (expr.kind as ExprKind.Binary)
                                 val comparator = when (binary.kind) {
@@ -146,18 +144,15 @@ class AstToActionTransformer(private val ctx: LoweringCtx) {
         }
     }
 
-    private fun expectExprValue(expr: Expr): String {
+    private fun unwrapStatValue(expr: Expr): StatValue {
         return when (expr.kind) {
             is ExprKind.Lit -> {
                 when (val lit = (expr.kind as ExprKind.Lit).lit) {
                     is Lit.I64 -> {
-                        lit.value.toString()
-                    }
-                    is Lit.Str -> {
-                        lit.value
+                        StatValue.I64(lit.value)
                     }
                     else -> {
-                        val err = ctx.dcx().err("cannot assign non-integer variable in `strict` mode")
+                        val err = ctx.dcx().err("cannot assign to non-integer variable.")
                         err.span(expr.span)
                         throw CompileException(err)
                     }
@@ -165,16 +160,18 @@ class AstToActionTransformer(private val ctx: LoweringCtx) {
             }
             is ExprKind.Var -> {
                 val ident = (expr.kind as ExprKind.Var).ident
-                if (ident.global) {
+                StatValue.Str(if (ident.global) {
                     "%stat.global/${ident.name}%"
                 } else {
                     "%stat.player/${ident.name}%"
-                }
+                })
             }
             else -> {
                 val err = ctx.dcx().err("expected variable")
                 err.span(expr.span)
-                err.note(Level.Error, "cannot use complex expressions in `strict` mode")
+                if (ctx.sess.opts.mode == Mode.Strict) {
+                    err.note(Level.Error, "cannot use complex expressions in `strict` mode")
+                }
                 throw CompileException(err)
             }
         }
