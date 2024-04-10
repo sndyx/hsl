@@ -121,7 +121,7 @@ class Lexer(
             in '0'..'9' -> number(currentChar)
             else -> {
                 if (isIdStart(currentChar)) {
-                    identKwBoolMacro(currentChar)
+                    identKwBoolMacroItem(currentChar)
                 } else {
                     TokenKind.Unknown(currentChar)
                 }
@@ -157,7 +157,7 @@ class Lexer(
     }
 
     // Yes it is absolutely necessary to include all of this functionality in one function. :-)
-    private fun identKwBoolMacro(start: Char): TokenKind {
+    private fun identKwBoolMacroItem(start: Char): TokenKind {
         val startPos = pos
 
         val sb = StringBuilder("$start")
@@ -189,6 +189,33 @@ class Lexer(
             // Can just parse null as 0. On the other hand, booleans should stay bool literals because of
             // later on parsing around built-in functions...
             "null" -> TokenKind.Literal(Lit(LitKind.I64, "0"))
+
+            "item" -> {
+                eatWhile { it.isWhitespace() }
+                if (bump() != '{') {
+                    throw sess.dcx().err("expected {", Span.single(pos, fid))
+                }
+
+                val sb2 = StringBuilder("{")
+                var depth = 1
+
+                var c: Char? = bump()
+                while (c != null) {
+                    if (c == '{') {
+                        depth++
+                    }
+                    else if (c == '}') {
+                        depth--
+                        if (depth == 0) {
+                            sb2.append('}')
+                            break
+                        }
+                    }
+                    sb2.append(c)
+                    c = bump()
+                }
+                TokenKind.Literal(Lit(LitKind.Item, sb2.toString()))
+            }
 
             else -> {
                 val ident = sb.toString()
@@ -225,7 +252,7 @@ class Lexer(
                 if (arg.isEmpty()) {
                     val err = sess.dcx().err("unexpected token") // Best way to describe it I think...
                     err.span(Span.single(pos, fid))
-                    throw CompileException(err)
+                    throw err
                 }
 
                 args.add(arg.toString())

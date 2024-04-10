@@ -1,5 +1,16 @@
+#define ITEM(material, name) `item {
+    "id": $material,
+    "tag": {
+        "display": {
+            "Name": $name
+        }
+    }
+}`
+
 fn say_hello_if_true() {
     if (x in 1..y) {
         send_message("Hello world!")
+        give_item(ITEM("minecraft:stone", "Stone!"), true, 0, true)
     }
+    action_bar("Fuck you!")
 }

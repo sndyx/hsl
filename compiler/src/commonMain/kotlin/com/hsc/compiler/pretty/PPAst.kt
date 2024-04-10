@@ -84,12 +84,10 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
             is ExprKind.Action -> {
-                t.print("${(bold + italic)(kind.name)}${white("(")}")
-                kind.exprs.forEachIndexed { idx, it ->
-                    visitExpr(it)
-                    if (idx != kind.exprs.size - 1) t.print(white(", "))
-                }
-                t.print(white(")"))
+                t.print("${(bold + italic)(kind.action.toString())}${white("(")}")
+            }
+            is ExprKind.Condition -> {
+                t.print("${(bold + italic)(kind.condition.toString())}${white("(")}")
             }
             is ExprKind.Binary -> {
                 t.print(gray("["))

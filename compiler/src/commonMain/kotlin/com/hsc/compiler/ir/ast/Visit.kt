@@ -113,9 +113,6 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
             v.visitExpr(kind.expr)
             kind.arms.forEach(v::visitArm)
         }
-        is ExprKind.Action -> {
-            kind.exprs.forEach(v::visitExpr)
-        }
         is ExprKind.Range -> {
             v.visitExpr(kind.range.lo)
             v.visitExpr(kind.range.hi)
@@ -123,6 +120,7 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
         is ExprKind.Paren -> v.visitExpr(kind.expr)
         is ExprKind.Unary -> v.visitExpr(kind.expr)
         is ExprKind.Var -> v.visitIdent(kind.ident)
+        is ExprKind.Action, is ExprKind.Condition -> { }
     }
 }
 

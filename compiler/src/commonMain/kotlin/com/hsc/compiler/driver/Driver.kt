@@ -13,6 +13,7 @@ import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.*
 import com.hsc.compiler.pretty.prettyPrintActions
 import com.hsc.compiler.pretty.prettyPrintActionsWebview
+import com.hsc.compiler.pretty.prettyPrintAst
 import com.hsc.compiler.span.SourceMap
 import kotlinx.datetime.Clock
 import kotlinx.io.Buffer
@@ -75,7 +76,7 @@ class Driver(private val opts: CompileOptions) {
             success = !emitter.emittedError
 
             if (success) {
-                // prettyPrintAst(terminal, ast)
+                prettyPrintAst(terminal, ast)
 
                 val transformer = ActionTransformer(sess)
                 val functions = transformer.transform(ast)

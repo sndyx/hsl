@@ -84,7 +84,7 @@ sealed class TokenKind {
 
     data class Literal(val lit: Lit) : TokenKind() {
         override fun toString(): String = when (lit.kind) {
-            LitKind.Bool, LitKind.I64, LitKind.F64, LitKind.Null -> lit.value
+            LitKind.Bool, LitKind.I64, LitKind.F64, LitKind.Null, LitKind.Item -> lit.value
             LitKind.Str -> "\"${lit.value}\""
         }
     }
@@ -143,6 +143,7 @@ enum class LitKind {
     I64,
     F64,
     Str,
+    Item,
     Null;
 
     override fun toString(): String {
@@ -151,6 +152,7 @@ enum class LitKind {
             I64 -> "integer"
             F64 -> "float"
             Str -> "string"
+            Item -> "item"
             Null -> "null"
         }
     }

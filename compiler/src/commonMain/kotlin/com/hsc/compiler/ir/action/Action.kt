@@ -6,6 +6,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonObject
 
 @Serializable
 sealed class Action {
@@ -168,7 +169,7 @@ sealed class Action {
         @SerialName("allow_multiple") val allowMultiple: Boolean,
         @SerialName("inventory_slot") val inventorySlot: Int,
         @SerialName("replace_existing_item") val replaceExistingItem: Boolean,
-    )
+    ) : Action()
     @Serializable
     @SerialName("SPAWN")
     data object GoToHouseSpawn : Action()
@@ -187,10 +188,7 @@ sealed class Action {
         val sound: Sound,
         val volume: Float,
         val pitch: Float,
-        // This is a terrible way to handle location but the serialization would be a nightmare otherwise...
-        // users beware!
         val location: Location,
-        val coordinates: String?,
     )
     @Serializable
     @SerialName("RANDOM_ACTION")
@@ -229,8 +227,10 @@ sealed class Action {
     data class SendToLobby(val location: Lobby) : Action()
 }
 
-@Serializable
-class ItemStack : MutableMap<String, Any> by mutableMapOf()
+@Serializable(with = ItemStackSerializer::class)
+data class ItemStack(
+    val nbt: JsonObject,
+)
 
 @Serializable
 data class Location(
@@ -299,6 +299,16 @@ sealed class StatValue {
     data class I64(val value: Long) : StatValue()
     @Serializable(with = StatStrSerializer::class)
     data class Str(val value: String) : StatValue()
+}
+
+object ItemStackSerializer : KSerializer<ItemStack> {
+    override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+
+    override fun deserialize(decoder: Decoder): ItemStack { error("not implemented!") }
+
+    override fun serialize(encoder: Encoder, value: ItemStack) {
+        JsonObject.serializer().serialize(encoder, value.nbt)
+    }
 }
 
 // For the love of god, Kotlin will not choose a fucking polymorphic serializer

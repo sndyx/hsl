@@ -26,7 +26,7 @@ actual fun printProcess(command: String) {
     }
     println(cmd)
     val reader = Runtime.getRuntime()
-        .exec(cmd).inputReader()
+        .exec(cmd).inputStream.bufferedReader()
     var line: String? = ""
     while (reader.readLine().also { line = it } != null) {
         println(line)

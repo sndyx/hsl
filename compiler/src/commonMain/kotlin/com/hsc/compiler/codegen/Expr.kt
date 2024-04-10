@@ -12,6 +12,9 @@ fun ActionTransformer.transformExpr(expr: Expr): Action {
         is ExprKind.Action -> {
             unwrapAction(expr)
         }
+        is ExprKind.Condition -> {
+            throw sess.dcx().err("expected statement, found condition", expr.span)
+        }
         is ExprKind.Binary -> {
             val err = sess.dcx().err("expected statement, found binary expression")
             err.span(expr.span)

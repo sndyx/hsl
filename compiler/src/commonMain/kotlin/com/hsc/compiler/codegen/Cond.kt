@@ -73,12 +73,8 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
                     }
                 }
             }
-            is ExprKind.Action -> {
-                if (!kind.boolean) {
-                    sess.dcx().err("expected boolean", expr.span)
-                } else {
-                    res.add(expr)
-                }
+            is ExprKind.Condition -> {
+                res.add(expr)
             }
             else -> {
                 throw sess.dcx().err("expected binary expression, found ${kind.str()}", expr.span)
@@ -91,14 +87,8 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
 
 private fun ActionTransformer.unwrapCond(cond: Expr): Condition {
     return when (val kind = cond.kind) {
-        is ExprKind.Action -> {
-            when (kind.name) {
-                "is_sneaking" -> {
-                    expectArgs(cond.span, kind.exprs, 0)
-                    Condition.PlayerSneaking
-                }
-                else -> error("unknown built-in action")
-            }
+        is ExprKind.Condition -> {
+            kind.condition
         }
         is ExprKind.Binary -> {
             val comparison = when (kind.kind) {

@@ -1,5 +1,6 @@
 package com.hsc.compiler.ir.ast
 
+import com.hsc.compiler.ir.action.ItemStack
 import com.hsc.compiler.span.Span
 
 
@@ -195,7 +196,7 @@ sealed class Lit {
     }
     
     data class Item(val value: ItemStack) : Lit() {
-        override fun deepCopy(): Lit = copy(value = value.deepCopy())
+        override fun deepCopy(): Lit = copy(value = value.copy())
     }
     
     data object Null : Lit() {
@@ -211,15 +212,6 @@ sealed class Lit {
             is Lit.Null -> "null"
         }
 
-}
-
-data class ItemStack(
-    val material: String,
-    val name: String?,
-    val count: Int?,
-    val lore: List<String>?,
-) {
-    fun deepCopy(): ItemStack = this.copy()
 }
 
 enum class BinOpKind {

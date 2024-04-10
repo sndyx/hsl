@@ -4,9 +4,12 @@ import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.errors.CompileException
+import com.hsc.compiler.ir.action.ItemStack
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
 import com.hsc.compiler.ir.ast.Lit
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
 import kotlin.reflect.KClass
 
 class Parser(
@@ -454,13 +457,14 @@ class Parser(
                     LitKind.I64 -> Lit.I64(parseI64())
                     LitKind.F64 -> Lit.I64(parseFloat())
                     LitKind.Str -> Lit.Str(lit.value).also { bump() }
+                    LitKind.Item -> runCatching {
+                        Lit.Item(
+                            ItemStack(Json.decodeFromString<JsonObject>(lit.value))
+                        )
+                    }.getOrElse {
+                        throw dcx().err("error parsing item JSON: ${it.message}", token.span)
+                    }.also { bump() }
                     LitKind.Null -> Lit.Null
-                }
-            }
-            is TokenKind.Ident -> {
-                if (token.kind.ident.value == "Item") {
-                    bump()
-                    return Lit.Item(parseItemStack())
                 }
             }
             else -> { /* Ignore */ }
@@ -470,85 +474,6 @@ class Parser(
         err.span(token.span)
         err.emit()
         return Lit.I64(0)
-    }
-
-    /**
-     * Parses an item stack
-     */
-    private fun parseItemStack(): ItemStack {
-        val span = prev.span
-
-        expect(TokenKind.OpenDelim(Delimiter.Brace))
-        var material: String? = null
-        var name: String? = null
-        var count: Int? = null
-        var lore: List<String>? = null
-
-        fun duplicateKey(name: String): Nothing {
-            val err = dcx().err("duplicate key '${name}'")
-            err.span(token.span)
-            throw CompileException(err)
-        }
-
-        while (true) {
-            when (token.kind) {
-                is TokenKind.Ident -> {
-                    bump()
-                    val ident = prev.kind.ident.value // Who the FUCK cares if its global
-                    expect(TokenKind.Colon::class)
-                    when (ident) {
-                        "material" -> {
-                            if (material != null) duplicateKey("material")
-                            material = parseString()
-                        }
-                        "name" -> {
-                            if (name != null) duplicateKey("name")
-                            name = parseString()
-                        }
-                        "count" -> {
-                            if (count != null) duplicateKey("count")
-                            count = parseI64().toInt()
-                            if (count > 65 || count < 1) {
-                                count = 1 // I'm a gangster for this one
-                                val err = dcx().err("count must be in range 1..64")
-                                err.span(token.span)
-                                err.emit()
-                            }
-                        }
-                        "lore" -> {
-                            if (lore != null) duplicateKey("lore")
-                            lore = parseDelimited(Delimiter.Bracket) {
-                                parseString()
-                            }.getOrThrow()
-                        }
-                        else -> {
-                            val err = dcx().err("unknown key '${ident}'")
-                            err.span(token.span)
-                            err.note(Level.Hint, "valid keys are: ['material', 'name', 'count', 'lore']")
-                            err.emit()
-                        }
-                    }
-                }
-                is TokenKind.CloseDelim -> {
-                    if (token.kind.closeDelim.type == Delimiter.Brace) {
-                        bump()
-                        break
-                    }
-                    unexpected() // Why could they have put this here guys? Why?
-                }
-                else -> unexpected()
-            }
-        }
-
-        if (material == null) {
-            val err = dcx().err("missing required key 'material'")
-            err.span(span) // Saved `Item` ident span
-            err.note(Level.Hint, "material identifies the item type (eg: minecraft:diamond)")
-            err.emit()
-            material = ""
-        }
-
-        return ItemStack(material, name, count, lore)
     }
 
     private fun parseI64(): Long = parseLiteral(LitKind.I64).runCatching {
