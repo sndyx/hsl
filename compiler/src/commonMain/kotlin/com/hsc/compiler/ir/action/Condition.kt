@@ -27,8 +27,8 @@ sealed class Condition {
 
 enum class Comparison {
     @SerialName("EQUAL") Eq,
-    @SerialName("GT") Gt,
-    @SerialName("GE") Ge,
-    @SerialName("LT") Lt,
-    @SerialName("LE") Le;
+    @SerialName("GREATER_THAN") Gt,
+    @SerialName("GREATER_THAN_OR_EQUAL") Ge,
+    @SerialName("LESS_THAN") Lt,
+    @SerialName("LESS_THAN_OR_EQUAL") Le;
 }

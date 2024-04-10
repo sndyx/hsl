@@ -1,6 +1,7 @@
 package com.hsc.compiler.pretty
 
 fun prettyPrintActionsWebview(functions: List<com.hsc.compiler.ir.action.Function>) {
+    /*
     functions.sortedBy { it.name }.forEachIndexed { idx, it ->
         println("<h2><b><span class=\"kw\">function</span> ${it.name}</b></h2>")
         it.actions.forEach { action ->
@@ -11,4 +12,5 @@ fun prettyPrintActionsWebview(functions: List<com.hsc.compiler.ir.action.Functio
             println("<hr>")
         }
     }
+     */
 }

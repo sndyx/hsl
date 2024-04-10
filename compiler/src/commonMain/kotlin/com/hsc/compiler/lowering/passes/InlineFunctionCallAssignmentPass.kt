@@ -65,7 +65,7 @@ private object InlineFunctionCallAssignmentVisitor : BlockAwareVisitor() {
                 when (val call = assign.expr.kind) {
                     is ExprKind.Call -> {
                         // insert call function before assign and change assign expr kind to var (_return)
-                        val newStmt = Stmt(NodeId.from(currentBlock.id), Span.none, StmtKind.Expr(assign.expr.deepCopy()))
+                        val newStmt = Stmt(Span.none, StmtKind.Expr(assign.expr.deepCopy()))
                         currentBlock.stmts.add(currentPosition, newStmt)
                         functionsUsedAsExpressions.add(Pair(call.ident.name, assign.expr.span))
                         assign.expr.kind = ExprKind.Var(Ident(false, "_return"))
@@ -78,7 +78,7 @@ private object InlineFunctionCallAssignmentVisitor : BlockAwareVisitor() {
                 // TOD0(NT)!!!!: MAKE THIS (NOT) WORK!!!! IT DOES(--)NT(--) FUCKIGN WORK! (HOORAY!!!)
                 when (val call = assign.expr.kind) {
                     is ExprKind.Call -> {
-                        val newStmt = Stmt(NodeId.from(currentBlock.id), Span.none, StmtKind.Expr(assign.expr.copy()))
+                        val newStmt = Stmt(Span.none, StmtKind.Expr(assign.expr.copy()))
                         currentBlock.stmts.add(currentPosition, newStmt)
                         functionsUsedAsExpressions.add(Pair(call.ident.name, assign.expr.span))
                         assign.expr.kind = ExprKind.Var(Ident(false, "_return"))

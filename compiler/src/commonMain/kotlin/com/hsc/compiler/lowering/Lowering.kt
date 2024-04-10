@@ -18,12 +18,14 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineFunctionPass,
         RemoveParenPass,
         ExpandInPass,
+        ExpandMatchPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
         ConstantFoldingPass,
         FlattenComplexExpressionsPass,
         InlineFunctionParametersPass,
         InlineFunctionCallAssignmentPass,
+        InlineBlockPass,
         FlattenTempReassignPass,
         MapCallActionsPass,
         EmptyBlockCheckPass,
@@ -49,15 +51,7 @@ fun lower(ctx: LoweringCtx) {
 class LoweringCtx(val ast: Ast, val sess: CompileSess) {
 
     @PublishedApi
-    internal val cache: Map<ULong, Any>
-    @PublishedApi
     internal val queryCache: MutableMap<KClass<*>, List<Any>> = mutableMapOf()
-
-    init {
-        val visitor = NodeVisitor()
-        visitor.visitAst(ast)
-        cache = visitor.visited
-    }
 
     fun dcx(): DiagCtx = sess.dcx()
 
@@ -72,33 +66,6 @@ class LoweringCtx(val ast: Ast, val sess: CompileSess) {
         queryCache.remove(T::class)
     }
 
-    inline fun <reified T : Any> node(id: NodeId): T = node(id.id)
-    inline fun <reified T : Any> node(id: ULong): T = cache[id] as T
-
-}
-
-class NodeVisitor : AstVisitor {
-    val visited = mutableMapOf<ULong, Any>()
-
-    override fun visitBlock(block: Block) {
-        visited[block.id.id] = block
-        super.visitBlock(block)
-    }
-
-    override fun visitExpr(expr: Expr) {
-        visited[expr.id.id] = expr
-        super.visitExpr(expr)
-    }
-
-    override fun visitItem(item: Item) {
-        visited[item.id.id] = item
-        super.visitItem(item)
-    }
-
-    override fun visitStmt(stmt: Stmt) {
-        visited[stmt.id.id] = stmt
-        super.visitStmt(stmt)
-    }
 }
 
 class QueryVisitor(private val type: KClass<*>) : AstVisitor {

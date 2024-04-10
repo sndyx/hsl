@@ -98,19 +98,17 @@ class Parser(
     }
 
     private fun parseFnItem(processors: Processors? = null): Item {
-        val id = NodeId.from(sess.rootId)
 
         val lo = prev.span.lo
         val ident = parseIdent()
         val sig = parseFnSig()
-        val block = parseBlock(id)
+        val block = parseBlock()
         val hi = prev.span.hi
-        return Item(id, Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block)))
+        return Item(Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block)))
     }
 
-    private fun parseBlock(parent: NodeId): Block {
+    private fun parseBlock(): Block {
         val stmts = mutableListOf<Stmt>()
-        val id = NodeId.from(parent)
         expect(TokenKind.OpenDelim(Delimiter.Brace))
         val startSpan = prev.span
         while (true) {
@@ -121,11 +119,11 @@ class Parser(
                 err.span(startSpan)
                 throw CompileException(err) // No reason to recover this
             } else {
-                stmts.add(parseStmt(id))
+                stmts.add(parseStmt())
             }
         }
         val hi = prev.span.hi
-        return Block(id, Span(startSpan.lo, hi, fid), stmts)
+        return Block(Span(startSpan.lo, hi, fid), stmts)
     }
 
     private fun parseFnSig(): FnSig {
@@ -137,19 +135,18 @@ class Parser(
         return FnSig(Span(lo, hi, fid), args)
     }
 
-    private fun parseStmt(parent: NodeId): Stmt {
-        val id = NodeId.from(parent)
+    private fun parseStmt(): Stmt {
         val lo = token.span.lo
 
         if (eat(TokenKind.Kw(Keyword.For))) {
-            return parseForLoop(id)
+            return parseForLoop()
         } else if (eat(TokenKind.Kw(Keyword.While))) {
-            return parseWhileLoop(id)
+            return parseWhileLoop()
         } else if (check(TokenKind.Ident::class) || check(TokenKind.At::class)) {
             val ident = parseIdent()
             if (eat(TokenKind.Eq::class)) {
-                val expr = parseExpr(id)
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Assign(ident, expr))
+                val expr = parseExpr()
+                return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Assign(ident, expr))
             } else if (eat(TokenKind.BinOpEq::class)) {
                 val kind = when (prev.kind.binOpEq.type) {
                     BinOpToken.Plus -> BinOpKind.Add
@@ -159,80 +156,77 @@ class Parser(
                     BinOpToken.Percent -> BinOpKind.Rem
                     BinOpToken.Caret -> BinOpKind.Pow
                 }
-                val expr = parseExpr(id)
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.AssignOp(kind, ident, expr))
+                val expr = parseExpr()
+                return Stmt(Span(lo, prev.span.hi, fid), StmtKind.AssignOp(kind, ident, expr))
             } else if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
                 val loArgs = token.span.lo
-                val id2 = NodeId.from(id)
                 val exprs = parseDelimited(Delimiter.Parenthesis) {
-                    parseExpr(id2)
+                    parseExpr()
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
 
-                val expr = Expr(id2, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
-                return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
+                val expr = Expr(Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
+                return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
             } else {
-                return Stmt(id, prev.span, StmtKind.Expr(Expr(NodeId.from(id), prev.span, ExprKind.Var(ident))))
+                return Stmt(prev.span, StmtKind.Expr(Expr(prev.span, ExprKind.Var(ident))))
             }
         } else if (eat(TokenKind.Kw(Keyword.Break))) {
-            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Break)
+            return Stmt(Span(lo, token.span.hi, fid), StmtKind.Break)
         } else if (eat(TokenKind.Kw(Keyword.Continue))) {
-            return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Continue)
+            return Stmt(Span(lo, token.span.hi, fid), StmtKind.Continue)
         } else if (eat(TokenKind.Kw(Keyword.Return))) {
             if (check(TokenKind.CloseDelim(Delimiter.Brace))) {
-                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(null))
+                return Stmt(Span(lo, token.span.hi, fid), StmtKind.Ret(null))
             } else {
-                val expr = parseExpr(id)
-                return Stmt(id, Span(lo, token.span.hi, fid), StmtKind.Ret(expr))
+                val expr = parseExpr()
+                return Stmt(Span(lo, token.span.hi, fid), StmtKind.Ret(expr))
             }
         }
-        val expr = parseExpr(id)
-        return Stmt(id, Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
+        val expr = parseExpr()
+        return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
     }
 
-    private fun parseForLoop(parent: NodeId): Stmt {
+    private fun parseForLoop(): Stmt {
         val lo = prev.span.lo
 
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         val ident = parseIdent()
         expect(TokenKind.Kw(Keyword.In))
-        val range = parseRange(parent)
+        val range = parseRange()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-        val block = parseBlock(parent)
+        val block = parseBlock()
         return Stmt(
-            NodeId.from(parent), Span(lo, prev.span.hi, fid),
+            Span(lo, prev.span.hi, fid),
             StmtKind.For(ident, range, block)
         )
     }
 
-    private fun parseWhileLoop(parent: NodeId): Stmt {
+    private fun parseWhileLoop(): Stmt {
         val lo = prev.span.lo
 
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
-        val cond = parseExpr(parent)
+        val cond = parseExpr()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-        val block = parseBlock(parent)
+        val block = parseBlock()
         return Stmt(
-            NodeId.from(parent), Span(lo, prev.span.hi, fid),
+            Span(lo, prev.span.hi, fid),
             StmtKind.While(cond, block)
         )
     }
 
-    private fun parseExpr(parent: NodeId): Expr {
-        val expr = parseExpr0(parent)
+    private fun parseExpr(): Expr {
+        val expr = parseExpr0()
         if (eat(TokenKind.Kw(Keyword.In))) {
-            val other = parseExpr(parent)
+            val other = parseExpr()
             return Expr(
-                NodeId.from(parent),
                 Span(expr.span.lo, other.span.hi, fid),
                 ExprKind.Binary(BinOpKind.In, expr, other)
             )
         }
         if (eat(TokenKind.DotDot)) {
-            val other = parseExpr0(parent) // We should stop chained ranges, probably
+            val other = parseExpr0() // We should stop chained ranges, probably
             val range = Range(expr, other)
             return Expr(
-                NodeId.from(parent),
                 Span(expr.span.lo, other.span.hi, fid),
                 ExprKind.Range(range)
             )
@@ -241,9 +235,9 @@ class Parser(
         }
     }
 
-    private fun parseExpr0(parent: NodeId, canBeRange: Boolean = true): Expr {
+    private fun parseExpr0(canBeRange: Boolean = true): Expr {
         // Simple shunting-yard impl
-        val exprStack = mutableListOf(parseExpr00(parent))
+        val exprStack = mutableListOf(parseExpr00())
         val opStack = mutableListOf<Pair<BinOpKind, Int>>()
 
         fun popStack() {
@@ -251,7 +245,6 @@ class Parser(
             val expr2 = exprStack.removeLast()
             val expr1 = exprStack.removeLast()
             val newExpr = Expr(
-                NodeId.from(parent),
                 Span(expr1.span.lo, expr2.span.hi, fid),
                 ExprKind.Binary(kind, expr1, expr2)
             )
@@ -263,7 +256,7 @@ class Parser(
             while ((opStack.lastOrNull()?.second ?: -1) >= op.second) {
                 popStack()
             }
-            exprStack.add(parseExpr00(parent))
+            exprStack.add(parseExpr00())
             opStack.add(op)
         }
         while (opStack.isNotEmpty()) {
@@ -274,48 +267,47 @@ class Parser(
     }
 
     // parseExpr000 when
-    private fun parseExpr00(parent: NodeId): Expr {
-        val id = NodeId.from(parent)
+    private fun parseExpr00(): Expr {
         val lo = token.span.lo
 
         if (eat(TokenKind.BinOp(BinOpToken.Minus))) {
-            val expr = parseExpr(id)
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Neg, expr))
+            val expr = parseExpr()
+            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Neg, expr))
         }
         if (check(TokenKind.Ident::class)) { // We are trolling with this one :-)
             if (token.kind.ident.value == "Item") {
                 val lit = parseLiteral()
-                return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
+                return Expr(Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
             }
         } else if (check(TokenKind.Literal::class)) {
             val lit = parseLiteral()
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
+            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
         }
         if (check(TokenKind.At::class) || check(TokenKind.Ident::class)) {
             val ident = parseIdent()
             return if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
                 val loArgs = token.span.lo
                 val exprs = parseDelimited(Delimiter.Parenthesis) {
-                    parseExpr(id)
+                    parseExpr()
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
 
-                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
+                Expr(Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
             } else {
-                Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Var(ident))
+                Expr(Span(lo, prev.span.hi, fid), ExprKind.Var(ident))
             }
         }
         else if (eat(TokenKind.Kw(Keyword.If))) {
-            return parseIf(id)
+            return parseIf()
         } else if (eat(TokenKind.Kw(Keyword.Match))) {
-            return parseMatch(id)
+            return parseMatch()
         } else if (check(TokenKind.OpenDelim(Delimiter.Brace))) {
-            val block = parseBlock(id)
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Block(block))
+            val block = parseBlock()
+            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Block(block))
         } else if (eat(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
-            val expr = parseExpr(id)
+            val expr = parseExpr()
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-            return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Paren(expr))
+            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Paren(expr))
         }
         val err = dcx().err("expected expression")
         err.span(token.span)
@@ -356,13 +348,13 @@ class Parser(
         return kind
     }
 
-    private fun parseIf(id: NodeId): Expr {
+    private fun parseIf(): Expr {
         val lo = prev.span.lo
         var cond: Expr? = null
         runCatching {
             expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         }.onSuccess {
-            cond = parseExpr(id)
+            cond = parseExpr()
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
         }.onFailure { e ->
             if (e !is CompileException) throw e
@@ -376,46 +368,46 @@ class Parser(
             e.diag.emit()
             // Recover
         }
-        val block = parseBlock(id)
+        val block = parseBlock()
         val other = if (eat(TokenKind.Kw(Keyword.Else))) {
-            parseBlock(id)
+            parseBlock()
         } else null
-        return Expr(id, Span(lo, prev.span.hi, fid),
-            ExprKind.If(cond ?: Expr(id, Span(0, 0, 0), ExprKind.Lit(Lit.I64(0))), block, other)
+        return Expr(Span(lo, prev.span.hi, fid),
+            ExprKind.If(cond ?: Expr(Span(0, 0, 0), ExprKind.Lit(Lit.I64(0))), block, other)
         )
     }
 
-    private fun parseMatch(id: NodeId): Expr {
+    private fun parseMatch(): Expr {
         val lo = prev.span.lo
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
-        val expr = parseExpr(id)
+        val expr = parseExpr()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
         val arms = parseDelimited(Delimiter.Brace) {
-            parseMatchArm(id)
+            parseMatchArm()
         }.getOrThrow()
-        return Expr(id, Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
+        return Expr(Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
     }
 
-    private fun parseMatchArm(id: NodeId): Arm {
+    private fun parseMatchArm(): Arm {
         val exprs = mutableListOf<Expr>()
         while (true) {
-            exprs.add(parseExpr(id))
+            exprs.add(parseExpr())
             if (!eat(TokenKind.Comma::class)) {
                 expect(TokenKind.FatArrow)
                 break
             }
             if (eat(TokenKind.FatArrow::class)) break
         }
-        val expr = parseExpr(id)
+        val expr = parseExpr()
         return Arm(exprs, expr)
     }
 
-    private fun parseRange(id: NodeId): Range {
+    private fun parseRange(): Range {
         val start = token.span.lo
         try {
-            val lo = parseExpr(id)
+            val lo = parseExpr()
             expect(TokenKind.DotDot)
-            val hi = parseExpr(id)
+            val hi = parseExpr()
             return Range(lo, hi)
         } catch (e: CompileException) {
             // Ignore integer limit errors. We are only interested in transforming vague parse errors

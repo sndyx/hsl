@@ -6,10 +6,9 @@ import com.hsc.compiler.span.Span
 
 data class Ast(
     val items: MutableList<Item>,
-    val id: NodeId,
 ) {
 
-    constructor() : this(mutableListOf(), NodeId(0uL, 0uL))
+    constructor() : this(mutableListOf())
 
 }
 
@@ -19,7 +18,6 @@ data class Ident(
 )
 
 data class Item(
-    val id: NodeId,
     val span: Span,
     val ident: Ident,
     val kind: ItemKind,
@@ -65,7 +63,6 @@ data class Args(val span: Span, var args: MutableList<Expr>) {
 }
 
 data class Block(
-    val id: NodeId,
     val span: Span,
     var stmts: MutableList<Stmt>,
 ) {
@@ -73,7 +70,6 @@ data class Block(
 }
 
 data class Stmt(
-    val id: NodeId,
     val span: Span,
     var kind: StmtKind,
 ) {
@@ -109,7 +105,6 @@ sealed class StmtKind {
 }
 
 data class Expr(
-    val id: NodeId,
     var span: Span,
     var kind: ExprKind,
 ) {

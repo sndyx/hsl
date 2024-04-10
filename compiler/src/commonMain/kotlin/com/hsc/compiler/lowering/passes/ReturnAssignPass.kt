@@ -18,9 +18,12 @@ object ReturnAssignPass : AstPass {
 private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     var flagNextStmt = false
+    var depth = 0
 
     override fun visitBlock(block: Block) {
+        depth++
         super.visitBlock(block)
+        depth--
         flagNextStmt = false
     }
 
@@ -33,23 +36,20 @@ private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
         }
         when (val kind = stmt.kind) {
             is StmtKind.Ret -> {
-                val blockOwner = ctx.node<Any>(currentBlock.id.ownerId)
-
                 // change _return to return value
                 if (kind.expr != null) {
                     val assign = StmtKind.Assign(Ident(false, "_return"), kind.expr!!)
                     stmt.kind = assign // I believe this is fine?
                     currentBlock.stmts = currentBlock.stmts.take(currentPosition + 1).toMutableList()
                 }
-                if (blockOwner !is Item) {
+                if (depth > 1) {
                     // We are inside a conditional body, I think?
                     val exit = StmtKind.Expr(Expr(
-                        NodeId.from(currentBlock.id),
                         Span.none,
                         ExprKind.Call(Ident(false, "exit"), Args(Span.none, mutableListOf()))
                     ))
                     currentBlock.stmts = currentBlock.stmts.take(currentPosition + 1).toMutableList()
-                    currentBlock.stmts.add(Stmt(NodeId.from(currentBlock.id), Span.none, exit))
+                    currentBlock.stmts.add(Stmt(Span.none, exit))
                 }
 
                 flagNextStmt = true

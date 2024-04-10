@@ -31,8 +31,8 @@ private class ExpandInVisitor(val ctx: LoweringCtx) : AstVisitor {
                         }
                     }
 
-                    val lower = Expr(expr.id, expr.span, ExprKind.Binary(BinOpKind.Ge, kind.a.deepCopy(), range.lo))
-                    val higher = Expr(expr.id, expr.span, ExprKind.Binary(BinOpKind.Le, kind.a.deepCopy(), range.hi))
+                    val lower = Expr(expr.span, ExprKind.Binary(BinOpKind.Ge, kind.a.deepCopy(), range.lo))
+                    val higher = Expr(expr.span, ExprKind.Binary(BinOpKind.Le, kind.a.deepCopy(), range.hi))
                     expr.kind = ExprKind.Binary(BinOpKind.And, lower, higher)
                 }
             }

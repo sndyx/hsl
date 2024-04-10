@@ -80,7 +80,7 @@ class Driver(private val opts: CompileOptions) {
 
                 val transformer = ActionTransformer(sess)
                 val functions = transformer.transform(ast)
-                // prettyPrintActions(functions)
+                prettyPrintActions(terminal, functions)
 
                 if (!emitter.emittedError) {
                     val elapsed = Clock.System.now() - startTime

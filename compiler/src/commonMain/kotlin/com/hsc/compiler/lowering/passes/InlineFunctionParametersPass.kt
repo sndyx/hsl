@@ -77,11 +77,7 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
                     }
 
                     val stmts = fn.sig.args.mapIndexed { idx, ident ->
-                        val id = NodeId.from(currentBlock.id)
-                        Stmt(
-                            id, Span.none,
-                            StmtKind.Assign(ident, kind.args.args[idx])
-                        )
+                        Stmt(Span.none, StmtKind.Assign(ident, kind.args.args[idx]))
                     }
                     currentBlock.stmts.addAll(currentPosition, stmts)
                     added(stmts.size)

@@ -3,7 +3,9 @@ package com.hsc.compiler.pretty
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
+import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.ast.*
+import kotlinx.serialization.internal.throwMissingFieldException
 
 fun prettyPrintAst(t: Terminal, ast: Ast) {
     val visitor = PrettyPrintVisitor(t)
@@ -47,9 +49,10 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 t.println()
             }
             is StmtKind.Expr -> {
-                t.print(i)
+                val isInstr = kind.expr.kind is ExprKind.Action || kind.expr.kind is ExprKind.Condition
+                if (!isInstr) t.print(i)
                 visitExpr(kind.expr)
-                t.println()
+                if (!isInstr) t.println()
             }
             is StmtKind.Assign -> {
                 t.print("${i}${kind.ident.str} ${white("=")} ")
@@ -84,10 +87,10 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
             is ExprKind.Action -> {
-                t.print("${(bold + italic)(kind.action.toString())}${white("(")}")
+                prettyPrintAction(t, kind.action, indent)
             }
             is ExprKind.Condition -> {
-                t.print("${(bold + italic)(kind.condition.toString())}${white("(")}")
+                prettyPrintCondition(t, kind.condition, indent)
             }
             is ExprKind.Binary -> {
                 t.print(gray("["))

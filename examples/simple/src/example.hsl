@@ -7,10 +7,16 @@
     }
 }`
 
-fn say_hello_if_true() {
-    if (x in 1..y) {
-        send_message("Hello world!")
-        give_item(ITEM("minecraft:stone", "Stone!"), true, 0, true)
+fn test() {
+    match (level) {
+        1, 2, 3 => {
+            send_message("Keep going!")
+        },
+        4, 5 => {
+            send_message("Almost there!")
+        },
+        6 => {
+            send_message("Final stage!")
+        }
     }
-    action_bar("Fuck you!")
 }

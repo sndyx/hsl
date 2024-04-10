@@ -21,19 +21,17 @@ object CleanupTempVarsPass : AstPass {
             }
         }
 
-        val fnId = NodeId.from(0uL)
-        val block = Block(NodeId.from(fnId), Span.none, mutableListOf())
+        val block = Block(Span.none, mutableListOf())
 
         cleanUp.forEach {
-            val id = NodeId.from(block.id)
-            val stmt = Stmt(id, Span.none, StmtKind.Assign(
-                it, Expr(NodeId.from(id), Span.none, ExprKind.Lit(Lit.I64(0)))
+            val stmt = Stmt(Span.none, StmtKind.Assign(
+                it, Expr(Span.none, ExprKind.Lit(Lit.I64(0)))
             ))
             block.stmts.add(stmt)
         }
 
         val fn = Fn(null, FnSig(Span.none, emptyList()), block)
-        val item = Item(fnId, Span.none, Ident(false, "cleanup"), ItemKind.Fn(fn))
+        val item = Item(Span.none, Ident(false, "cleanup"), ItemKind.Fn(fn))
 
         ctx.ast.items.add(item)
         ctx.clearQuery<Item>() // Remove cached queries as we have inserted a new element
