@@ -1,22 +1,6 @@
-#define ITEM(material, name) `item {
-    "id": $material,
-    "tag": {
-        "display": {
-            "Name": $name
-        }
-    }
-}`
-
 fn test() {
-    match (level) {
-        1, 2, 3 => {
-            send_message("Keep going!")
-        },
-        4, 5 => {
-            send_message("Almost there!")
-        },
-        6 => {
-            send_message("Final stage!")
-        }
+    x = {
+        _temp0 = _temp0 * (_temp0 * y * 4)
+        _temp0 * 4
     }
 }

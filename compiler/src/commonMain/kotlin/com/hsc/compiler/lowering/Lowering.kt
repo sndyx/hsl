@@ -44,7 +44,8 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
         it.run(ctx)
-        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        //println(it::class.simpleName)
+        //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 

@@ -168,7 +168,8 @@ class Parser(
                 val expr = Expr(Span(lo, prev.span.hi, fid), ExprKind.Call(ident, Args(Span(loArgs, hiArgs, fid), exprs)))
                 return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
             } else {
-                return Stmt(prev.span, StmtKind.Expr(Expr(prev.span, ExprKind.Var(ident))))
+                val wholeExpr = parseExpr(Expr(prev.span, ExprKind.Var(ident)))
+                return Stmt(wholeExpr.span, StmtKind.Expr(wholeExpr))
             }
         } else if (eat(TokenKind.Kw(Keyword.Break))) {
             return Stmt(Span(lo, token.span.hi, fid), StmtKind.Break)
@@ -214,8 +215,8 @@ class Parser(
         )
     }
 
-    private fun parseExpr(): Expr {
-        val expr = parseExpr0()
+    private fun parseExpr(lookahead: Expr? = null): Expr {
+        val expr = parseExpr0(lookahead)
         if (eat(TokenKind.Kw(Keyword.In))) {
             val other = parseExpr()
             return Expr(
@@ -235,9 +236,9 @@ class Parser(
         }
     }
 
-    private fun parseExpr0(canBeRange: Boolean = true): Expr {
+    private fun parseExpr0(lookahead: Expr? = null): Expr {
         // Simple shunting-yard impl
-        val exprStack = mutableListOf(parseExpr00())
+        val exprStack = mutableListOf(lookahead ?: parseExpr00())
         val opStack = mutableListOf<Pair<BinOpKind, Int>>()
 
         fun popStack() {
@@ -382,9 +383,16 @@ class Parser(
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         val expr = parseExpr()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-        val arms = parseDelimited(Delimiter.Brace) {
-            parseMatchArm()
-        }.getOrThrow()
+        expect(TokenKind.OpenDelim(Delimiter.Brace))
+        val arms = buildList {
+            while (true) {
+                if (token.kind == TokenKind.CloseDelim(Delimiter.Brace)) {
+                    bump()
+                    break
+                }
+                add(parseMatchArm())
+            }
+        }
         return Expr(Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
     }
 

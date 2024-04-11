@@ -338,7 +338,7 @@ object StatI64Serializer : KSerializer<StatValue.I64> {
 }
 
 object StatStrSerializer : KSerializer<StatValue.Str> {
-    override val descriptor: SerialDescriptor = Int.serializer().descriptor
+    override val descriptor: SerialDescriptor = String.serializer().descriptor
     override fun serialize(encoder: Encoder, value: StatValue.Str) {
         encoder.encodeString(value.value)
     }

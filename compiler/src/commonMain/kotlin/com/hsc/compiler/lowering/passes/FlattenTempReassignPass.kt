@@ -43,17 +43,21 @@ private object FlattenTempReassignVisitor : BlockAwareVisitor() {
     override fun visitStmt(stmt: Stmt) {
         when (val kind = stmt.kind) {
             is StmtKind.Assign -> {
-                if (prevTempAssign != null) {
-                    when (val exprKind = kind.expr.kind) {
-                        is ExprKind.Var -> {
-                            if (exprKind.ident == prevIdent) {
-                                kind.expr = prevTempAssign!!
-                                currentBlock.stmts.removeAt(currentPosition - 1)
-                                added(-1)
-                            }
+                when (val exprKind = kind.expr.kind) {
+                    is ExprKind.Var -> {
+                        if (exprKind.ident == prevIdent) {
+                            kind.expr = prevTempAssign!!
+                            currentBlock.stmts.removeAt(currentPosition - 1)
+                            added(-1)
+                        } else if (exprKind.ident == kind.ident) {
+                            currentBlock.stmts.removeAt(currentPosition)
+                            added(-1)
+                            super.visitStmt(stmt)
+                            return
                         }
-                        else -> { }
                     }
+
+                    else -> {}
                 }
 
                 if (kind.ident.name.startsWith("_")) {
@@ -72,6 +76,7 @@ private object FlattenTempReassignVisitor : BlockAwareVisitor() {
                     added(-1)
                 }
                 prevTempAssign = null
+                prevIdent = null
             }
         }
         super.visitStmt(stmt)

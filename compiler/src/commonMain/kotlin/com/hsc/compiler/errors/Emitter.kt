@@ -4,6 +4,7 @@ import kotlin.time.Duration
 
 abstract class Emitter {
 
+    var pass: String = "none"
     var emittedError = false
 
     fun emit(diagnostic: Diagnostic) {
