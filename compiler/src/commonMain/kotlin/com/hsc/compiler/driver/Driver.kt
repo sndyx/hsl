@@ -47,8 +47,6 @@ class Driver(private val opts: CompileOptions) {
 
         var success = false
         try {
-            val value = StatValue.Str("hello!")
-            val test = Condition.PlayerStatRequirement("hello", Comparison.Le, value)
             val sess = CompileSess(dcx, opts, sourceMap)
             val ast = Ast()
 

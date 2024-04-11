@@ -58,40 +58,48 @@ object InlineFunctionCallAssignmentPass : AstPass {
 private object InlineFunctionCallAssignmentVisitor : BlockAwareVisitor() {
 
     val functionsUsedAsExpressions = mutableListOf<Pair<String, Span>>()
+    var inlined = 0
 
     override fun visitStmt(stmt: Stmt) {
-        when (val assign = stmt.kind) {
-            is StmtKind.Assign -> {
-                when (val call = assign.expr.kind) {
-                    is ExprKind.Call -> {
-                        // insert call function before assign and change assign expr kind to var (_return)
-                        val newStmt = Stmt(Span.none, StmtKind.Expr(assign.expr.deepCopy()))
-                        currentBlock.stmts.add(currentPosition, newStmt)
-                        functionsUsedAsExpressions.add(Pair(call.ident.name, assign.expr.span))
-                        assign.expr.kind = ExprKind.Var(Ident(false, "_return"))
-                        added(1)
-                    }
-                    else -> { }
-                }
-            }
-            is StmtKind.AssignOp -> {
-                // TOD0(NT)!!!!: MAKE THIS (NOT) WORK!!!! IT DOES(--)NT(--) FUCKIGN WORK! (HOORAY!!!)
-                when (val call = assign.expr.kind) {
-                    is ExprKind.Call -> {
-                        val newStmt = Stmt(Span.none, StmtKind.Expr(assign.expr.copy()))
-                        currentBlock.stmts.add(currentPosition, newStmt)
-                        functionsUsedAsExpressions.add(Pair(call.ident.name, assign.expr.span))
-                        assign.expr.kind = ExprKind.Var(Ident(false, "_return"))
+        inlined = 0
+        super.visitStmt(stmt)
+    }
 
-                        println(currentBlock)
-                        added(1)
+    override fun visitExpr(expr: Expr) {
+        when (val kind = expr.kind) {
+            is ExprKind.Call -> {
+                val stmt = currentBlock.stmts[currentPosition]
+                when (val stmtKind = stmt.kind) {
+                    is StmtKind.Expr -> {
+                        if (stmtKind.expr == expr) {
+                            super.visitExpr(expr)
+                            return
+                        }
                     }
-                    else -> { }
+                    else -> {}
                 }
+                val offset = if (inlined < 2) inlined
+                else (inlined - 1) * 2 + 1
+
+                val newStmt = Stmt(expr.span, StmtKind.Expr(expr.deepCopy()))
+                currentBlock.stmts.add(currentPosition - offset, newStmt)
+                val returnKind = ExprKind.Var(Ident(false, "_return"))
+                if (inlined == 0) {
+                    functionsUsedAsExpressions.add(Pair(kind.ident.name, expr.span))
+                    expr.kind = returnKind
+                    added(1)
+                } else {
+                    val ident = Ident(false, "_temp${inlined - 1}")
+                    val newStmt2 = Stmt(expr.span, StmtKind.Assign(ident, Expr(expr.span, returnKind)))
+                    currentBlock.stmts.add(currentPosition - offset + 1, newStmt2)
+                    expr.kind = ExprKind.Var(ident)
+                    added(2)
+                }
+                inlined++
             }
-            else -> { }
+            else -> {}
         }
-        super.visitStmt(stmt) // Always do t
+        super.visitExpr(expr)
     }
 
 }

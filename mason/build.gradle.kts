@@ -18,7 +18,7 @@ kotlin {
     jvm {
         withJava()
         mainRun {
-            args("build", "C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\simple")
+            args("build", "../examples/simple")
             mainClass.set("com.hsc.mason.MainKt")
         }
     }

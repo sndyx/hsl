@@ -1,65 +1,65 @@
 package com.hsc.compiler.lowering
 
+import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
-import kotlinx.serialization.json.Json
+import com.hsc.compiler.span.Span
 
-val limits by lazy {
-    Json.decodeFromString<Map<String, Int>>(
-        """
-            {
-              "apply_inventory_layout": 5,
-              "apply_potion_effect": 22,
-              "balance_player_team": 1,
-              "change_global_stat": 10,
-              "change_health": 5,
-              "change_player_group": 1,
-              "change_player_stat": 10,
-              "change_team_stat": 10,
-              "clear_all_potion_effects": 5,
-              "close_menu": 1,
-              "conditional": 15,
-              "display_action_bar": 5,
-              "display_menu": 10,
-              "display_title": 5,
-              "enchant_held_item": 23,
-              "fail_parkour": 1,
-              "full_heal": 5,
-              "give_experience_levels": 5,
-              "give_item": 20,
-              "go_to_house_spawn": 1,
-              "kill_player": 1,
-              "parkour_checkpoint": 1,
-              "play_sound": 25,
-              "pause_execution": 30,
-              "random_action": 5,
-              "remove_item": 20,
-              "reset_inventory": 1,
-              "send_a_chat_message": 20,
-              "send_to_lobby": 1,
-              "set_compass_target": 5,
-              "set_gamemode": 1,
-              "set_hunger_level": 5,
-              "set_max_health": 5,
-              "set_player_team": 1,
-              "teleport_player": 5,
-              "trigger_function": 10,
-              "use_remove_held_item": 1
-            }
-        """.trimIndent()
-    )
-}
+val limits = mapOf(
+    "APPLY_LAYOUT" to 5,
+    "POTION_EFFECT" to 22,
+    "BALANCE_PLAYER_TEAM" to 1,
+    "CANCEL_EVENT" to 1, // guess
+    "CHANGE_GLOBAL_STAT" to 10,
+    "CHANGE_HEALTH" to 5,
+    "CHANGE_HUNGER_LEVEL" to 5,
+    "CHANGE_MAX_HEALTH" to 5,
+    "CHANGE_PLAYER_GROUP" to 1,
+    "CHANGE_STAT" to 10,
+    "CHANGE_TEAM_STAT" to 10,
+    "CLEAR_EFFECTS" to 5,
+    "CLOSE_MENU" to 1,
+    "CONDITIONAL" to 15,
+    "ACTION_BAR" to 5,
+    "DISPLAY_MENU" to 10,
+    "TITLE" to 5,
+    "ENCHANT_HELD_ITEM" to 23, // wtf
+    "EXIT" to 1, // guess
+    "FAIL_PARKOUR" to 1,
+    "FULL_HEAL" to 5,
+    "GIVE_EXP_LEVELS" to 5,
+    "GIVE_ITEM" to 20,
+    "SPAWN" to 1,
+    "KILL" to 1,
+    "PARKOUR_CHECKPOINT" to 1,
+    "PAUSE" to 30,
+    "PLAY_SOUND" to 25,
+    "RANDOM_ACTION" to 5,
+    "SEND_MESSAGE" to 20,
+    "TRIGGER_FUNCTION" to 10,
+    "RESET_INVENTORY" to 1,
+    "REMOVE_ITEM" to 20,
+    "SET_PLAYER_TEAM" to 1,
+    "USE_HELD_ITEM" to 20,
+    "SET_GAMEMODE" to 1,
+    "SET_COMPASS_TARGET" to 5,
+    "TELEPORT_PLAYER" to 5,
+    "SEND_TO_LOBBY" to 1,
+)
 
 fun stmtActionKind(stmt: Stmt): String {
     return when (val kind = stmt.kind) {
+        is StmtKind.Action -> {
+            kind.action.actionName
+        }
         is StmtKind.Assign -> {
-            if (kind.ident.global) "change_global_stat"
-            else "change_player_stat"
+            if (kind.ident.global) "CHANGE_GLOBAL_STAT"
+            else "CHANGE_STAT"
         }
         is StmtKind.AssignOp -> {
-            if (kind.ident.global) "change_global_stat"
-            else "change_player_stat"
+            if (kind.ident.global) "CHANGE_GLOBAL_STAT"
+            else "CHANGE_STAT"
         }
         StmtKind.Break -> ""
         StmtKind.Continue -> ""
@@ -79,4 +79,18 @@ fun limits(block: Block): Map<String, Int> {
     return limits.map { (name, value) ->
         name to (value - actions.count { it == name })
     }.toMap()
+}
+
+fun checkLimits(block: Block): Pair<String, Span>? {
+    val map = limits.toMutableMap()
+
+    for (stmt in block.stmts) {
+        val kind = stmtActionKind(stmt)
+        map[kind] = (map[kind] ?: Int.MAX_VALUE) - 1
+        if (map[kind] == -1) {
+            return Pair(kind, stmt.span)
+        }
+    }
+
+    return null
 }

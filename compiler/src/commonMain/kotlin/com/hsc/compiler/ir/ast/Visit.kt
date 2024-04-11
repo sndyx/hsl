@@ -120,12 +120,13 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
         is ExprKind.Paren -> v.visitExpr(kind.expr)
         is ExprKind.Unary -> v.visitExpr(kind.expr)
         is ExprKind.Var -> v.visitIdent(kind.ident)
-        is ExprKind.Action, is ExprKind.Condition -> { }
+        is ExprKind.Condition -> {}
     }
 }
 
 fun walkStmt(v: AstVisitor, stmt: Stmt) {
     when (val kind = stmt.kind) {
+        is StmtKind.Action -> {}
         is StmtKind.Assign -> {
             v.visitIdent(kind.ident)
             v.visitExpr(kind.expr)

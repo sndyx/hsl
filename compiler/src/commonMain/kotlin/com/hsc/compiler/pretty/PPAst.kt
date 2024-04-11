@@ -40,6 +40,9 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
 
     override fun visitStmt(stmt: Stmt) {
         when (val kind = stmt.kind) {
+            is StmtKind.Action -> {
+                prettyPrintAction(t, kind.action, indent)
+            }
             is StmtKind.Ret -> {
                 t.print("${i}${blue("return")}")
                 kind.expr?.let {
@@ -49,7 +52,7 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 t.println()
             }
             is StmtKind.Expr -> {
-                val isInstr = kind.expr.kind is ExprKind.Action || kind.expr.kind is ExprKind.Condition
+                val isInstr = kind.expr.kind is ExprKind.Condition
                 if (!isInstr) t.print(i)
                 visitExpr(kind.expr)
                 if (!isInstr) t.println()
@@ -86,9 +89,6 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
 
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
-            is ExprKind.Action -> {
-                prettyPrintAction(t, kind.action, indent)
-            }
             is ExprKind.Condition -> {
                 prettyPrintCondition(t, kind.condition, indent)
             }

@@ -1,6 +1,6 @@
+#define HELLO(world) "Hello, " + $world + "!"
+
 fn test() {
-    x = {
-        _temp0 = _temp0 * (_temp0 * y * 4)
-        _temp0 * 4
-    }
+    send_message(HELLO("neighbor") + " Today I am feeling great!")
+    send_message(HELLO("world") + " It's a good day outside!")
 }

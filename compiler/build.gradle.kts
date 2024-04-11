@@ -59,6 +59,7 @@ kotlin {
             implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.3.2")
             implementation("com.github.ajalt.clikt:clikt:4.2.2")
             implementation("com.github.ajalt.mordant:mordant:2.4.0")
+            implementation("com.github.ajalt.mordant:mordant-coroutines:2.4.0")
         }
     }
 

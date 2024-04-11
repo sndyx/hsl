@@ -1,13 +1,10 @@
 package com.hsc.compiler.lowering
 
-import com.github.ajalt.mordant.rendering.AnsiLevel
-import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.passes.*
-import com.hsc.compiler.pretty.prettyPrintAst
 import kotlin.reflect.KClass
 
 private val passes: Map<Mode, List<AstPass>> = mapOf(
@@ -24,10 +21,10 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         ConstantFoldingPass,
         FlattenComplexExpressionsPass,
         InlineFunctionParametersPass,
+        MapCallActionsPass, // Before call assignment, or will become valid expression
         InlineFunctionCallAssignmentPass,
         InlineBlockPass,
         FlattenTempReassignPass,
-        MapCallActionsPass,
         EmptyBlockCheckPass,
         // CleanupTempVarsPass,
         LimitCheckPass,
@@ -44,6 +41,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
         it.run(ctx)
+
         //println(it::class.simpleName)
         //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }

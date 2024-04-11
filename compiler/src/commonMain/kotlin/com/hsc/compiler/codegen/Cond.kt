@@ -3,9 +3,8 @@ package com.hsc.compiler.codegen
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Comparison
 import com.hsc.compiler.ir.action.Condition
-import com.hsc.compiler.ir.ast.BinOpKind
-import com.hsc.compiler.ir.ast.Expr
-import com.hsc.compiler.ir.ast.ExprKind
+import com.hsc.compiler.ir.action.StatValue
+import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
 
 /**
@@ -22,11 +21,12 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
                 BinOpKind.Or -> false
                 else -> {
                     // single condition, unwrap and return
-                    val single = unwrapCond(cond.expr)
+                    val single = unwrapCond(cond.expr)!! // binary expression is safe to assert
                     return Action.Conditional(listOf(single), false, block, other)
                 }
             }
         }
+        is ExprKind.Var, is ExprKind.Lit -> true
         else -> {
             // This should almost certainly never happen unless in `strict` mode.
             // But on the off chance it does, here's a bug that creates a bug!
@@ -73,7 +73,7 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
                     }
                 }
             }
-            is ExprKind.Condition -> {
+            is ExprKind.Condition, is ExprKind.Var, is ExprKind.Lit -> {
                 res.add(expr)
             }
             else -> {
@@ -82,10 +82,10 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
         }
     }
 
-    return Action.Conditional(res.map(this::unwrapCond), !and, block, other)
+    return Action.Conditional(res.mapNotNull(this::unwrapCond), !and, block, other)
 }
 
-private fun ActionTransformer.unwrapCond(cond: Expr): Condition {
+private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
     return when (val kind = cond.kind) {
         is ExprKind.Condition -> {
             kind.condition
@@ -115,8 +115,29 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition {
             }
         }
         is ExprKind.Lit -> {
-            // This is dumb! 0L / 1L
-            TODO("handle this bullshit, or don't, I don't care")
+            when (val lit = kind.lit) {
+                is Lit.Bool -> {
+                    if (!lit.value) Condition.PlayerStatRequirement("@nothing", Comparison.Eq, StatValue.I64(1))
+                    else null
+                }
+                is Lit.I64 -> {
+                    when (lit.value) {
+                        0L -> Condition.PlayerStatRequirement("@nothing", Comparison.Eq, StatValue.I64(0))
+                        1L -> null
+                        else -> throw sess.dcx().err("expected condition, found literal", cond.span)
+                    }
+                }
+                else -> {
+                    throw sess.dcx().err("expected condition, found literal", cond.span)
+                }
+            }
+        }
+        is ExprKind.Var -> {
+            if (kind.ident.global) {
+                Condition.GlobalStatRequirement(kind.ident.name, Comparison.Eq, StatValue.I64(1))
+            } else {
+                Condition.PlayerStatRequirement(kind.ident.name, Comparison.Eq, StatValue.I64(1))
+            }
         }
         else -> {
             throw sess.dcx().bug("unexpected conditional", cond.span)

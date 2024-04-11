@@ -61,11 +61,11 @@ private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
                 when (kind.kind) {
                     BinOpKind.Add, BinOpKind.Sub, BinOpKind.Mul, BinOpKind.Div, BinOpKind.Rem -> {
                         val assignTemp = Stmt(
-                            Span.none,
+                            kind.a.span,
                             StmtKind.Assign(cident ?: Ident(false, "_temp$passes"), kind.a)
                         )
                         val assignOp = Stmt(
-                            Span.none,
+                            kind.b.span,
                             StmtKind.AssignOp(kind.kind, cident ?: Ident(false, "_temp$passes"), kind.b)
                         )
                         currentBlock.stmts.add(currentPosition, assignTemp)

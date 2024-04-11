@@ -1,20 +1,19 @@
 package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.lowering.limits
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.ir.ast.BlockAwareVisitor
-import com.hsc.compiler.ir.ast.Item
-import com.hsc.compiler.ir.ast.ItemKind
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.checkLimits
+import com.hsc.compiler.span.Span
 
 object LimitCheckPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
+        val functions = ctx.query<Block>()
         functions.forEach {
-            LimitCheckVisitor(ctx).visitItem(it)
+            LimitCheckVisitor(ctx).visitBlock(it)
         }
     }
 
@@ -23,16 +22,17 @@ object LimitCheckPass : AstPass {
 private class LimitCheckVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     override fun visitBlock(block: Block) {
-        val action = limits(block).entries.find { it.value < 0 }?.key
-        if (action != null) {
-            val err = ctx.dcx().err("action limit surpassed: `$action`")
+        val (action, span) = checkLimits(block) ?: return
+        val err = ctx.dcx().err("action limit surpassed: `${action.lowercase()}`")
+        if (span == Span.none) {
             err.spanLabel(block.span, "in this scope")
-            if (ctx.sess.opts.mode != Mode.Strict) {
-                err.note(Level.Error, "could not optimize out actions")
-            }
-            err.emit()
+        } else {
+            err.spanLabel(span, "with this statement")
         }
-        super.visitBlock(block)
+        if (ctx.sess.opts.mode != Mode.Strict) {
+            err.note(Level.Error, "could not optimize out actions")
+        }
+        err.emit()
     }
 
 }

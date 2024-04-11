@@ -78,6 +78,11 @@ data class Stmt(
 
 sealed class StmtKind {
     abstract fun deepCopy(): StmtKind
+
+    data class Action(val action: com.hsc.compiler.ir.action.Action) : StmtKind() {
+        override fun deepCopy(): StmtKind = copy()
+    }
+
     data class For(var label: Ident, var range: Range, var block: Block) : StmtKind() {
         override fun deepCopy(): StmtKind = copy(range = range.deepCopy(), block = block.deepCopy())
     }
@@ -143,10 +148,6 @@ sealed class ExprKind  {
     data class Paren(var expr: Expr) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy())
     }
-    // Inline actions and conditions
-    data class Action(val action: com.hsc.compiler.ir.action.Action) : ExprKind() {
-        override fun deepCopy(): ExprKind = copy()
-    }
 
     data class Condition(val condition: com.hsc.compiler.ir.action.Condition) : ExprKind() {
         override fun deepCopy(): ExprKind = copy()
@@ -154,7 +155,6 @@ sealed class ExprKind  {
 
     fun str(): String =
         when (this) {
-            is Action -> "action"
             is Condition -> "condition"
             is Var -> "var"
             is Call -> "function call"
@@ -200,24 +200,25 @@ sealed class Lit {
 
     fun str(): String =
         when (this) {
-            is Lit.Str -> "string"
-            is Lit.I64 -> "integer"
-            is Lit.Item -> "item"
-            is Lit.Bool -> "boolean"
-            is Lit.Null -> "null"
+            is Str -> "string"
+            is I64 -> "integer"
+            is Item -> "item"
+            is Bool -> "boolean"
+            is Null -> "null"
         }
 
 }
 
-enum class BinOpKind {
-    Add, Sub,
-    Mul, Div,
-    Pow, Rem,
-    And, Or,
-    Eq, Ne,
-    Lt, Le,
-    Ge, Gt,
-    In;
+enum class BinOpKind(val value: String) {
+    Add("+"), Sub("-"),
+    Mul("*"), Div("/"),
+    Pow("^"), Rem("%"),
+    And("&&"), Or("||"),
+    Eq("=="), Ne("!="),
+    Lt("<"), Le("<="),
+    Ge(">="), Gt(">"),
+    In("in");
+    override fun toString(): String = value
 }
 
 enum class UnaryOpKind {

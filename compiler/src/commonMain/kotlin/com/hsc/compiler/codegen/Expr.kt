@@ -9,9 +9,6 @@ import com.hsc.compiler.ir.ast.Ident
 
 fun ActionTransformer.transformExpr(expr: Expr): Action {
     return when (val kind = expr.kind) {
-        is ExprKind.Action -> {
-            unwrapAction(expr)
-        }
         is ExprKind.Condition -> {
             throw sess.dcx().err("expected statement, found condition", expr.span)
         }

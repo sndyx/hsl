@@ -10,6 +10,9 @@ import com.hsc.compiler.ir.ast.StmtKind
 
 fun ActionTransformer.transformStmt(stmt: Stmt): Action {
     return when (val kind = stmt.kind) {
+        is StmtKind.Action -> {
+            unwrapAction(stmt)
+        }
         is StmtKind.Assign -> {
             val value = unwrapStatValue(kind.expr)
             makeAssign(kind.ident, null, value)

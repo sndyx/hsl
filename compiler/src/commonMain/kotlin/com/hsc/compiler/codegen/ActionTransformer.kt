@@ -48,6 +48,9 @@ class ActionTransformer(internal val sess: CompileSess) {
                 is Lit.Str -> {
                     StatValue.Str(lit.value)
                 }
+                is Lit.Bool -> {
+                    StatValue.I64(if (lit.value) 1 else 0)
+                }
                 else -> {
                     throw sess.dcx().err("expected integer or placeholder")
                 }

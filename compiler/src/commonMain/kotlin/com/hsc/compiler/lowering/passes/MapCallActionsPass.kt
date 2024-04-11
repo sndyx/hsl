@@ -7,13 +7,13 @@ import com.hsc.compiler.lowering.LoweringCtx
 object MapCallActionsPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        ctx.query<Expr>()
-            .forEach { MapCallActionsVisitor(ctx).visitExpr(it) }
+        ctx.query<Block>()
+            .forEach { MapCallActionsVisitor(ctx).visitBlock(it) }
     }
 
 }
 
-private class MapCallActionsVisitor(val ctx: LoweringCtx) : AstVisitor {
+private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     lateinit var p: ArgParser
 
@@ -55,9 +55,18 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : AstVisitor {
                     "send_to_lobby" -> parseSendToLobby()
                     else -> null
                 }
-                if (action != null) expr.kind = ExprKind.Action(action)
+                if (action != null) {
+                    // Ensure this statement is used correctly
+                    val stmt = currentBlock.stmts[currentPosition]
+                    if (stmt.kind is StmtKind.Expr && (stmt.kind as StmtKind.Expr).expr == expr) {
+                        stmt.kind = StmtKind.Action(action)
+                    } else {
+                        ctx.dcx().err("expected expression, found statement", expr.span).emit()
+                    }
+                }
             }
-            else -> {} // Don't walk, we have already cached Exprs
+
+            else -> {}
         }
     }
 

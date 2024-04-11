@@ -9,7 +9,9 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-sealed class Action {
+sealed class Action(
+    @Transient val actionName: String = ""
+) {
 
     companion object {
         val builtins = setOf(
@@ -52,7 +54,7 @@ sealed class Action {
 
     @Serializable
     @SerialName("APPLY_LAYOUT")
-    data class ApplyInventoryLayout(val layout: String) : Action()
+    data class ApplyInventoryLayout(val layout: String) : Action("APPLY_LAYOUT")
     @Serializable
     @SerialName("POTION_EFFECT")
     data class ApplyPotionEffect(
@@ -61,52 +63,52 @@ sealed class Action {
         val level: Int,
         @SerialName("override_existing_effects")
         val override: Boolean
-    ) : Action()
+    ) : Action("POTION_EFFECT")
     @Serializable
     @SerialName("BALANCE_PLAYER_TEAM")
-    data object BalancePlayerTeam : Action()
+    data object BalancePlayerTeam : Action("BALANCE_PLAYER_TEAM")
     @Serializable
     @SerialName("CANCEL_EVENT")
-    data object CancelEvent : Action()
+    data object CancelEvent : Action("CANCEL_EVENT")
     @Serializable
     @SerialName("CHANGE_GLOBAL_STAT")
     data class ChangeGlobalStat(
         val stat: String,
         @SerialName("mode") val op: StatOp,
         val amount: StatValue
-    ) : Action()
+    ) : Action("CHANGE_GLOBAL_STAT")
     @Serializable
     @SerialName("CHANGE_HEALTH")
     data class ChangeHealth(
         @SerialName("mode") val op: StatOp,
         @SerialName("health") val value: String
-    ) : Action()
+    ) : Action("CHANGE_HEALTH")
     @Serializable
     @SerialName("CHANGE_HUNGER_LEVEL")
     data class ChangeHungerLevel(
         @SerialName("mode") val op: StatOp,
         @SerialName("hunger") val value: String
-    ) : Action()
+    ) : Action("CHANGE_HUNGER_LEVEL")
     @Serializable
     @SerialName("CHANGE_MAX_HEALTH")
     data class ChangeMaxHealth(
         @SerialName("mode") val op: StatOp,
         @SerialName("max_health") val value: String,
         @SerialName("heal_on_change") val heal: Boolean
-    ) : Action()
+    ) : Action("CHANGE_MAX_HEALTH")
     @Serializable
     @SerialName("CHANGE_PLAYER_GROUP")
     data class ChangePlayerGroup(
         val group: String,
         @SerialName("demotion_protection") val protectDemotion: Boolean
-    ) : Action()
+    ) : Action("CHANGE_PLAYER_GROUP")
     @Serializable
     @SerialName("CHANGE_STAT")
     data class ChangePlayerStat(
         val stat: String,
         @SerialName("mode") val op: StatOp,
         val amount: StatValue
-    ) : Action()
+    ) : Action("CHANGE_STAT")
     @Serializable
     @SerialName("CHANGE_TEAM_STAT")
     data class ChangeTeamStat(
@@ -114,13 +116,13 @@ sealed class Action {
         @SerialName("mode") val op: StatOp,
         val amount: StatValue,
         val team: String,
-    ) : Action()
+    ) : Action("CHANGE_TEAM_STAT")
     @Serializable
     @SerialName("CLEAR_EFFECTS")
-    data object ClearAllPotionEffects : Action()
+    data object ClearAllPotionEffects : Action("CLEAR_EFFECTS")
     @Serializable
     @SerialName("CLOSE_MENU")
-    data object CloseMenu : Action()
+    data object CloseMenu : Action("CLOSE_MENU")
     @Serializable
     @SerialName("CONDITIONAL")
     data class Conditional(
@@ -128,13 +130,13 @@ sealed class Action {
         @SerialName("match_any_condition") val matchAnyCondition: Boolean,
         @SerialName("if_actions") val ifActions: List<Action>,
         @SerialName("else_actions") val elseActions: List<Action>,
-    ) : Action()
+    ) : Action("CONDITIONAL")
     @Serializable
     @SerialName("ACTION_BAR")
-    data class DisplayActionBar(val message: String) : Action()
+    data class DisplayActionBar(val message: String) : Action("ACTION_BAR")
     @Serializable
     @SerialName("DISPLAY_MENU")
-    data class DisplayMenu(val menu: String) : Action()
+    data class DisplayMenu(val menu: String) : Action("DISPLAY_MENU")
     @Serializable
     @SerialName("TITLE")
     data class DisplayTitle(
@@ -143,25 +145,25 @@ sealed class Action {
         @SerialName("fade_in") val fadeIn: Int,
         val stay: Int,
         @SerialName("fade_out") val fadeOut: Int,
-    ) : Action()
+    ) : Action("TITLE")
     @Serializable
     @SerialName("ENCHANT_HELD_ITEM")
     data class EnchantHeldItem(
         val enchantment: Enchantment,
         val level: Int,
-    ) : Action()
+    ) : Action("ENCHANT_HELD_ITEM")
     @Serializable
     @SerialName("EXIT")
-    data object Exit : Action()
+    data object Exit : Action("EXIT")
     @Serializable
     @SerialName("FAIL_PARKOUR")
-    data class FailParkour(val reason: String) : Action()
+    data class FailParkour(val reason: String) : Action("FAIL_PARKOUR")
     @Serializable
     @SerialName("FULL_HEAL")
-    data object FullHeal : Action()
+    data object FullHeal : Action("FULL_HEAL")
     @Serializable
     @SerialName("GIVE_EXP_LEVELS")
-    data class GiveExperienceLevels(val levels: Int) : Action()
+    data class GiveExperienceLevels(val levels: Int) : Action("GIVE_EXP_LEVELS")
     @Serializable
     @SerialName("GIVE_ITEM")
     data class GiveItem(
@@ -169,19 +171,19 @@ sealed class Action {
         @SerialName("allow_multiple") val allowMultiple: Boolean,
         @SerialName("inventory_slot") val inventorySlot: Int,
         @SerialName("replace_existing_item") val replaceExistingItem: Boolean,
-    ) : Action()
+    ) : Action("GIVE_ITEM")
     @Serializable
     @SerialName("SPAWN")
-    data object GoToHouseSpawn : Action()
+    data object GoToHouseSpawn : Action("SPAWN")
     @Serializable
     @SerialName("KILL")
-    data object KillPlayer : Action()
+    data object KillPlayer : Action("KILL")
     @Serializable
     @SerialName("PARKOUR_CHECKPOINT")
-    data object ParkourCheckpoint : Action()
+    data object ParkourCheckpoint : Action("PARKOUR_CHECKPOINT")
     @Serializable
     @SerialName("PAUSE")
-    data class PauseExecution(@SerialName("ticks_to_wait") val ticks: Int) : Action()
+    data class PauseExecution(@SerialName("ticks_to_wait") val ticks: Int) : Action("PAUSE")
     @Serializable
     @SerialName("PLAY_SOUND")
     data class PlaySound(
@@ -189,42 +191,43 @@ sealed class Action {
         val volume: Float,
         val pitch: Float,
         val location: Location,
-    )
+    ) : Action("PLAY_SOUND")
     @Serializable
     @SerialName("RANDOM_ACTION")
     data class RandomAction(
         val actions: List<Action>,
-    )
+    ) : Action("RANDOM_ACTION")
     @Serializable
     @SerialName("SEND_MESSAGE")
-    data class SendMessage(val message: String) : Action()
+    data class SendMessage(val message: String) : Action("SEND_MESSAGE")
     @Serializable
     @SerialName("TRIGGER_FUNCTION")
-    data class ExecuteFunction(val name: String, val global: Boolean) : Action()
+    data class ExecuteFunction(val name: String, val global: Boolean) : Action("TRIGGER_FUNCTION")
     @Serializable
     @SerialName("RESET_INVENTORY")
-    data object ResetInventory : Action()
+    data object ResetInventory : Action("RESET_INVENTORY")
     @Serializable
     @SerialName("REMOVE_ITEM")
-    data class RemoveItem(val item: ItemStack) : Action()
+    data class RemoveItem(val item: ItemStack) : Action("REMOVE_ITEM")
     @Serializable
     @SerialName("SET_PLAYER_TEAM")
-    data class SetPlayerTeam(val team: String) : Action()
+    data class SetPlayerTeam(val team: String) : Action("SET_PLAYER_TEAM")
     @Serializable
     @SerialName("USE_HELD_ITEM")
-    data object UseHeldItem : Action()
+    data object UseHeldItem : Action("USE_HELD_ITEM")
     @Serializable
     @SerialName("SET_GAMEMODE")
-    data class SetGameMode(val gamemode: GameMode) : Action()
+    data class SetGameMode(val gamemode: GameMode) : Action("SET_GAMEMODE")
     @Serializable
     @SerialName("SET_COMPASS_TARGET")
-    data class SetCompassTarget(val location: Location) : Action()
+    data class SetCompassTarget(val location: Location) : Action("SET_COMPASS_TARGET")
     @Serializable
     @SerialName("TELEPORT_PLAYER")
-    data class TeleportPlayer(val location: Location) : Action()
+    data class TeleportPlayer(val location: Location) : Action("TELEPORT_PLAYER")
     @Serializable
     @SerialName("SEND_TO_LOBBY")
-    data class SendToLobby(val location: Lobby) : Action()
+    data class SendToLobby(val location: Lobby) : Action("SEND_TO_LOBBY")
+
 }
 
 @Serializable(with = ItemStackSerializer::class)
