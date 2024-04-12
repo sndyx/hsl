@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package com.hsc.compiler.parse
 
 import com.hsc.compiler.driver.CompileSess
@@ -13,20 +15,20 @@ import kotlinx.serialization.json.JsonObject
 import kotlin.reflect.KClass
 
 class Parser(
-    private val stream: TokenStream,
-    private val sess: CompileSess,
+    val stream: TokenStream,
+    val sess: CompileSess,
 ) {
 
-    private var token: Token = Token.dummy()
-    private var prev: Token = Token.dummy()
-    private var fid: Int = 0
+    var token: Token = Token.dummy()
+    var prev: Token = Token.dummy()
+    var fid: Int = 0
 
     init {
         bump()
         fid = token.span.fid // Fid of first token
     }
 
-    private fun dcx(): DiagCtx = sess.dcx()
+    fun dcx(): DiagCtx = sess.dcx()
 
     fun parseCompletely(ast: Ast) {
         var item: Item? = null
@@ -35,7 +37,7 @@ class Parser(
         }
     }
 
-    private fun parseItem(): Item? {
+    fun parseItem(): Item? {
         return if (check(TokenKind.Eof::class)) {
             null
         } else if (eat(TokenKind.Kw(Keyword.Fn))) {
@@ -47,7 +49,7 @@ class Parser(
         }
     }
 
-    private fun parseProcessorFnItem(): Item {
+    fun parseProcessorFnItem(): Item {
         val lo = prev.span.lo
         val processors = if (check(TokenKind.OpenDelim(Delimiter.Bracket))) {
             parseDelimited(Delimiter.Bracket) {
@@ -71,7 +73,7 @@ class Parser(
         }
     }
 
-    private fun tryRecoverInvalidItem(): Item {
+    fun tryRecoverInvalidItem(): Item {
         if (token.kind is TokenKind.Ident) {
             val value = token.kind.ident.value
             val err = dcx().err("expected item, found ident")
@@ -97,7 +99,7 @@ class Parser(
         throw CompileException(err)
     }
 
-    private fun parseFnItem(processors: Processors? = null): Item {
+    fun parseFnItem(processors: Processors? = null): Item {
 
         val lo = prev.span.lo
         val ident = parseIdent()
@@ -107,7 +109,7 @@ class Parser(
         return Item(Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block)))
     }
 
-    private fun parseBlock(): Block {
+    fun parseBlock(): Block {
         val stmts = mutableListOf<Stmt>()
         expect(TokenKind.OpenDelim(Delimiter.Brace))
         val startSpan = prev.span
@@ -126,7 +128,7 @@ class Parser(
         return Block(Span(startSpan.lo, hi, fid), stmts)
     }
 
-    private fun parseFnSig(): FnSig {
+    fun parseFnSig(): FnSig {
         val lo = token.span.lo
         val args = parseDelimited(Delimiter.Parenthesis) {
             parseIdent()
@@ -135,7 +137,7 @@ class Parser(
         return FnSig(Span(lo, hi, fid), args)
     }
 
-    private fun parseStmt(): Stmt {
+    fun parseStmt(): Stmt {
         val lo = token.span.lo
 
         if (eat(TokenKind.Kw(Keyword.For))) {
@@ -187,7 +189,7 @@ class Parser(
         return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
     }
 
-    private fun parseForLoop(): Stmt {
+    fun parseForLoop(): Stmt {
         val lo = prev.span.lo
 
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
@@ -202,7 +204,7 @@ class Parser(
         )
     }
 
-    private fun parseWhileLoop(): Stmt {
+    fun parseWhileLoop(): Stmt {
         val lo = prev.span.lo
 
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
@@ -215,7 +217,7 @@ class Parser(
         )
     }
 
-    private fun parseExpr(lookahead: Expr? = null): Expr {
+    fun parseExpr(lookahead: Expr? = null): Expr {
         val expr = parseExpr0(lookahead)
         if (eat(TokenKind.Kw(Keyword.In))) {
             val other = parseExpr()
@@ -315,7 +317,7 @@ class Parser(
         throw CompileException(err)
     }
 
-    private fun checkBinOp(): Boolean {
+    fun checkBinOp(): Boolean {
         // Don't handle in here, it sucks :(
         return check(TokenKind.BinOp::class)
                 || check(TokenKind.AndAnd)
@@ -325,7 +327,7 @@ class Parser(
                 || check(TokenKind.Lt) || check(TokenKind.Le)
     }
 
-    private fun parseBinOp(): Pair<BinOpKind, Int> {
+    fun parseBinOp(): Pair<BinOpKind, Int> {
         val kind = when (token.kind) {
             is TokenKind.BinOp -> when (token.kind.binOp.type) {
                 BinOpToken.Plus -> Pair(BinOpKind.Add, 4)
@@ -349,7 +351,7 @@ class Parser(
         return kind
     }
 
-    private fun parseIf(): Expr {
+    fun parseIf(): Expr {
         val lo = prev.span.lo
         var cond: Expr? = null
         runCatching {
@@ -369,16 +371,26 @@ class Parser(
             e.diag.emit()
             // Recover
         }
-        val block = parseBlock()
-        val other = if (eat(TokenKind.Kw(Keyword.Else))) {
+        val block = if (check(TokenKind.OpenDelim(Delimiter.Brace))) {
             parseBlock()
+        } else { // single stmt body
+            val stmt = parseStmt()
+            Block(stmt.span, mutableListOf(stmt))
+        }
+        val other = if (eat(TokenKind.Kw(Keyword.Else))) {
+            if (check(TokenKind.OpenDelim(Delimiter.Brace))) {
+                parseBlock()
+            } else {
+                val stmt = parseStmt()
+                Block(stmt.span, mutableListOf(stmt))
+            }
         } else null
         return Expr(Span(lo, prev.span.hi, fid),
             ExprKind.If(cond ?: Expr(Span(0, 0, 0), ExprKind.Lit(Lit.I64(0))), block, other)
         )
     }
 
-    private fun parseMatch(): Expr {
+    fun parseMatch(): Expr {
         val lo = prev.span.lo
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         val expr = parseExpr()
@@ -396,7 +408,7 @@ class Parser(
         return Expr(Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
     }
 
-    private fun parseMatchArm(): Arm {
+    fun parseMatchArm(): Arm {
         val exprs = mutableListOf<Expr>()
         while (true) {
             exprs.add(parseExpr())
@@ -410,7 +422,7 @@ class Parser(
         return Arm(exprs, expr)
     }
 
-    private fun parseRange(): Range {
+    fun parseRange(): Range {
         val start = token.span.lo
         try {
             val lo = parseExpr()
@@ -440,14 +452,14 @@ class Parser(
         }
     }
 
-    private fun parseIdent(): Ident {
+    fun parseIdent(): Ident {
         val global = eat(TokenKind.At::class)
         expect(TokenKind.Ident::class)
         val name = prev.kind.ident.value
         return Ident(global, name)
     }
 
-    private fun parseLiteral(): Lit {
+    fun parseLiteral(): Lit {
         when (token.kind) {
             is TokenKind.Literal -> {
                 val lit = token.kind.literal.lit
@@ -476,7 +488,7 @@ class Parser(
         return Lit.I64(0)
     }
 
-    private fun parseI64(): Long = parseLiteral(LitKind.I64).runCatching {
+    fun parseI64(): Long = parseLiteral(LitKind.I64).runCatching {
         toLong()
     }.getOrElse {
         val err = dcx().err("invalid integer")
@@ -484,18 +496,18 @@ class Parser(
             "below 64-bit integer limit"
         } else "above 64-bit integer limit"
         err.spanLabel(prev.span, hint)
-        throw CompileException(err)
+        throw err
     }
-    private fun parseFloat(): Long = parseLiteral(LitKind.F64).runCatching {
+    fun parseFloat(): Long = parseLiteral(LitKind.F64).runCatching {
         replace(".", "").toLong()
     }.getOrElse {
         val err = dcx().err("invalid float")
         err.span(prev.span)
-        throw CompileException(err)
+        throw err
     } // We do some trolling... this now parses an int :-)
-    private fun parseString(): String = parseLiteral(LitKind.Str)
+    fun parseString(): String = parseLiteral(LitKind.Str)
 
-    private fun <T> parseDelimited(delimiter: Delimiter, producer: () -> T): Result<List<T>> {
+    fun <T> parseDelimited(delimiter: Delimiter, producer: () -> T): Result<List<T>> {
         expect(TokenKind.OpenDelim(delimiter))
         val list = mutableListOf<T>()
         while (true) {
@@ -519,7 +531,7 @@ class Parser(
         return Result.success(list)
     }
 
-    private fun parseLiteral(kind: LitKind): String {
+    fun parseLiteral(kind: LitKind): String {
         // Muh muh parse literal muh muh
         // mfw when i stumble back here looking for the bump call again:
         // https://www.youtube.com/watch?v=lmbJP1yObZc
@@ -538,7 +550,7 @@ class Parser(
         throw CompileException(err)
     }
 
-    private fun unexpected(): Nothing {
+    fun unexpected(): Nothing {
         val err = dcx().err("unexpected token ${token.kind}")
         err.span(token.span)
         throw CompileException(err)
@@ -547,7 +559,7 @@ class Parser(
     /**
      * Raises an error if the current token doesn't match a given [kind].
      */
-    private fun <T : TokenKind> assert(kind: KClass<T>) {
+    fun <T : TokenKind> assert(kind: KClass<T>) {
         if (!kind.isInstance(token.kind)) {
             val err = dcx().err("expected ${kind.name}, found ${token.kind}")
             err.span(token.span)
@@ -558,7 +570,7 @@ class Parser(
     /**
      * Raises an error if the current token doesn't match a given [kind].
      */
-    private fun assert(kind: TokenKind) {
+    fun assert(kind: TokenKind) {
         if (token.kind != kind) {
             val err = dcx().err("expected ${kind}, found ${token.kind}")
             err.span(token.span)
@@ -569,18 +581,18 @@ class Parser(
     /**
      * Checks if the current token matches [kind].
      */
-    private fun <T : TokenKind> check(kind: KClass<T>): Boolean =
+    fun <T : TokenKind> check(kind: KClass<T>): Boolean =
         kind.isInstance(token.kind)
 
     /**
      * Checks if the current token matches [kind].
      */
-    private fun check(kind: TokenKind): Boolean = token.kind == kind
+    fun check(kind: TokenKind): Boolean = token.kind == kind
 
     /**
      * Eats a token and raises an error if it doesn't match a given [kind].
      */
-    private fun <T : TokenKind> expect(kind: KClass<T>) {
+    fun <T : TokenKind> expect(kind: KClass<T>) {
         if (!kind.isInstance(token.kind)) {
             val err = dcx().err("expected ${kind.name}, found ${token.kind}")
             err.spanLabel(token.span, "unexpected token")
@@ -592,7 +604,7 @@ class Parser(
     /**
      * Eats a token and raises an error if it doesn't match a given [kind].
      */
-    private fun expect(kind: TokenKind) {
+    fun expect(kind: TokenKind) {
         if (token.kind != kind) {
             val err = dcx().err("expected ${kind}, found ${token.kind}")
             err.spanLabel(token.span, "unexpected token")
@@ -601,14 +613,14 @@ class Parser(
         bump()
     }
 
-    private fun <T : TokenKind> eatUntil(kind: KClass<T>, consumer: (Token) -> Unit = {}) {
+    fun <T : TokenKind> eatUntil(kind: KClass<T>, consumer: (Token) -> Unit = {}) {
         while (!kind.isInstance(token.kind) && token.kind != TokenKind.Eof) {
             consumer(token)
             bump()
         }
     }
 
-    private fun eatUntil(kind: TokenKind, consumer: (Token) -> Unit = {}) {
+    fun eatUntil(kind: TokenKind, consumer: (Token) -> Unit = {}) {
         while (token.kind != kind && token.kind != TokenKind.Eof) {
             consumer(token)
             bump()
@@ -618,19 +630,19 @@ class Parser(
     /**
      * Eats a token if it matches [kind] and returns whether it ate a token.
      */
-    private fun <T : TokenKind> eat(kind: KClass<T>): Boolean =
+    fun <T : TokenKind> eat(kind: KClass<T>): Boolean =
         kind.isInstance(token.kind).also { if (it) bump() }
 
 
     /**
      * Eats a token if it matches [kind] and returns whether it ate a token.
      */
-    private fun eat(kind: TokenKind): Boolean =
+    fun eat(kind: TokenKind): Boolean =
         (token.kind == kind).also {
             if (it) bump()
         }
 
-    private fun bump() {
+    fun bump() {
         prev = token
         token = if (stream.hasNext()) {
             stream.next()

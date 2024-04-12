@@ -36,7 +36,7 @@ class Driver(private val opts: CompileOptions) {
         EmitterType.Internal -> DiagEmitter(sourceMap)
         EmitterType.Webview -> WebviewEmitter
     }
-    private val dcx: DiagCtx = DiagCtx(emitter)
+    private val dcx: DiagCtx = DiagCtx(emitter, null)
     private val json = Json { prettyPrint = true }
 
     fun run(files: List<Path>) {
@@ -53,11 +53,7 @@ class Driver(private val opts: CompileOptions) {
             files.forEach { path ->
                 val file = sourceMap.loadFile(path)
                 val provider = SourceProvider(file)
-
-                val pre = Preprocessor(sess, provider)
-                pre.run()
-                // MUST run before the Lexer is even created
-                // due to how the Lexer is initialized, this is fine I suppose
+                dcx.setSourceProvider(provider)
 
                 val lexer = Lexer(sess, provider)
 

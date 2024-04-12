@@ -1,14 +1,9 @@
 package com.hsc.compiler.parse
 
-data class MacroProvider(
-    val name: String,
-    val source: String,
-    val args: List<String>
-) {
+interface MacroProvider {
 
-    fun invoke(values: List<String>): String =
-        args.zip(values).fold(source) { src, (arg, value) ->
-            src.replace("\${$arg}", value).replace(Regex("\\\$$arg\\b"), value)
-        }
+    val name: String
+
+    fun invoke(lexer: Lexer): CharProvider
 
 }

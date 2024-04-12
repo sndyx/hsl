@@ -106,7 +106,7 @@ sealed class TokenKind {
     }
 
     data class Unknown(val value: Char) : TokenKind() {
-        override fun toString(): String = "<unknown>"
+        override fun toString(): String = "<unknown ${value.code}>"
     }
 
     val binOp: BinOp get() = this as BinOp

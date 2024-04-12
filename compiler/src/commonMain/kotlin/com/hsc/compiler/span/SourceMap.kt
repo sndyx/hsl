@@ -1,5 +1,7 @@
 package com.hsc.compiler.span
 
+import com.hsc.compiler.parse.CharProvider
+import com.hsc.compiler.parse.StringCharProvider
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
@@ -26,6 +28,8 @@ data class SourceFile(
 ) {
 
     val fid: Int = Random.nextInt()
+
+    fun provider(): CharProvider = StringCharProvider(src)
 
     private fun lookupLine(pos: Int): Int {
         val index = lines.indexOfFirst { it > pos }

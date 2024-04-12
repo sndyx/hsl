@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -75,6 +76,16 @@ kotlin {
             from({
                 main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) }
             })
+        }
+    }
+
+    tasks.withType<KotlinCompile>().configureEach {
+        kotlinOptions {
+            freeCompilerArgs = listOf(
+                "-opt-in=kotlin.RequiresOptIn",
+                "-Xbackend-threads=0", // Multi-threaded compilation 😎
+                "-Xcontext-receivers"
+            )
         }
     }
 

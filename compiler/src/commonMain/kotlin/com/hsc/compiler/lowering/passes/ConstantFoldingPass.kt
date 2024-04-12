@@ -8,7 +8,9 @@ import kotlin.math.pow
  * A pass that evaluates constant equations.
  * Must run before complex expressions are flattened.
  */
-object ConstantFoldingPass : AstPass {
+object ConstantFoldingPass : VolatilePass {
+
+    override var changed: Boolean = false
 
     override fun run(ctx: LoweringCtx) {
         val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
@@ -17,13 +19,14 @@ object ConstantFoldingPass : AstPass {
             do {
                 visitor.changes = 0
                 visitor.visitItem(it)
+                if (visitor.changes > 0) changed = true
             } while (visitor.changes != 0)
         }
     }
 
 }
 
-private class EvaluateConstantEquationsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
+class EvaluateConstantEquationsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     var changes = 0
 
@@ -106,6 +109,23 @@ private class EvaluateConstantEquationsVisitor(val ctx: LoweringCtx) : BlockAwar
                 else {
                     visitExpr(kind.a)
                     visitExpr(kind.b)
+                }
+            }
+            is ExprKind.If -> {
+                when (val litKind = kind.expr.kind) {
+                    is ExprKind.Lit -> {
+                        when (val lit = litKind.lit) {
+                            is Lit.I64 -> {
+                                if (lit.value == 1L) expr.kind = ExprKind.Block(kind.block)
+                                else if (lit.value == 0L) expr.kind = ExprKind.Block(kind.other!!) // should be safe
+                            }
+                            is Lit.Bool -> {
+                                if (lit.value) expr.kind = ExprKind.Block(kind.block)
+                                else expr.kind = ExprKind.Block(kind.other!!)
+                            }
+                            else -> {}
+                        }
+                    } else -> super.visitExpr(expr)
                 }
             }
             else -> super.visitExpr(expr)

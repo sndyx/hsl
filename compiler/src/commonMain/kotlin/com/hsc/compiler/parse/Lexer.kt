@@ -1,36 +1,24 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package com.hsc.compiler.parse
 
 import com.hsc.compiler.driver.CompileSess
-import com.hsc.compiler.errors.CompileException
-import com.hsc.compiler.errors.Level
 import com.hsc.compiler.span.Span
 
 class Lexer(
-    private val sess: CompileSess,
-    private val srcp: SourceProvider,
+    val sess: CompileSess,
+    val srcp: SourceProvider,
 ): Iterable<Token> {
 
-    private val fid = srcp.fid
+    val fid = srcp.fid
 
-    private val pos: Int get() = srcp.pos
+    val pos: Int get() = srcp.pos
 
-    private fun isIdStart(char: Char): Boolean = char.isLetter() || char == '_'
-    private fun isIdContinue(char: Char): Boolean = char.isDigit() || char.isLetter() || char == '_'
+    fun isIdStart(char: Char): Boolean = char.isLetter() || char == '_' || char == '#'
+    fun isIdContinue(char: Char): Boolean = char.isDigit() || char.isLetter() || char == '_'
 
     fun advanceToken(): Token {
-        val token = advanceToken0()
-        if (srcp.isVirtual) {
-            // modify span to processor usage
-            return Token(token.kind, srcp.virtualSpan!!)
-        }
-        return token
-    }
-
-    private fun advanceToken0(): Token {
-        eatWhile {
-            if (it == '\n') srcp.addLine(pos + 1)
-            it.isWhitespace()
-        }
+        eatWhile { it.isWhitespace() }
 
         val currentChar = bump() ?: return Token(TokenKind.Eof, Span.single(pos, fid))
 
@@ -85,7 +73,6 @@ class Lexer(
             '[' -> TokenKind.OpenDelim(Delimiter.Bracket)
             ']' -> TokenKind.CloseDelim(Delimiter.Bracket)
             ',' -> TokenKind.Comma
-            '#' -> TokenKind.Pound
             ':' -> TokenKind.Colon
             '@' -> TokenKind.At
             '=' -> {
@@ -131,13 +118,13 @@ class Lexer(
         return Token(kind, Span(startPos, pos, fid))
     }
 
-    private fun eatLineComment(): Token {
+    fun eatLineComment(): Token {
         bump()
         eatWhile { it != '\n' }
         return advanceToken()
     }
 
-    private fun eatBlockComment(): Token {
+    fun eatBlockComment(): Token {
         bump()
         var depth = 1
         var c: Char? = bump()
@@ -157,7 +144,7 @@ class Lexer(
     }
 
     // Yes it is absolutely necessary to include all of this functionality in one function. :-)
-    private fun identKwBoolMacroItem(start: Char): TokenKind {
+    fun identKwBoolMacroItem(start: Char): TokenKind {
         val startPos = pos
 
         val sb = StringBuilder("$start")
@@ -222,8 +209,8 @@ class Lexer(
 
                 if (srcp.isMacro(ident)) {
                     // Handle macro invocation
-                    parseMacro(startPos, ident)
-                    advanceToken0().kind // It's OK to discard the span, will become virtual.
+                    srcp.enterMacro(this, Span(startPos, pos, fid), ident)
+                    advanceToken().kind // We discard the span, I guess?
                 } else {
                     // Just handle ident normally
                     TokenKind.Ident(ident)
@@ -232,59 +219,7 @@ class Lexer(
         }
     }
 
-    private fun parseMacro(startPos: Int, ident: String) {
-        val argCount = srcp.macroArgCount(ident)
-        val args = mutableListOf<String>()
-        if (first() == '(') { // It's fine to use parens even with 0 args
-            val argStart = pos
-            bump()
-            eatWhile(Char::isWhitespace)
-            var level = 1
-
-            while (!(first() == ')' && level == 1) && !isEof()) {
-                val arg = StringBuilder()
-                while (first() != ',' && !isEof() && !(first() == ')' && level == 1)) {
-                    if (first() == '(') level++
-                    else if (first() == ')') level--
-                    arg.append(bump())
-                }
-
-                if (arg.isEmpty()) {
-                    val err = sess.dcx().err("unexpected token") // Best way to describe it I think...
-                    err.span(Span.single(pos, fid))
-                    throw err
-                }
-
-                args.add(arg.toString())
-                if (first() == ',') bump() // Bump ,
-
-                eatWhile(Char::isWhitespace)
-            }
-            bump() // Bump )
-
-            if (args.size != argCount) {
-                // Fuck grammar!!!
-                val s1 = if (argCount == 1) "" else "s"
-                val s2 = if (args.size == 1) "" else "s"
-                val was = if (args.size == 1) "was" else "were"
-
-                val err = sess.dcx().err("this macro takes $argCount parameter$s1 but ${args.size} parameter$s2 $was supplied")
-                err.span(Span(argStart, pos - 1, fid))
-                throw CompileException(err)
-            }
-        } else {
-            if (argCount > 0) { // No invocation & args expected
-                val err = sess.dcx().err("expected (")
-                err.span(Span.single(pos - 1, fid))
-                err.note(Level.Error, "expecting macro invocation")
-                throw CompileException(err)
-            }
-        }
-        srcp.enterMacro(Span(startPos, pos, fid), ident, args)
-    }
-
-
-    private fun string(): TokenKind {
+    fun string(): TokenKind {
         val sb = StringBuilder()
 
         var c: Char? = bump()
@@ -300,7 +235,7 @@ class Lexer(
         return TokenKind.Literal(Lit(LitKind.Str, sb.toString()))
     }
 
-    private fun number(firstDigit: Char): TokenKind {
+    fun number(firstDigit: Char): TokenKind {
         val num = StringBuilder("$firstDigit")
         num.append(digits())
         return if (first() == '.' && second() != '.') {
@@ -313,7 +248,7 @@ class Lexer(
         }
     }
 
-    private fun digits(): String {
+    fun digits(): String {
         val sb = StringBuilder()
         while (true) {
             if (first() == '_') {
@@ -328,26 +263,27 @@ class Lexer(
         return sb.toString()
     }
 
-    private fun bump(): Char? {
+    fun bump(): Char? {
         return srcp.bump()
     }
 
-    private fun first(): Char = srcp.first()
-    private fun second(): Char = srcp.second()
+    fun first(): Char = srcp.first()
+    fun second(): Char = srcp.second()
 
-    private fun eatWhile(predicate: (Char) -> Boolean) {
+    fun eatWhile(predicate: (Char) -> Boolean) {
         while (!isEof() && predicate(first())) {
-            bump()
+            if (bump() == '\n') srcp.addLine(pos)
         }
     }
 
-    private fun isEof(): Boolean = srcp.isEmpty()
+    fun isEof(): Boolean = srcp.isEmpty()
 
+    var iteratorObj: Iterator<Token>? = null
     override fun iterator(): Iterator<Token> {
-        return object : Iterator<Token> {
+        return iteratorObj ?: object : Iterator<Token> {
             override fun hasNext(): Boolean = !isEof()
             override fun next(): Token = advanceToken()
-        }
+        }.also { iteratorObj = it }
     }
 
 }

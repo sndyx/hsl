@@ -1,6 +1,10 @@
-#define HELLO(world) "Hello, " + $world + "!"
+#define FIB(n) `{
+    #if
+    #else
+    if ($n <= 1) $n
+    else FIB($n - 1) + FIB($n - 2)
+}`
 
 fn test() {
-    send_message(HELLO("neighbor") + " Today I am feeling great!")
-    send_message(HELLO("world") + " It's a good day outside!")
+    x = FIB(5)
 }

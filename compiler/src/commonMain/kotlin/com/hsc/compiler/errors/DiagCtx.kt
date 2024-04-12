@@ -1,9 +1,11 @@
 package com.hsc.compiler.errors
 
+import com.hsc.compiler.parse.SourceProvider
 import com.hsc.compiler.span.Span
 
 class DiagCtx(
     private val emitter: Emitter,
+    private var srcp: SourceProvider?
 ) {
 
     fun bug(message: String, span: Span? = null): Diagnostic = diagnostic(Level.Bug, message, span)
@@ -22,6 +24,10 @@ class DiagCtx(
 
     fun note(message: String, span: Span? = null): Diagnostic = diagnostic(Level.Note, message, span)
 
+    fun setSourceProvider(srcp: SourceProvider) {
+        this.srcp = srcp
+    }
+
 
     private fun diagnostic(
         level: Level,
@@ -33,6 +39,9 @@ class DiagCtx(
         }
 
     internal fun emit(diagnostic: Diagnostic) {
+        if (srcp?.isVirtual == true) {
+            diagnostic.reference(srcp!!.virtualSpan!!, "macro expansion here")
+        }
         emitter.emit(diagnostic)
     }
 

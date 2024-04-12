@@ -1,39 +1,50 @@
 package com.hsc.compiler.parse
 
+import com.hsc.compiler.parse.macros.DefineMacroProvider
+import com.hsc.compiler.parse.macros.ForMacroProvider
 import com.hsc.compiler.span.SourceFile
 import com.hsc.compiler.span.Span
 
 class SourceProvider(private val file: SourceFile) {
 
-    private val macros = mutableListOf<MacroProvider>()
+    private val macros = mutableListOf(ForMacroProvider, DefineMacroProvider)
 
-    private val srcStack = mutableListOf(file.src)
-    private val posStack = mutableListOf<Int>()
+    private val srcStack = mutableListOf(file.provider())
 
     val fid = file.fid
+    val pos get() = (srcStack.lastOrNull()?.let { it.srcOffset + it.pos }) ?: -1
 
-    var pos = 0
-
-    val src: String get() = srcStack.last()
+    private var spanStack = mutableListOf<Span>()
     val isVirtual: Boolean get() = srcStack.size > 1
-    var virtualSpan: Span? = null
+    val virtualSpan: Span? get() = spanStack.lastOrNull()
 
     fun bump(): Char? {
-        if (srcStack.lastOrNull()?.length?.let { it <= pos} == true) {
+        if (srcStack.lastOrNull()?.hasNext() == false) {
             srcStack.removeLast()
+            spanStack.removeLastOrNull()
             if (isEmpty()) {
                 return null
             } // out of src
-            pos = posStack.removeLast()
-            return srcStack.last().getOrNull(pos) ?: ' '
+            return srcStack.lastOrNull()?.nextOrNull()
         } else {
-            return srcStack.lastOrNull()?.getOrNull(pos++)
+            return srcStack.lastOrNull()?.nextOrNull()
         }
     }
 
-    fun first(): Char = srcStack.lastOrNull()?.getOrNull(pos) ?: ' '
+    // stupid logic for first & second here.... lookahead will only support these values!
+    fun first(): Char = srcStack.foldRight('\u0000') { provider, it ->
+        if (it != '\u0000') it
+        else provider.lookahead(0) ?: '\u0000'
+    }.takeIf { it > '\u0000' } ?: ' '
 
-    fun second(): Char = srcStack.lastOrNull()?.getOrNull(pos + 1) ?: ' '
+    fun second(): Char = srcStack.foldRight('\u0000') { provider, it ->
+        if (it != '\u0000' && it != '\u0001') it
+        else if (it == '\u0000') {
+            provider.lookahead(1) ?: if (provider.lookahead(0) == null) '\u0000' else '\u0001'
+        } else {
+            provider.lookahead(0) ?: '\u0001'
+        }
+    }.takeIf { it > '\u0001' } ?: ' '
 
     fun isEmpty(): Boolean = srcStack.isEmpty()
 
@@ -47,21 +58,14 @@ class SourceProvider(private val file: SourceFile) {
         return macros.any { it.name == ident }
     }
 
-    fun macroArgCount(ident: String): Int {
-        return macros.first { it.name == ident }.args.size
-    }
-
     fun addMacro(provider: MacroProvider) {
         macros.add(provider)
     }
 
-    fun enterMacro(span: Span, name: String, args: List<String>) {
-        if (!isVirtual) {
-            virtualSpan = span
-        }
-        posStack.add(pos)
-        srcStack.add(macros.first { it.name == name }.invoke(args))
-        pos = 0
+    fun enterMacro(lexer: Lexer, span: Span, ident: String) {
+        spanStack.add(span)
+        val provider = macros.first { it.name == ident }.invoke(lexer)
+        srcStack.add(provider)
     }
 
 }
