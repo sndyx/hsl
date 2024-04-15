@@ -69,7 +69,7 @@ kotlin {
         }
         val jvmMain by sourceSets.getting {
             dependencies {
-                runtimeOnly(project(":compiler"))
+                runtimeOnly(project(":compiler")) // IGNORE THIS
             }
         }
 

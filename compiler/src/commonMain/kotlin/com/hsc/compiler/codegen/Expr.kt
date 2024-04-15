@@ -49,11 +49,6 @@ fun ActionTransformer.transformExpr(expr: Expr): Action {
                 unsupported("block as expression", expr.span)
             }
         }
-        is ExprKind.Paren -> {
-            strict(expr.span) {
-                unsupported("parenthesized expressions", expr.span)
-            }
-        }
         is ExprKind.Unary -> {
             strict(expr.span) {
                 unsupported("unary expressions", expr.span)
@@ -71,5 +66,5 @@ fun ActionTransformer.transformExpr(expr: Expr): Action {
 }
 
 private fun ActionTransformer.makeCall(ident: Ident): Action {
-    return Action.ExecuteFunction(ident.name, ident.global)
+    return Action.ExecuteFunction(ident.name, ident.isGlobal)
 }

@@ -2,7 +2,6 @@ package com.hsc.compiler.codegen
 
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
-import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.errors.Diagnostic
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.action.Action
@@ -57,10 +56,10 @@ class ActionTransformer(internal val sess: CompileSess) {
             }
         }
         is ExprKind.Var -> {
-            StatValue.Str(if (kind.ident.global) {
-                "%stat.global/${kind.ident.name}%"
-            } else {
-                "%stat.player/${kind.ident.name}%"
+            StatValue.Str(when (val ident = kind.ident) {
+                is Ident.Player -> "%stat.player/${ident.name}%"
+                is Ident.Global -> "%stat.global/${ident.name}%"
+                is Ident.Team -> "%stat.team/${ident.name}/${ident.team}%"
             })
         }
         else -> {
@@ -116,8 +115,10 @@ class ActionTransformer(internal val sess: CompileSess) {
         }
     }
 
-    internal fun identString(ident: Ident): String =
-        if (ident.global) "%stat.global/${ident.name}%"
-        else "%stat.player/${ident.name}%"
+    private fun identString(ident: Ident): String = when (ident) {
+        is Ident.Player -> "%stat.player/${ident.name}%"
+        is Ident.Global -> "%stat.global/${ident.name}%"
+        is Ident.Team -> "%stat.team/${ident.name}/${ident.team}%"
+    }
 
 }

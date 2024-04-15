@@ -4,13 +4,14 @@ import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
-object OwnedRecursiveCallCheckPass : AstPass {
+object CheckOwnedRecursiveCallPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
-        functions.forEach {
-            OwnedRecursiveCallVisitor(ctx, it.ident).visitItem(it)
-        }
+        ctx.query<Item>()
+            .filter { it.kind is ItemKind.Fn }
+            .forEach {
+                OwnedRecursiveCallVisitor(ctx, it.ident).visitItem(it)
+            }
     }
 
 }

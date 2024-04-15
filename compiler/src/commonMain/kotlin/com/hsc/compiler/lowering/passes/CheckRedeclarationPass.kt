@@ -5,7 +5,7 @@ import com.hsc.compiler.ir.ast.ItemKind
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.span.Span
 
-object RedeclarationCheckPass : AstPass {
+object CheckRedeclarationPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }.sortedBy { it.span.lo }

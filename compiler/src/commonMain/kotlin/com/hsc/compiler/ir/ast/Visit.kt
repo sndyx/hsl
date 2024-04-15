@@ -41,6 +41,7 @@ open class BlockAwareVisitor : AstVisitor {
     // These should not fail, probably
     val currentBlock: Block get() = blocks.last()
     val currentPosition: Int get() = positions.last()
+    val currentStmt: Stmt get() = currentBlock.stmts[currentPosition]
 
     override fun visitBlock(block: Block) {
         blocks.add(block)
@@ -56,6 +57,10 @@ open class BlockAwareVisitor : AstVisitor {
     override fun visitStmt(stmt: Stmt) {
         // If this ever fails... It's not our fault
         super.visitStmt(stmt)
+        pass()
+    }
+
+    fun pass() {
         positions.add(positions.removeLast() + 1)
     }
 
@@ -76,6 +81,12 @@ fun walkItem(v: AstVisitor, item: Item) {
     when (item.kind) {
         is ItemKind.Fn -> {
             v.visitFn(item.kind.fn)
+        }
+        is ItemKind.Const -> {
+            v.visitExpr(item.kind.value)
+        }
+        is ItemKind.Enum -> {
+            // DO NOTHING
         }
     }
 }
@@ -117,7 +128,6 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
             v.visitExpr(kind.range.lo)
             v.visitExpr(kind.range.hi)
         }
-        is ExprKind.Paren -> v.visitExpr(kind.expr)
         is ExprKind.Unary -> v.visitExpr(kind.expr)
         is ExprKind.Var -> v.visitIdent(kind.ident)
         is ExprKind.Condition -> {}

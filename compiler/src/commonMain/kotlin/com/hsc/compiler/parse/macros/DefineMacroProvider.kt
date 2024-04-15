@@ -41,7 +41,6 @@ object DefineMacroProvider : MacroProvider {
         } else {
             takeWhile { it != '\n' }
         }
-        println(src)
 
         srcp.addMacro(DefinedMacroProvider(ident, src, startPos, args))
         EmptyCharProvider
@@ -111,12 +110,4 @@ private class DefinedMacroProvider(
 
         StringCharProvider(replaced, srcOffset)
     }
-}
-
-private object EmptyCharProvider : CharProvider {
-    override val srcOffset: Int = 0
-    override var pos: Int = 0
-    override fun next(): Char = error("")
-    override fun hasNext(): Boolean = false
-    override fun lookahead(count: Int): Char? = null
 }

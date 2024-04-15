@@ -7,10 +7,12 @@ import com.hsc.compiler.span.Span
 object ReturnAssignPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
-        functions.forEach {
-            ReturnAssignVisitor(ctx).visitItem(it)
-        }
+        val visitor = ReturnAssignVisitor(ctx)
+        ctx.query<Item>()
+            .filter { it.kind is ItemKind.Fn }
+            .forEach {
+                visitor.visitItem(it)
+            }
     }
 
 }
@@ -38,7 +40,7 @@ private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
             is StmtKind.Ret -> {
                 // change _return to return value
                 if (kind.expr != null) {
-                    val assign = StmtKind.Assign(Ident(false, "_return"), kind.expr!!)
+                    val assign = StmtKind.Assign(Ident.Player("_return"), kind.expr!!)
                     stmt.kind = assign // I believe this is fine?
                     currentBlock.stmts = currentBlock.stmts.take(currentPosition + 1).toMutableList()
                 }
@@ -46,7 +48,7 @@ private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
                     // We are inside a conditional body, I think?
                     val exit = StmtKind.Expr(Expr(
                         Span.none,
-                        ExprKind.Call(Ident(false, "exit"), Args(Span.none, mutableListOf()))
+                        ExprKind.Call(Ident.Player("exit"), Args(Span.none, mutableListOf()))
                     ))
                     currentBlock.stmts = currentBlock.stmts.take(currentPosition + 1).toMutableList()
                     currentBlock.stmts.add(Stmt(Span.none, exit))

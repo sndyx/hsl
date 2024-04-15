@@ -64,7 +64,7 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                         }
                         kind.args.args.clear()
 
-                        expr.kind = ExprKind.Var(Ident(false, "_return"))
+                        expr.kind = ExprKind.Var(Ident.Player("_return"))
                         // currentBlock.stmts.removeAt(currentPosition)
 
                         currentBlock.stmts.addAll(currentPosition, inlineBlock.stmts)

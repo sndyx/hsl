@@ -2,7 +2,6 @@ package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
-import com.hsc.compiler.span.Span
 
 /**
  * A pass that should flatten complex expressions.
@@ -21,25 +20,30 @@ import com.hsc.compiler.span.Span
  * x = temp0
  * ```
  */
-object FlattenComplexExpressionsPass : AstPass {
+object ExpandComplexExpressionsPass : AstPass {
+
+    private var changed = false
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
-        functions.forEach {
-            val visitor = FlattenComplexExpressionsVisitor()
-            do {
-                visitor.changes = 0
-                visitor.visitItem(it)
-                visitor.passes++
-            } while (visitor.changes != 0)
-        }
+        ctx.query<Item>()
+            .filter { it.kind is ItemKind.Fn }
+            .forEach {
+                val visitor = FlattenComplexExpressionsVisitor()
+                do {
+                    visitor.changed = false
+                    visitor.visitItem(it)
+                    visitor.passes++
+                    if (visitor.changed) changed = true
+                } while (visitor.changed)
+            }
+        if (changed) ctx.clearQuery<Stmt>()
     }
 
 }
 
 private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
 
-    var changes = 0
+    var changed = false
     var passes = 0
     var cident: Ident? = null
 
@@ -62,21 +66,21 @@ private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
                     BinOpKind.Add, BinOpKind.Sub, BinOpKind.Mul, BinOpKind.Div, BinOpKind.Rem -> {
                         val assignTemp = Stmt(
                             kind.a.span,
-                            StmtKind.Assign(cident ?: Ident(false, "_temp$passes"), kind.a)
+                            StmtKind.Assign(cident ?: Ident.Player("_temp$passes"), kind.a)
                         )
                         val assignOp = Stmt(
                             kind.b.span,
-                            StmtKind.AssignOp(kind.kind, cident ?: Ident(false, "_temp$passes"), kind.b)
+                            StmtKind.AssignOp(kind.kind, cident ?: Ident.Player("_temp$passes"), kind.b)
                         )
                         currentBlock.stmts.add(currentPosition, assignTemp)
                         currentBlock.stmts.add(currentPosition + 1, assignOp)
                         if (cident == null) {
-                            expr.kind = ExprKind.Var(Ident(false, "_temp$passes"))
+                            expr.kind = ExprKind.Var(Ident.Player("_temp$passes"))
                         } else {
                             currentBlock.stmts.removeAt(currentPosition + 2)
                         }
                         added(if (cident != null) 1 else 2)
-                        changes++
+                        changed = true
                     }
                     else -> super.visitExpr(expr) // Do(n't) flatten conditions
                 }

@@ -7,26 +7,21 @@ object RaiseNotEqPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val exprs = ctx.query<Expr>()
-        exprs.forEach {
-            RaiseNotEqVisitor.visitExpr(it)
+        exprs.forEach { expr ->
+            raiseNotEq(expr)
         }
     }
 
 }
 
-private object RaiseNotEqVisitor : AstVisitor {
-
-    override fun visitExpr(expr: Expr) {
-        when (val kind = expr.kind) {
-            is ExprKind.Binary -> {
-                if (kind.kind == BinOpKind.Ne) {
-                    kind.kind = BinOpKind.Eq
-                    expr.kind = ExprKind.Paren(expr)
-                }
+private fun raiseNotEq(expr: Expr) {
+    when (val kind = expr.kind) {
+        is ExprKind.Binary -> {
+            if (kind.kind == BinOpKind.Ne) {
+                kind.kind = BinOpKind.Eq
+                expr.kind = ExprKind.Unary(UnaryOpKind.Not, expr)
             }
-            else -> { }
         }
-        super.visitExpr(expr)
+        else -> {}
     }
-
 }

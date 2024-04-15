@@ -108,7 +108,7 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
                 }
             }
             val other = unwrapStatValue(kind.b)
-            if (ident.global) {
+            if (ident.isGlobal) {
                 Condition.GlobalStatRequirement(ident.name, comparison, other)
             } else {
                 Condition.PlayerStatRequirement(ident.name, comparison, other)
@@ -133,7 +133,7 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
             }
         }
         is ExprKind.Var -> {
-            if (kind.ident.global) {
+            if (kind.ident.isGlobal) {
                 Condition.GlobalStatRequirement(kind.ident.name, Comparison.Eq, StatValue.I64(1))
             } else {
                 Condition.PlayerStatRequirement(kind.ident.name, Comparison.Eq, StatValue.I64(1))

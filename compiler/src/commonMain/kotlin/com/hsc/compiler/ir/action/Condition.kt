@@ -1,3 +1,5 @@
+@file:Suppress("SERIALIZER_TYPE_INCOMPATIBLE")
+
 package com.hsc.compiler.ir.action
 
 import kotlinx.serialization.SerialName
@@ -6,6 +8,35 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class Condition {
 
+    companion object {
+        val builtins = setOf(
+            "in_group",
+            "has_permission",
+            "in_region",
+            "has_item",
+            "in_parkour",
+            "potion_effect",
+            "sneaking",
+            "flying",
+            "gamemode",
+            "in_team",
+            "pvp_enabled",
+            "fishing_environment",
+            "portal_type",
+            "damage_cause",
+            "block_type",
+            "is_item"
+        )
+    }
+
+    @Serializable
+    @SerialName("IN_GROUP")
+    data class RequiredGroup(
+        @SerialName("required_group")
+        val group: String,
+        @SerialName("include_higher_groups")
+        val includeHigherGroups: Boolean,
+    ) : Condition()
     @Serializable
     @SerialName("PLAYER_STAT")
     data class PlayerStatRequirement(
@@ -21,8 +52,123 @@ sealed class Condition {
         val value: StatValue,
     ) : Condition()
     @Serializable
+    @SerialName("TEAM_STAT")
+    data class TeamStatRequirement(
+        val stat: String,
+        val team: String,
+        @SerialName("mode") val op: Comparison,
+        val value: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("HAS_PERMISSION")
+    data class HasPermission(
+        @SerialName("required_permission")
+        val permission: Permission,
+    ) : Condition()
+    @Serializable
+    @SerialName("IN_REGION")
+    data class InRegion(
+        val region: String,
+    ) : Condition()
+    @Serializable
+    @SerialName("HAS_ITEM")
+    data class HasItem(
+        val item: ItemStack,
+        @SerialName("what_to_check") val whatToCheck: ItemCheck,
+        @SerialName("where_to_check") val whereToCheck: InventoryLocation,
+        @SerialName("required_amount") val amount: ItemAmount,
+    ) : Condition()
+    @Serializable
+    @SerialName("IN_PARKOUR")
+    data object InParkour : Condition()
+    @Serializable
+    @SerialName("POTION_EFFECT")
+    data class RequiredEffect(
+        val effect: PotionEffect,
+    ) : Condition()
+    @Serializable
     @SerialName("SNEAKING")
     data object PlayerSneaking : Condition()
+    @Serializable
+    @SerialName("FLYING")
+    data object PlayerFlying : Condition()
+    @Serializable
+    @SerialName("HEALTH")
+    data class RequiredHealth(
+        val mode: Comparison,
+        val amount: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("MAX_HEALTH")
+    data class RequiredMaxHealth(
+        val mode: Comparison,
+        val amount: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("HUNGER_LEVEL")
+    data class RequiredHungerLevel(
+        val mode: Comparison,
+        val amount: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("GAMEMODE")
+    data class RequiredGameMode(
+        @SerialName("required_gamemode")
+        val gameMode: GameMode
+    ) : Condition()
+    @Serializable
+    @SerialName("PLACEHOLDER_NUMBER")
+    data class RequiredPlaceholderNumber(
+        val placeholder: String,
+        val mode: Comparison,
+        val amount: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("IN_TEAM")
+    data class RequiredTeam(
+        @SerialName("required_team")
+        val team: String,
+    ) : Condition()
+    @Serializable
+    @SerialName("PVP_ENABLED")
+    data object PvpEnabled : Condition()
+    @Serializable
+    @SerialName("FISHING_ENVIRONMENT")
+    data class FishingEnvironment(
+        val environment: com.hsc.compiler.ir.action.FishingEnvironment
+    ) : Condition()
+    @Serializable
+    @SerialName("PORTAL_TYPE")
+    data class PortalType(
+        @SerialName("portal_type")
+        val type: com.hsc.compiler.ir.action.PortalType
+    ) : Condition()
+    @Serializable
+    @SerialName("DAMAGE_CAUSE")
+    data class DamageCause(
+        val cause: com.hsc.compiler.ir.action.DamageCause
+    ) : Condition()
+    @Serializable
+    @SerialName("DAMAGE_AMOUNT")
+    data class RequiredDamageAmount(
+        val mode: Comparison,
+        val amount: StatValue,
+    ) : Condition()
+    @Serializable
+    @SerialName("BLOCK_TYPE")
+    data class BlockType(
+        val item: ItemStack,
+        @SerialName("match_type_only")
+        val matchTypeOnly: Boolean,
+    ) : Condition()
+    @Serializable
+    @SerialName("IS_ITEM")
+    data class IsItem(
+        val item: ItemStack,
+        @SerialName("what_to_check") val whatToCheck: ItemCheck,
+        @SerialName("where_to_check") val whereToCheck: InventoryLocation,
+        @SerialName("required_amount") val amount: ItemAmount,
+    ) : Condition()
 }
 
 enum class Comparison {
@@ -31,4 +177,99 @@ enum class Comparison {
     @SerialName("GREATER_THAN_OR_EQUAL") Ge,
     @SerialName("LESS_THAN") Lt,
     @SerialName("LESS_THAN_OR_EQUAL") Le;
+}
+
+@Serializable(with = KeyedSerializer::class)
+enum class Permission(override val key: String) : Keyed {
+    Fly("Fly"),
+    WoodDoor("Wood Door"),
+    IronDoor("Iron Door"),
+    WoodTrapDoor("Wood Trap Door"),
+    IronTrapDoor("Iron Trap Door"),
+    FenceGate("Fence Gate"),
+    Button("Button"),
+    Lever("Lever"),
+    UseLaunchPads("Use Launch Pads"),
+    Tp("/tp"),
+    TpOtherPlayers("/tp Other Players"),
+    Jukebox("Jukebox"),
+    Kick("Kick"),
+    Ban("Ban"),
+    Mute("Mute"),
+    PetSpawning("Pet Spawning"),
+    Build("Build"),
+    OfflineBuild("Offline Build"),
+    Fluid("Fluid"),
+    ProTools("Pro Tools"),
+    UseChests("Use Chests"),
+    UseEnderChests("Use Ender Chests"),
+    ItemEditor("Item Editor"),
+    SwitchGameMode("Switch Game Mode"),
+    EditStats("Edit Stats"),
+    ChangePlayerGroup("Change Player Group"),
+    ChangeGameRules("Change Gamerules"),
+    HousingMenu("Housing Menu"),
+    TeamChatSpy("Team Chat Spy"),
+    EditActions("Edit Actions"),
+    EditRegions("Edit Regions"),
+    EditScoreboard("Edit Scoreboard"),
+    EditEventActions("Edit Event Actions"),
+    EditCommands("Edit Commands"),
+    EditFunctions("Edit Functions"),
+    EditInventoryLayouts("Edit Inventory Layouts"),
+    EditTeams("Edit Teams"),
+    EditCustomMenus("Edit Custom Menus"),
+    ItemMailbox("Item: Mailbox"),
+    ItemEggHunt("Item: Egg Hunt"),
+    ItemTeleportPad("Item: Teleport Pad"),
+    ItemLaunchPad("Item: Launch Pad"),
+    ItemActionPad("Item: Action Pad"),
+    ItemHologram("Item: Hologram"),
+    ItemNPC("Item: NPCs"),
+    ItemActionButton("Item: Action Button"),
+    ItemLeaderboard("Item: Leaderboard"),
+    ItemTrashCan("Item: Trash Can"),
+    ItemBiomeStick("Item: Biome Stick");
+}
+
+enum class ItemCheck(override val key: String) : Keyed {
+    ItemType("Item Type"),
+    Metadata("Metadata");
+}
+
+enum class ItemAmount(override val key: String) : Keyed {
+    Any("Any Amount"),
+    Ge("Equal or Greater Amount");
+}
+
+enum class InventoryLocation(override val key: String) : Keyed {
+    Hand("Hand"),
+    Armor("Armor"),
+    HotBar("Hotbar"),
+    Inventory("Inventory"),
+    Anywhere("Anywhere");
+}
+
+enum class FishingEnvironment(override val key: String) : Keyed {
+    Water("Water"),
+    Lava("Lava");
+}
+
+enum class PortalType(override val key: String) : Keyed {
+    EndPortal("End Portal"),
+    NetherPortal("Nether Portal")
+}
+
+enum class DamageCause(override val key: String) : Keyed {
+    EntityAttack("Entity Attack"),
+    Projectile("Projectile"),
+    Suffocation("Suffocation"),
+    Fall("Fall"),
+    Lava("Lava"),
+    Fire("Fire"),
+    FireTick("Fire Tick"),
+    Drowning("Drowning"),
+    Starvation("Starvation"),
+    Poison("Poison"),
+    Thorns("Thorns");
 }

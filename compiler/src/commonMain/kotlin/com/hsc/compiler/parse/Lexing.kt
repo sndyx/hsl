@@ -9,7 +9,7 @@ fun Lexer.expectNumber(): Long {
         if (first() == '0' && second() !in '0'..'9') "0".also { bump() }
         else expect { it in '1'..'9' } + takeWhile { it.isDigit() || it == '_' }
     }.getOrElse { throw sess.dcx().err("invalid integer", Span(lo, pos, fid)) }
-    val long = number.toLongOrNull()
+    val long = number.replace("_", "").toLongOrNull()
     if (long == null) {
         val err = sess.dcx().err("invalid integer")
         val hint = if (negative) {

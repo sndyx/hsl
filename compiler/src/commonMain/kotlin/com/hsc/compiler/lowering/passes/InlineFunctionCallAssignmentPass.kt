@@ -28,25 +28,8 @@ object InlineFunctionCallAssignmentPass : AstPass {
             .map { it.first }
             .distinct()
             .forEach { name ->
-                functions.find { it.ident.name == name }?.let {
-                    val visitor = FindReturnVisitor()
-                    visitor.visitItem(it)
-                    if (!visitor.found) {
-                        InlineFunctionCallAssignmentVisitor.functionsUsedAsExpressions
-                            .filter { it.first == name }
-                            .forEach { pair ->
-                                val err = ctx.dcx().err("function with no `return` used as expression")
-                                err.spanLabel(pair.second, "called here")
-                                // Guys we did the funny span creation again
-                                err.reference(
-                                    Span(it.span.lo, (it.kind as ItemKind.Fn).fn.sig.span.hi, it.span.fid),
-                                    "function declared here"
-                                )
-                                err.emit()
-                            }
-                    }
-                }
-        }
+                checkHasReturn(ctx, name, functions)
+            }
         functions.forEach {
             val fn = (it.kind as ItemKind.Fn).fn
             fn.sig.args = emptyList() // Args are no more!
@@ -83,13 +66,13 @@ private object InlineFunctionCallAssignmentVisitor : BlockAwareVisitor() {
 
                 val newStmt = Stmt(expr.span, StmtKind.Expr(expr.deepCopy()))
                 currentBlock.stmts.add(currentPosition - offset, newStmt)
-                val returnKind = ExprKind.Var(Ident(false, "_return"))
+                val returnKind = ExprKind.Var(Ident.Player("_return"))
                 if (inlined == 0) {
                     functionsUsedAsExpressions.add(Pair(kind.ident.name, expr.span))
                     expr.kind = returnKind
                     added(1)
                 } else {
-                    val ident = Ident(false, "_temp${inlined - 1}")
+                    val ident = Ident.Player("_temp${inlined - 1}")
                     val newStmt2 = Stmt(expr.span, StmtKind.Assign(ident, Expr(expr.span, returnKind)))
                     currentBlock.stmts.add(currentPosition - offset + 1, newStmt2)
                     expr.kind = ExprKind.Var(ident)
@@ -109,7 +92,32 @@ private class FindReturnVisitor : AstVisitor {
     var found = false
 
     override fun visitIdent(ident: Ident) {
-        found = found || (ident.name == "_return" && !ident.global)
+        found = found || (ident.name == "_return" && !ident.isGlobal)
     }
 
+}
+
+private fun checkHasReturn(
+    ctx: LoweringCtx,
+    name: String,
+    functions: List<Item>,
+) {
+    functions.find { it.ident.name == name }?.let {
+        val visitor = FindReturnVisitor()
+        visitor.visitItem(it)
+        if (!visitor.found) {
+            InlineFunctionCallAssignmentVisitor.functionsUsedAsExpressions
+                .filter { fn -> fn.first == name }
+                .forEach { pair ->
+                    val err = ctx.dcx().err("function with no `return` used as expression")
+                    err.spanLabel(pair.second, "called here")
+                    // Guys we did the funny span creation again
+                    err.reference(
+                        Span(it.span.lo, (it.kind as ItemKind.Fn).fn.sig.span.hi, it.span.fid),
+                        "function declared here"
+                    )
+                    err.emit()
+                }
+        }
+    }
 }

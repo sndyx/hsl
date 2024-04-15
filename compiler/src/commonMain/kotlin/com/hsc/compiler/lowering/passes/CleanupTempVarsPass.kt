@@ -31,7 +31,7 @@ object CleanupTempVarsPass : AstPass {
         }
 
         val fn = Fn(null, FnSig(Span.none, emptyList()), block)
-        val item = Item(Span.none, Ident(false, "cleanup"), ItemKind.Fn(fn))
+        val item = Item(Span.none, Ident.Player("cleanup"), ItemKind.Fn(fn))
 
         ctx.ast.items.add(item)
         ctx.clearQuery<Item>() // Remove cached queries as we have inserted a new element

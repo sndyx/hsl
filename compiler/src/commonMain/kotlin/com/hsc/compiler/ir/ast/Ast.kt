@@ -12,10 +12,23 @@ data class Ast(
 
 }
 
-data class Ident(
-    var global: Boolean,
-    var name: String
-)
+enum class IdentKind {
+    Global,
+    Team,
+    Player,
+}
+
+sealed class Ident(
+    open var name: String
+) {
+    val isGlobal: Boolean get() = this is Global
+    val isTeam: Boolean get() = this is Team
+    val isPlayer: Boolean get() = this is Player
+
+    data class Global(override var name: String) : Ident(name)
+    data class Team(val team: String, override var name: String) : Ident(name)
+    data class Player(override var name: String) : Ident(name)
+}
 
 data class Item(
     val span: Span,
@@ -30,6 +43,14 @@ sealed class ItemKind {
     
     data class Fn(val fn: com.hsc.compiler.ir.ast.Fn) : ItemKind() {
         override fun deepCopy(): ItemKind = copy(fn = fn.deepCopy())
+    }
+
+    data class Enum(val enum: com.hsc.compiler.ir.ast.Enum) : ItemKind() {
+        override fun deepCopy(): ItemKind = copy(enum = enum.deepCopy())
+    }
+
+    data class Const(val value: Expr) : ItemKind() {
+        override fun deepCopy(): ItemKind = copy(value = value.deepCopy())
     }
 
 }
@@ -60,6 +81,12 @@ data class Args(val span: Span, var args: MutableList<Expr>) {
     fun deepCopy(): Args = copy(args = args.toMutableList())
 
     fun isEmpty() = args.isEmpty()
+}
+
+data class Enum(
+    val values: Map<String, Long>
+) {
+    fun deepCopy(): Enum = copy(values = values.toMap())
 }
 
 data class Block(
@@ -145,10 +172,6 @@ sealed class ExprKind  {
     data class Block(var block: com.hsc.compiler.ir.ast.Block) : ExprKind() {
         override fun deepCopy(): ExprKind = copy(block = block.deepCopy())
     }
-    data class Paren(var expr: Expr) : ExprKind() {
-        override fun deepCopy(): ExprKind = copy(expr = expr.deepCopy())
-    }
-
     data class Condition(val condition: com.hsc.compiler.ir.action.Condition) : ExprKind() {
         override fun deepCopy(): ExprKind = copy()
     }
@@ -171,7 +194,6 @@ sealed class ExprKind  {
             is If -> "if"
             is Match -> "match"
             is Block -> "block"
-            is Paren -> "paren"
         }
 
 }

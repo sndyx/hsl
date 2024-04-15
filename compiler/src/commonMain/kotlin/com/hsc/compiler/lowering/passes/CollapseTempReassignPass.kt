@@ -2,6 +2,7 @@ package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
+import kotlinx.coroutines.*
 
 /**
  * A pass that will flatten temp vars that are immediately reassigned.
@@ -18,18 +19,19 @@ import com.hsc.compiler.lowering.LoweringCtx
  * x = 5
  * ```
  */
-object FlattenTempReassignPass : AstPass {
+object CollapseTempReassignPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
-        functions.forEach {
-            FlattenTempReassignVisitor.visitItem(it)
-        }
+        ctx.query<Item>()
+            .filter { it.kind is ItemKind.Fn }
+            .forEach {
+                CollapseTempReassignVisitor.visitItem(it)
+            }
     }
 
 }
 
-private object FlattenTempReassignVisitor : BlockAwareVisitor() {
+private object CollapseTempReassignVisitor : BlockAwareVisitor() {
 
     var prevTempAssign: Expr? = null
     var prevIdent: Ident? = null

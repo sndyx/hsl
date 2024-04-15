@@ -28,7 +28,7 @@ object Hsc {
             else -> "--force-color"
         }
 
-        printProcess("hsc ${src.joinToString(" ")} $modeString --force-color --output $out")
+        printProcess("hsc ${src.joinToString(" ")} $modeString --color=always --parallel --output $out")
     }
 
 }

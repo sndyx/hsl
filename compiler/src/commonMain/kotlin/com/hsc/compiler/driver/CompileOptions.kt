@@ -3,12 +3,20 @@ package com.hsc.compiler.driver
 import kotlinx.io.files.Path
 
 data class CompileOptions(
+    val houseName: String,
     val target: Target,
     val mode: Mode,
     val emitter: EmitterType,
     val output: Path,
-    val forceColor: Boolean,
+    val color: Color,
+    val parallel: Boolean,
 )
+
+enum class Color(val label: String) {
+    Auto("auto"),
+    Always("always"),
+    Never("never");
+}
 
 enum class Target(val label: String) {
     Default("default"),

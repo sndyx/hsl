@@ -1,6 +1,5 @@
 package com.hsc.compiler.lowering
 
-import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
@@ -54,11 +53,11 @@ fun stmtActionKind(stmt: Stmt): String {
             kind.action.actionName
         }
         is StmtKind.Assign -> {
-            if (kind.ident.global) "CHANGE_GLOBAL_STAT"
+            if (kind.ident.isGlobal) "CHANGE_GLOBAL_STAT"
             else "CHANGE_STAT"
         }
         is StmtKind.AssignOp -> {
-            if (kind.ident.global) "CHANGE_GLOBAL_STAT"
+            if (kind.ident.isGlobal) "CHANGE_GLOBAL_STAT"
             else "CHANGE_STAT"
         }
         StmtKind.Break -> ""

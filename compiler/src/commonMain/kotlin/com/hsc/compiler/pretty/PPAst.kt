@@ -3,9 +3,7 @@ package com.hsc.compiler.pretty
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
-import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.ast.*
-import kotlinx.serialization.internal.throwMissingFieldException
 
 fun prettyPrintAst(t: Terminal, ast: Ast) {
     val visitor = PrettyPrintVisitor(t)
@@ -25,11 +23,25 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 kind.fn.processors?.list?.forEach {
                     t.println(brightYellow("#$it"))
                 }
-                t.println("${blue("fn")} ${bold(item.ident.name)}${white("(")}${kind.fn.sig.args.joinToString { it.str }}${white(")")} ${white("{")}")
+                t.println("${blue("fn")} ${bold(item.ident.str)}${white("(")}${kind.fn.sig.args.joinToString { it.str }}${white(")")} ${white("{")}")
+                super.visitItem(item)
+                t.println(white("}"))
+            }
+            is ItemKind.Enum -> {
+                t.println("${blue("const")} ${bold(item.ident.str)} ${white("{")}")
+                indent++
+                kind.enum.values.forEach { (name, value) ->
+                    t.println("${i}$name ${white("=")} $value")
+                }
+                indent--
+                t.println(white("}"))
+            }
+            is ItemKind.Const -> {
+                t.print("${blue("const")} ${bold(item.ident.str)} ${white("=")} ")
+                super.visitItem(item)
+                t.println()
             }
         }
-        super.visitItem(item)
-        t.println(white("}"))
     }
 
     override fun visitBlock(block: Block) {
@@ -163,11 +175,6 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 t.print(white(".."))
                 visitExpr(kind.range.hi)
             }
-            is ExprKind.Paren -> {
-                t.print(white("("))
-                visitExpr(kind.expr)
-                t.print(white(")"))
-            }
             is ExprKind.Unary -> {
                 when (kind.kind) {
                     UnaryOpKind.Neg -> {
@@ -204,8 +211,11 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
     }
 
     private val Ident.str: String get() {
-        return if (name.startsWith("_")) (italic)("${if (global) "@" else ""}${gray(name.take(1))}${name.drop(1)}")
-        else (italic)("${if (global) "@" else ""}$name")
+        return when (this) {
+            is Ident.Player -> name
+            is Ident.Global -> "@$name"
+            is Ident.Team -> "$team.$name"
+        }
     }
 
 }

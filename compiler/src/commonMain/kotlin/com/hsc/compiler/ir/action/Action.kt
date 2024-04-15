@@ -1,12 +1,17 @@
+@file:Suppress("SERIALIZER_TYPE_INCOMPATIBLE")
+
 package com.hsc.compiler.ir.action
 
 import kotlinx.serialization.*
 import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
+import kotlin.math.min
 
 @Serializable
 sealed class Action(
@@ -230,6 +235,20 @@ sealed class Action(
 
 }
 
+interface Keyed {
+    val key: String
+}
+
+object KeyedSerializer : KSerializer<Keyed> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Keyed", PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): Keyed { error("not implemented!") }
+
+    override fun serialize(encoder: Encoder, value: Keyed) {
+        encoder.encodeString(value.key)
+    }
+}
+
 @Serializable(with = ItemStackSerializer::class)
 data class ItemStack(
     val nbt: JsonObject,
@@ -247,45 +266,44 @@ data class Location(
     val yaw: Float,
 )
 
-enum class PotionEffect {
-    @SerialName("strength") Strength,
-    @SerialName("regeneration") Regeneration;
+enum class PotionEffect(override val key: String) : Keyed {
+    Strength("STRENGTH"),
+    Regeneration("REGENERATION");
 }
 
 enum class Enchantment {
-    @SerialName("protection") Protection;
-}
-enum class Sound {
-    @SerialName("meow") Meow;
+    @SerialName("protection")
+    Protection;
 }
 
-enum class GameMode {
-    Adventure,
-    Survival,
-    Creative;
+enum class GameMode(override val key: String) : Keyed {
+    Adventure("Adventure"),
+    Survival("Survival"),
+    Creative("Creative");
 }
 
-enum class Lobby {
-    @SerialName("Main Lobby") MainLobby,
-    @SerialName("Tournament Hall") TournamentHall,
-    @SerialName("Blitz SG") BlitzSG,
-    @SerialName("The TNT Games") TNTGames,
-    @SerialName("Mega Walls") MegaWalls,
-    @SerialName("Arcade Games") ArcadeGames,
-    @SerialName("Cops and Crims") CopsAndCrims,
-    @SerialName("UHC Champions") UHCChampions,
-    @SerialName("Warlords") Warlords,
-    @SerialName("Smash Heroes") SmashHeroes,
-    @SerialName("Housing") Housing,
-    @SerialName("SkyWars") SkyWars,
-    @SerialName("Speed UHC") SpeedUHC,
-    @SerialName("Classic Games") ClassicGames,
-    @SerialName("Prototype") Prototype,
-    @SerialName("Bed Wars") BedWars,
-    @SerialName("Murder Mystery") MurderMystery,
-    @SerialName("Build Battle") BuildBattle,
-    @SerialName("Duels") Duels,
-    @SerialName("Wool Wars") WoolWars;
+@Serializable(with = KeyedSerializer::class)
+enum class Lobby(override val key: String) : Keyed {
+    MainLobby("Main Lobby"),
+    TournamentHall("Tournament Hall"),
+    BlitzSG("Blitz SG"),
+    TNTGames("The TNT Games"),
+    MegaWalls("Mega Walls"),
+    ArcadeGames("Arcade Games"),
+    CopsAndCrims("Cops and Crims"),
+    UHCChampions("UHC Champions"),
+    Warlords("Warlords"),
+    SmashHeroes("Smash Heroes"),
+    Housing("Housing"),
+    SkyWars("SkyWars"),
+    SpeedUHC("Speed UHC"),
+    ClassicGames("Classic Games"),
+    Prototype("Prototype"),
+    BedWars("Bed Wars"),
+    MurderMystery("Murder Mystery"),
+    BuildBattle("Build Battle"),
+    Duels("Duels"),
+    WoolWars("Wool Wars");
 }
 
 enum class StatOp {
@@ -320,7 +338,7 @@ object StatValueBaseSerializer : KSerializer<StatValue> {
     override val descriptor: SerialDescriptor =
         buildClassSerialDescriptor("StatValueHellfireDespairPitsSerializer")
 
-    override fun deserialize(decoder: Decoder): StatValue { error("Not implemented!") }
+    override fun deserialize(decoder: Decoder): StatValue { error("not implemented!") }
 
     override fun serialize(encoder: Encoder, value: StatValue) {
         if (value is StatValue.I64) {
@@ -337,7 +355,7 @@ object StatI64Serializer : KSerializer<StatValue.I64> {
     override fun serialize(encoder: Encoder, value: StatValue.I64) {
         encoder.encodeLong(value.value)
     }
-    override fun deserialize(decoder: Decoder): StatValue.I64 { error("Not implemented!") }
+    override fun deserialize(decoder: Decoder): StatValue.I64 { error("not implemented!") }
 }
 
 object StatStrSerializer : KSerializer<StatValue.Str> {
@@ -345,5 +363,220 @@ object StatStrSerializer : KSerializer<StatValue.Str> {
     override fun serialize(encoder: Encoder, value: StatValue.Str) {
         encoder.encodeString(value.value)
     }
-    override fun deserialize(decoder: Decoder): StatValue.Str { error("Not implemented!") }
+    override fun deserialize(decoder: Decoder): StatValue.Str { error("not implemented!") }
+}
+
+enum class Sound(override val key: String) : Keyed {
+    AmbienceCave("Ambience Cave"),
+    AmbienceRain("Ambience Rain"),
+    AmbienceThunder("Ambience Thunder"),
+    AnvilBreak("Anvil Break"),
+    AnvilLand("Anvil Land"),
+    AnvilUse("Anvil Use"),
+    ArrowHit("Arrow Hit"),
+    Burp("Burp"),
+    ChestClose("Chest Close"),
+    ChestOpen("Chest Open"),
+    Click("Click"),
+    DoorClose("Door Close"),
+    DoorOpen("Door Open"),
+    Drink("Drink"),
+    Eat("Eat"),
+    Explode("Explode"),
+    FallBig("Fall Big"),
+    FallSmall("Fall Small"),
+    Fizz("Fizz"),
+    Fuse("Fuse"),
+    Glass("Glass"),
+    HurtFlesh("Hurt Flesh"),
+    ItemBreak("Item Break"),
+    ItemPickup("Item Pickup"),
+    LavaPop("Lava Pop"),
+    LevelUp("Level Up"),
+    NoteBass("Note Bass"),
+    NotePiano("Note Piano"),
+    NoteBassDrum("Note Bass Drum"),
+    NoteSticks("Note Sticks"),
+    NoteBassGuitar("Note Bass Guitar"),
+    NoteSnareDrum("Note Snare Drum"),
+
+    NotePling("Note Pling"),
+
+    OrbPickup("Orb Pickup"),
+    ShootArrow("Shoot Arrow"),
+    Splash("Splash"),
+    Swim("Swim"),
+    WoodClick("Wood Click"),
+
+    BatDeath("Bat Death"),
+    BatHurt("Bat Hurt"),
+    BatIdle("Bat Idle"),
+    BatLoop("Bat Loop"),
+    BatTakeoff("Bat Takeoff"),
+    BlazeBreath("Blaze Breath"),
+    BlazeDeath("Blaze Death"),
+    BlazeHit("Blaze Hit"),
+    CatHiss("Cat Hiss"),
+    CatHit("Cat Hit"),
+    CatMeow("Cat Meow"),
+    CatPurr("Cat Purr"),
+    CatPurreow("Cat Purreow"),
+    ChickenIdle("Chicken Idle"),
+    ChickenHurt("Chicken Hurt"),
+    ChickenEggPop("Chicken Egg Pop"),
+    ChickenWalk("Chicken Walk"),
+    CowIdle("Cow Idle"),
+    CowHurt("Cow Hurt"),
+    CowWalk("Cow Walk"),
+    CreeperHiss("Creeper Hiss"),
+    CreeperDeath("Creeper Death"),
+    EnderdragonDeath("Enderdragon Death"),
+    EnderdragonGrowl("Enderdragon Growl"),
+    EnderdragonHit("Enderdragon Hit"),
+    EnderdragonWings("Enderdragon Wings"),
+    EndermanDeath("Enderman Death"),
+    EndermanHit("Enderman Hit"),
+    EndermanIdle("Enderman Idle"),
+    EndermanTeleport("Enderman Teleport"),
+    EndermanScream("Enderman Scream"),
+    EndermanStare("Enderman Stare"),
+
+    GhastScream("Ghast Scream"),
+    GhastScream2("Ghast Scream2"),
+    GhastCharge("Ghast Charge"),
+    GhastDeath("Ghast Death"),
+    GhastFireball("Ghast Fireball"),
+    GhastMoan("Ghast Moan"),
+
+    GuardianHit("Guardian Hit"),
+    GuardianIdle("Guardian Idle"),
+    GuardianDeath("Guardian Death"),
+    GuardianElderHit("Guardian Elder Hit"),
+    GuardianElderIdle("Guardian Elder Idle"),
+    GuardianElderDeath("Guardian Elder Death"),
+    GuardianLandHit("Guardian Land Hit"),
+    GuardianLandIdle("Guardian Land Idle"),
+    GuardianLandDeath("Guardian Land Death"),
+    GuardianCurse("Guardian Curse"),
+    GuardianAttack("Guardian Attack"),
+    GuardianFlop("Guardian Flop"),
+
+    IrongolemDeath("Irongolem Death"),
+    IrongolemHit("Irongolem Hit"),
+    IrongolemThrow("Irongolem Throw"),
+    IrongolemWalk("Irongolem Walk"),
+
+    MagmacubeWalk("Magmacube Walk"),
+    MagmacubeWalk2("Magmacube Walk2"),
+    MagmacubeJump("Magmacube Jump"),
+
+    PigIdle("Pig Idle"),
+    PigDeath("Pig Death"),
+    PigWalk("Pig Walk"),
+
+    RabbitAmbient("Rabbit Ambient"),
+    RabbitDeath("Rabbit Death"),
+    RabbitHurt("Rabbit Hurt"),
+    RabbitJump("Rabbit Jump"),
+
+    SheepIdle("Sheep Idle"),
+    SheepShear("Sheep Shear"),
+    SheepWalk("Sheep Walk"),
+
+    SilverfishHit("Silverfish Hit"),
+    SilverfishKill("Silverfish Kill"),
+    SilverfishIdle("Silverfish Idle"),
+    SilverfishWalk("Silverfish Walk"),
+
+    SkeletonIdle("Skeleton Idle"),
+    SkeletonDeath("Skeleton Death"),
+    SkeletonHurt("Skeleton Hurt"),
+    SkeletonWalk("Skeleton Walk"),
+
+    SlimeAttack("Slime Attack"),
+    SlimeWalk("Slime Walk"),
+    SlimeWalk2("Slime Walk2"),
+
+    SpiderIdle("Spider Idle"),
+    SpiderDeath("Spider Death"),
+    SpiderWalk("Spider Walk"),
+
+    WitherDeath("Wither Death"),
+    WitherHurt("Wither Hurt"),
+    WitherIdle("Wither Idle"),
+    WitherShoot("Wither Shoot"),
+    WitherSpawn("Wither Spawn"),
+
+    WolfBark("Wolf Bark"),
+    WolfDeath("Wolf Death"),
+    WolfGrowl("Wolf Growl"),
+    WolfHowl("Wolf Howl"),
+    WolfHurt("Wolf Hurt"),
+    WolfPant("Wolf Pant"),
+    WolfShake("Wolf Shake"),
+    WolfWalk("Wolf Walk"),
+    WolfWhine("Wolf Whine"),
+
+    ZombieMetal("Zombie Metal"),
+    ZombieWood("Zombie Wood"),
+    ZombieWoodbreak("Zombie Woodbreak"),
+    ZombieIdle("Zombie Idle"),
+    ZombieDeath("Zombie Death"),
+    ZombieHurt("Zombie Hurt"),
+    ZombieInfect("Zombie Infect"),
+    ZombieUnfect("Zombie Unfect"),
+    ZombieRemedy("Zombie Remedy"),
+    ZombieWalk("Zombie Walk"),
+    ZombiePigIdle("Zombie Pig Idle"),
+    ZombiePigAngry("Zombie Pig Angry"),
+    ZombiePigDeath("Zombie Pig Death"),
+    ZombiePigHurt("Zombie Pig Hurt"),
+
+    FireworkBlast("Firework Blast"),
+    FireworkBlast2("Firework Blast2"),
+    FireworkLargeBlast("Firework Large Blast"),
+    FireworkLargeBlast2("Firework Large Blast2"),
+    FireworkTwinkle("Firework Twinkle"),
+    FireworkTwinkle2("Firework Twinkle2"),
+    FireworkLaunch("Firework Launch"),
+
+    FireworksBlast("Fireworks Blast"),
+    FireworksBlast2("Fireworks Blast2"),
+    FireworksLargeBlast("Fireworks Large Blast"),
+    FireworksLargeBlast2("Fireworks Large Blast2"),
+    FireworksTwinkle("Fireworks Twinkle"),
+    FireworksTwinkle2("Fireworks Twinkle2"),
+    FireworksLaunch("Fireworks Launch"),
+
+    SuccessfulHit("Successful Hit"),
+
+    HorseAngry("Horse Angry"),
+    HorseArmor("Horse Armor"),
+    HorseBreathe("Horse Breathe"),
+    HorseDeath("Horse Death"),
+    HorseGallop("Horse Gallop"),
+    HorseHit("Horse Hit"),
+    HorseIdle("Horse Idle"),
+    HorseJump("Horse Jump"),
+    HorseLand("Horse Land"),
+    HorseSaddle("Horse Saddle"),
+    HorseSoft("Horse Soft"),
+    HorseWood("Horse Wood"),
+    DonkeyAngry("Donkey Angry"),
+    DonkeyDeath("Donkey Death"),
+    DonkeyHit("Donkey Hit"),
+    DonkeyIdle("Donkey Idle"),
+    HorseSkeletonDeath("Horse Skeleton Death"),
+    HorseSkeletonHit("Horse Skeleton Hit"),
+    HorseSkeletonIdle("Horse Skeleton Idle"),
+    HorseZombieDeath("Horse Zombie Death"),
+    HorseZombieHit("Horse Zombie Hit"),
+    HorseZombieIdle("Horse Zombie Idle"),
+
+    VillagerDeath("Villager Death"),
+    VillagerHaggle("Villager Haggle"),
+    VillagerHit("Villager Hit"),
+    VillagerIdle("Villager Idle"),
+    VillagerNo("Villager No"),
+    VillagerYes("Villager Yes");
 }

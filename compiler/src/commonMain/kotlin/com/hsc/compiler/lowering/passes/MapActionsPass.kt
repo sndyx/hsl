@@ -1,14 +1,19 @@
 package com.hsc.compiler.lowering.passes
 
+import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.action.*
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.ArgParser
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.similar
 
-object MapCallActionsPass : AstPass {
+object MapActionsPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
-        ctx.query<Block>()
-            .forEach { MapCallActionsVisitor(ctx).visitBlock(it) }
+        val visitor = MapCallActionsVisitor(ctx)
+        ctx.query<Block>().forEach {
+            visitor.visitBlock(it)
+        }
     }
 
 }
@@ -20,10 +25,10 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
             is ExprKind.Call -> {
-                if (kind.ident.global || !Action.builtins.contains(kind.ident.name)) return
+                if (kind.ident.isGlobal || !Action.builtins.contains(kind.ident.name)) return
                 p = ArgParser(ctx, kind.args)
                 val action = when (kind.ident.name) {
-                    "apply_layout" -> parseLayout()
+                    "apply_layout" -> parseApplyLayout()
                     "potion_effect" -> parsePotionEffect()
                     "balance_player_team" -> Action.BalancePlayerTeam
                     "cancel_event" -> Action.CancelEvent
@@ -70,15 +75,15 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
         }
     }
 
-    fun parseLayout(): Action {
-        p.assertLength(1)
+    fun parseApplyLayout(): Action {
+        p.assertLength(1, "apply_layout(<layout>)")
         return Action.ApplyInventoryLayout(
             p.nextStringLit()
         )
     }
 
     fun parsePotionEffect(): Action {
-        p.assertLength(4)
+        p.assertLength(4, "potion_effect(<effect>, <duration>, <level>, <override_existing_effects>)")
         val effectStr = p.nextStringLit()
         val effect = runCatching {
             PotionEffect.valueOf(effectStr)
@@ -92,26 +97,26 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseChangePlayerGroup(): Action {
-        p.assertLength(2)
+        p.assertLength(2, "change_player_group(<group>, <protect_demotion>)")
         val group = p.nextStringLit()
         val protectDemotion = p.nextBooleanLit()
         return Action.ChangePlayerGroup(group, protectDemotion)
     }
 
     fun parseActionBar(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "action_bar(<message>)")
         val message = p.nextStringLit()
         return Action.DisplayActionBar(message)
     }
 
     fun parseDisplayMenu(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "display_menu(<menu>)")
         val menu = p.nextStringLit()
         return Action.DisplayMenu(menu)
     }
 
     fun parseDisplayTitle(): Action {
-        p.assertLength(5)
+        p.assertLength(5, "display_title(<title>, <subtitle>, <fadein>, <stay>, <fadeout>)")
         val title = p.nextStringLit()
         val subtitle = p.nextStringLit()
         val fadeIn = p.nextNumberLit().toInt()
@@ -121,7 +126,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseEnchantHeldItem(): Action {
-        p.assertLength(2)
+        p.assertLength(2, "enchant_held_item(<enchantment>, <level>)")
         val enchantString = p.nextStringLit()
         val enchant = runCatching {
             Enchantment.valueOf(enchantString)
@@ -133,19 +138,19 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseFailParkour(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "fail_parkour(<message>)")
         val message = p.nextStringLit()
         return Action.DisplayMenu(message)
     }
 
     fun parseGiveExpLevels(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "give_exp_levels(<levels>)")
         val levels = p.nextNumberLit().toInt()
         return Action.GiveExperienceLevels(levels)
     }
 
     fun parseGiveItem(): Action {
-        p.assertLength(4)
+        p.assertLength(4, "give_item(<item>, <allow_multiple>, <inventory_slot>, <replace_existing>)")
         val item = p.nextItemLit()
         val allowMultiple = p.nextBooleanLit()
         val inventorySlot = p.nextNumberLit().toInt()
@@ -154,7 +159,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parsePause(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "pause(<ticks>)")
         val ticks = p.nextNumberLit().toInt()
         return Action.PauseExecution(ticks)
     }
@@ -173,180 +178,75 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     )
     */
     fun parsePlaySound(): Action {
-        p.assertLength(4)
+        p.assertLength(4, "play_sound(<sound>, <TODO>)")
         val soundString = p.nextStringLit()
-        val sound = runCatching {
-            Sound.valueOf(soundString)
-        }.getOrElse {
-            throw ctx.dcx().err("invalid sound `$soundString`")
+        val sound = Sound.entries.find { it.key.lowercase() == soundString.lowercase() } ?: run {
+            val err = ctx.dcx().err("invalid sound `$soundString`", p.args.span)
+            val options = Sound.entries.map { it.key }
+            similar(soundString, options).forEach {
+                err.note(Level.Hint, "did you mean `$it`?")
+            }
+            throw err
         }
         val volume = TODO("GAHHHH, FLOAT PARSING IS DEAD")
     }
 
     fun parseSendMessage(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "send_message(<message>)")
         val message = p.nextStringLit()
         return Action.SendMessage(message)
     }
 
     fun parseRemoveItem(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "remove_item(<item>)")
         val item = p.nextItemLit()
         return Action.RemoveItem(item)
     }
 
     fun parseSetPlayerTeam(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "set_player_team(<team>)")
         val team = p.nextStringLit()
         return Action.SetPlayerTeam(team)
     }
 
     fun parseSetGameMode(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "set_gamemode(<gamemode>)")
         val gameModeString = p.nextStringLit()
-        val gameMode = runCatching {
-            GameMode.valueOf(gameModeString)
-        }.getOrElse {
-            throw ctx.dcx().err("invalid gamemode `$gameModeString`")
+        val gameMode = GameMode.entries.find { it.key.lowercase() == gameModeString.lowercase() } ?: run {
+            val err = ctx.dcx().err("invalid gamemode `$gameModeString`", p.args.span)
+            val options = GameMode.entries.map { it.key }
+            similar(gameModeString, options).forEach {
+                err.note(Level.Hint, "did you mean `$it`?")
+            }
+            throw err
         }
         return Action.SetGameMode(gameMode)
     }
 
     fun parseSetCompassTarget(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "set_compass_target(<location>)")
         val location = p.nextLocation()
         return Action.SetCompassTarget(location)
     }
 
     fun parseTeleportPlayer(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "teleport_player(<location>)")
         val location = p.nextLocation()
         return Action.TeleportPlayer(location)
     }
 
     fun parseSendToLobby(): Action {
-        p.assertLength(1)
+        p.assertLength(1, "send_to_lobby(<lobby>)")
         val lobbyString = p.nextStringLit()
-        val lobby = runCatching {
-            Lobby.valueOf(lobbyString)
-        }.getOrElse {
-            throw ctx.dcx().err("invalid lobby `$lobbyString`")
+        val lobby = Lobby.entries.find { it.key.lowercase() == lobbyString.lowercase() } ?: run {
+            val err = ctx.dcx().err("invalid lobby `$lobbyString`", p.args.span)
+            val options = Lobby.entries.map { it.key }
+            similar(lobbyString, options).forEach {
+                err.note(Level.Hint, "did you mean `$it`?")
+            }
+            throw err
         }
         return Action.SendToLobby(lobby)
     }
-
-}
-
-private class ArgParser(val ctx: LoweringCtx, val args: Args) {
-
-    var pos = 0
-
-    fun assertLength(length: Int) {
-        if (args.args.size != length) {
-            val s1 = if (length == 1) "" else "s"
-            val s2 = if (args.args.size == 1) "" else "s"
-            val was = if (args.args.size == 1) "was" else "were"
-            val err = ctx.dcx()
-                .err("this function takes $length parameter$s1 but ${args.args.size} parameter$s2 $was supplied")
-            err.span(args.span)
-            throw err
-        }
-    }
-
-    fun nextStringLit(): String {
-        val expr = bump()
-        when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.Str -> return lit.value
-                    else -> {
-                        throw ctx.dcx().err("expected string, found ${lit.str()}")
-                    }
-                }
-            }
-            else -> {
-                throw ctx.dcx().err("expected string, found ${kind.str()}")
-            }
-        }
-    }
-
-    fun nextNumberLit(): Long {
-        val expr = bump()
-        when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.I64 -> return lit.value
-                    else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
-                    }
-                }
-            }
-            else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
-            }
-        }
-    }
-
-    fun nextValue(): StatValue {
-        val expr = bump()
-        return when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.I64 -> StatValue.I64(lit.value)
-                    else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
-                    }
-                }
-            }
-            is ExprKind.Var -> {
-                if (kind.ident.global) StatValue.Str("%stat.global/${kind.ident.name}%")
-                else StatValue.Str("%stat.player/${kind.ident.name}%")
-            }
-            else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
-            }
-        }
-    }
-
-    fun nextBooleanLit(): Boolean {
-        val expr = bump()
-        when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.Bool -> return lit.value
-                    else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
-                    }
-                }
-            }
-            else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
-            }
-        }
-    }
-
-    fun nextItemLit(): ItemStack {
-        val expr = bump()
-        when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.Item -> return lit.value
-                    else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
-                    }
-                }
-            }
-            else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
-            }
-        }
-    }
-
-    fun nextLocation(): Location {
-        TODO()
-    }
-
-
-    fun bump(): Expr = args.args[pos++]
 
 }

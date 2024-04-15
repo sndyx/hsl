@@ -19,12 +19,15 @@ class Parser(
     val sess: CompileSess,
 ) {
 
-    var token: Token = Token.dummy()
+    private var _token: Token? = null
+    val token: Token get() = if (_token == null) {
+        bump0()
+        _token!!
+    } else _token!!
     var prev: Token = Token.dummy()
     var fid: Int = 0
 
     init {
-        bump()
         fid = token.span.fid // Fid of first token
     }
 
@@ -42,8 +45,10 @@ class Parser(
             null
         } else if (eat(TokenKind.Kw(Keyword.Fn))) {
             parseFnItem()
-        } else if (eat(TokenKind.Pound)) {
-            parseProcessorFnItem()
+        } else if (eat(TokenKind.Kw(Keyword.Enum))) {
+            parseEnumItem()
+        } else if (eat(TokenKind.Kw(Keyword.Const))) {
+            parseConstItem()
         } else {
             tryRecoverInvalidItem()
         }
@@ -107,6 +112,31 @@ class Parser(
         val block = parseBlock()
         val hi = prev.span.hi
         return Item(Span(lo, hi, fid), ident, ItemKind.Fn(Fn(processors, sig, block)))
+    }
+
+    fun parseEnumItem(): Item {
+        val lo = prev.span.lo
+        val ident = parseIdent()
+        expect(TokenKind.OpenDelim(Delimiter.Brace))
+        val map = buildMap {
+            while (!eat(TokenKind.CloseDelim(Delimiter.Brace))) {
+                val name = parseRawIdent()
+                expect(TokenKind.Eq)
+                val value = parseI64()
+                put(name, value)
+            }
+        }
+        val hi = prev.span.hi
+        return Item(Span(lo, hi, fid), ident, ItemKind.Enum(Enum(map)))
+    }
+
+    fun parseConstItem(): Item {
+        val lo = prev.span.lo
+        val ident = parseIdent()
+        expect(TokenKind.Eq)
+        val expr = parseExpr()
+        val hi = prev.span.hi
+        return Item(Span(lo, hi, fid), ident, ItemKind.Const(expr))
     }
 
     fun parseBlock(): Block {
@@ -310,7 +340,7 @@ class Parser(
         } else if (eat(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
             val expr = parseExpr()
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Paren(expr))
+            return expr
         }
         val err = dcx().err("expected expression")
         err.span(token.span)
@@ -452,11 +482,26 @@ class Parser(
         }
     }
 
+    fun parseRawIdent(): String {
+        if (check(TokenKind.At)) {
+            sess.dcx().err("expected name, found global ident").emit()
+        }
+        expect(TokenKind.Ident::class)
+        val name = prev.kind.ident.value
+        return name
+    }
+
     fun parseIdent(): Ident {
         val global = eat(TokenKind.At::class)
         expect(TokenKind.Ident::class)
-        val name = prev.kind.ident.value
-        return Ident(global, name)
+        val first = prev.kind.ident.value
+        return if (!global) {
+            if (eat(TokenKind.Dot::class)) {
+                expect(TokenKind.Ident::class)
+                val name = prev.kind.ident.value
+                Ident.Team(first, name)
+            } else Ident.Player(first)
+        } else Ident.Global(first)
     }
 
     fun parseLiteral(): Lit {
@@ -642,14 +687,22 @@ class Parser(
             if (it) bump()
         }
 
+    /**
+     * Lazily bumps the current [Token].
+     */
     fun bump() {
         prev = token
-        token = if (stream.hasNext()) {
-            stream.next()
-        } else {
-            // This is hacky, but This will have to do for now
-            Token(TokenKind.Eof, Span.single(prev.span.hi + 1, prev.span.fid))
-        }
+        _token = null
+    }
+
+    private fun bump0() {
+        _token =
+            if (stream.hasNext()) {
+                stream.next()
+            } else {
+                // This is hacky, but This will have to do for now
+                Token(TokenKind.Eof, Span.single(prev.span.hi + 1, prev.span.fid))
+            }
     }
 
 }

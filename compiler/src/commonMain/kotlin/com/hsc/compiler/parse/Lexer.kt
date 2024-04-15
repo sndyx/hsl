@@ -75,6 +75,7 @@ class Lexer(
             ',' -> TokenKind.Comma
             ':' -> TokenKind.Colon
             '@' -> TokenKind.At
+            '.' -> TokenKind.Dot
             '=' -> {
                 when (first()) {
                     '=' -> {

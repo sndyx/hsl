@@ -16,6 +16,9 @@ class CompileCommand : CliktCommand() {
 
     private val paths: List<String> by argument().multiple()
 
+    private val houseName: String by option("--house-name")
+        .default("Project")
+
     private val target: Target by option("--target", "-t")
         .enum<Target> { it.label }
         .default(Target.Default)
@@ -34,18 +37,23 @@ class CompileCommand : CliktCommand() {
     private val output: String by option("--output", "-o")
         .default("")
 
-    private val forceColor: Boolean by option("--force-color", "-c").flag()
+    private val color: Color by option("--color", "-c")
+        .enum<Color> { it.label }
+        .default(Color.Auto)
+        .help("set output color")
 
     private val version: Boolean by option("--version", "-v").flag()
         .help("Show version")
+
+    private val parallel: Boolean by option("--parallel").flag()
 
     override fun run() {
         if (version || paths.isEmpty()) {
             println("hsc v1.0.0")
             return
         }
-        val opts = CompileOptions(target, mode, emitter, Path(output), forceColor)
-        Driver(opts).run(paths.map { Path(it) })
+        val opts = CompileOptions(houseName, target, mode, emitter, Path(output), color, parallel)
+        runCompiler(opts, paths.map { Path(it) })
     }
 
 }

@@ -8,48 +8,55 @@ import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.passes.*
 import com.hsc.compiler.pretty.prettyPrintAst
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.datetime.Clock
 import kotlin.reflect.KClass
 
 private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Normal to listOf(
-        RedeclarationCheckPass,
-        OwnedRecursiveCallCheckPass,
+        CheckRedeclarationPass,
+        CheckOwnedRecursiveCallPass,
         ReturnAssignPass,
+        InlineConstPass,
+        InlineEnumPass,
         InlineFunctionPass,
-        RemoveParenPass,
         ExpandInPass,
         ExpandMatchPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
-        symbiotic(ConstantFoldingPass, BlockFoldingPass),
-        FlattenComplexExpressionsPass,
+        symbiotic(ConstantFoldingPass, InlineBlockPass),
+        ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
-        MapCallActionsPass, // Before call assignment, or will become valid expression
+        MapActionsPass, // Before call assignment, or will become valid expression
+        MapConditionsPass,
         InlineFunctionCallAssignmentPass,
-        FlattenTempReassignPass,
+        ExpandModPass,
+        CollapseTempReassignPass,
         EmptyBlockCheckPass,
         // CleanupTempVarsPass,
-        LimitCheckPass,
+        CheckLimitsPass,
     ),
     Mode.Strict to listOf(
-        RedeclarationCheckPass,
-        OwnedRecursiveCallCheckPass,
+        CheckRedeclarationPass,
+        CheckOwnedRecursiveCallPass,
         EmptyBlockCheckPass,
-        MapCallActionsPass,
-        LimitCheckPass,
+        MapActionsPass,
+        CheckLimitsPass,
     )
 )
 
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
+        //val startTime = Clock.System.now()
         it.run(ctx)
-
-        //println(it::class.simpleName)
-        //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        //print(it::class.simpleName)
+        //print(" ")
+        //println(Clock.System.now() - startTime)
+        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 
-class LoweringCtx(val ast: Ast, val sess: CompileSess) {
+class LoweringCtx(val ast: Ast, val sess: CompileSess, val dispatcher: CoroutineDispatcher) {
 
     @PublishedApi
     internal val queryCache: MutableMap<KClass<*>, List<Any>> = mutableMapOf()

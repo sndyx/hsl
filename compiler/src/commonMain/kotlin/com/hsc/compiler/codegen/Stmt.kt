@@ -36,9 +36,9 @@ fun ActionTransformer.transformStmt(stmt: Stmt): Action {
 
 private fun ActionTransformer.makeAssign(ident: Ident, op: BinOpKind?, value: StatValue): Action {
     val statOp = op?.let { unwrapStatOp(it) } ?: StatOp.Set
-    return if (ident.global) {
-        Action.ChangeGlobalStat(ident.name, statOp, value)
-    } else {
-        Action.ChangePlayerStat(ident.name, statOp, value)
+    return when (ident) {
+        is Ident.Player -> Action.ChangePlayerStat(ident.name, statOp, value)
+        is Ident.Global -> Action.ChangeGlobalStat(ident.name, statOp, value)
+        is Ident.Team -> Action.ChangeTeamStat(ident.name, statOp, value, ident.team)
     }
 }
