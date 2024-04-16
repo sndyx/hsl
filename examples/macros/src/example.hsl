@@ -1,0 +1,40 @@
+// Creates a single-line definition
+#define SAY_HELLO send_message("Hello, world!")
+
+fn main() {
+    // Compile time #if/#elif/#else macro, as opposed to regular if/elif/else
+    #if (5 == (4 + 1)) { // Condition must be known at compile time
+        SAY_HELLO
+    } #else {
+        send_message("Goodbye, world!")
+    }
+
+    // Compile time #for macro, as opposed to regular for loop
+    #for (i in 1..5) {
+        send_message("Current count: $i") // $i or ${i} for macro variable
+    }
+}
+
+// Multi-line macros are delimited with '`'.
+// Macros may contain nested & recursive calls
+#define FIB(n) `{ // Definitions may require arguments
+    #if ($n <= 1) $n
+    #else FIB($n - 1) + FIB($n - 2)
+}`
+
+// All macros can be declared anywhere
+#if (FIB(5) == 7) {
+    fn do_one_thing() {
+        x = FIB(8)
+    }
+} #else {
+    fn do_another_thing() {
+        x = FIB(10)
+    }
+}
+
+#for (i in 1..5) {
+    fn function_$i() {
+        SAY_HELLO
+    }
+}

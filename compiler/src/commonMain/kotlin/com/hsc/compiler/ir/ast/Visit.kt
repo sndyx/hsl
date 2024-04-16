@@ -38,9 +38,11 @@ open class BlockAwareVisitor : AstVisitor {
     private val blocks = mutableListOf<Block>()
     private val positions = mutableListOf<Int>()
 
-    // These should not fail, probably
-    val currentBlock: Block get() = blocks.last()
-    val currentPosition: Int get() = positions.last()
+    val inBlock: Boolean get() = blocks.isNotEmpty()
+
+    // These will not fail if inBlock is checked. Be careful!
+    val currentBlock: Block get() = blocks.lastOrNull() ?: error("current block")
+    val currentPosition: Int get() = positions.lastOrNull() ?: error("current position")
     val currentStmt: Stmt get() = currentBlock.stmts[currentPosition]
 
     override fun visitBlock(block: Block) {
@@ -61,7 +63,7 @@ open class BlockAwareVisitor : AstVisitor {
     }
 
     fun pass() {
-        positions.add(positions.removeLast() + 1)
+        if (positions.isNotEmpty()) positions.add(positions.removeLast() + 1)
     }
 
     fun added(amount: Int) {
@@ -84,6 +86,9 @@ fun walkItem(v: AstVisitor, item: Item) {
         }
         is ItemKind.Const -> {
             v.visitExpr(item.kind.value)
+        }
+        is ItemKind.Artificial -> {
+            v.visitStmt(item.kind.value)
         }
         is ItemKind.Enum -> {
             // DO NOTHING

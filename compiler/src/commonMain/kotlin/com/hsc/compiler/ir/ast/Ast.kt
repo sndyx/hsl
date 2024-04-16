@@ -53,6 +53,10 @@ sealed class ItemKind {
         override fun deepCopy(): ItemKind = copy(value = value.deepCopy())
     }
 
+    data class Artificial(val value: Stmt) : ItemKind() {
+        override fun deepCopy(): ItemKind = copy(value = value.deepCopy())
+    }
+
 }
 
 data class Fn(

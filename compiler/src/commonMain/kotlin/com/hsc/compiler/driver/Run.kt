@@ -53,7 +53,7 @@ fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
     val dcx = DiagCtx(compiler.emitter)
     val sess = CompileSess(dcx, opts, compiler.sm)
     compiler.enter {
-        val lcx = LoweringCtx(ast, sess, compiler.scope)
+        val lcx = LoweringCtx(ast, sess)
         lower(lcx)
     }
 

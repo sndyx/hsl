@@ -1,6 +1,5 @@
 package com.hsc.compiler.lowering.passes
 
-import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Condition
 import com.hsc.compiler.ir.ast.*
@@ -74,7 +73,7 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
                         val was = if (kind.args.args.size == 1) "was" else "were"
                         val err = ctx.dcx().err("this function takes ${fn.sig.args.size} parameter$s1 but ${kind.args.args.size} parameter$s2 $was supplied")
                         err.span(kind.args.span)
-                        throw CompileException(err) // This will probably mess up future passes if not thrown
+                        throw err // This will probably mess up future passes if not thrown
                     }
 
                     val stmts = fn.sig.args.mapIndexed { idx, ident ->

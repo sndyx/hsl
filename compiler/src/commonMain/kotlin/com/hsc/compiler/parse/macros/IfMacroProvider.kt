@@ -1,9 +1,9 @@
 package com.hsc.compiler.parse.macros
 
-import com.hsc.compiler.ir.ast.Expr
-import com.hsc.compiler.ir.ast.ExprKind
+import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.ir.ast.Lit
-import com.hsc.compiler.lowering.fold
+import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.*
 import com.hsc.compiler.span.Span
 
@@ -25,7 +25,7 @@ object IfMacroProvider : MacroProvider {
                     if (it == '{') depth++
                     if (it == '}') depth--
                     !(it == '}' && depth == 0) // exit
-                }, pos)
+                }, pos).also { lexer.bump() }
             } else {
                 val pos = lexer.pos
                 Pair(next.toString() + lexer.takeWhile { it != '\n' }, pos)
@@ -52,7 +52,10 @@ object IfMacroProvider : MacroProvider {
         }
 
         for ((expr, src, srcOffset) in conditions) {
-            fold(lexer.sess, expr)
+            val stmt = Stmt(Span.none, StmtKind.Expr(expr))
+            val exprItem = Item(Span.none, Ident.Player("#if_lcx"), ItemKind.Artificial(stmt))
+            val lcx = LoweringCtx(Ast(mutableListOf(exprItem)), lexer.sess)
+            lower(lcx)
 
             val success = when (val kind = expr.kind) {
                 is ExprKind.Lit -> {
@@ -66,7 +69,12 @@ object IfMacroProvider : MacroProvider {
                         else -> false
                     }
                 }
-                else -> false
+                else -> {
+                    val err = lexer.sess.dcx().err("#if condition is not a compile time constant")
+                    err.spanLabel(expr.span, "this condition")
+                    err.emit()
+                    false
+                }
             }
 
             if (success) {

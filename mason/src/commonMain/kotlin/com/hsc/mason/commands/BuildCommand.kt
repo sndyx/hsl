@@ -36,6 +36,9 @@ class BuildCommand : CliktCommand() {
 
         val config = build(path)
 
+        val buildPath = path.resolve("build")
+        if (!fs.exists(buildPath)) fs.createDirectory(buildPath)
+
         Hsc.compile(collectedFiles, path.resolve("build/out.json"), config.pkg.mode ?: Mode.Normal)
     }
 

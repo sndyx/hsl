@@ -27,6 +27,16 @@ private class InlineBlockVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
             is ExprKind.Block -> {
                 val block = kind.block
 
+                if (block.stmts.size == 1 && block.stmts.single().kind is StmtKind.Expr) {
+                    expr.kind = (block.stmts.single().kind as StmtKind.Expr).expr.kind
+                    super.visitExpr(expr)
+                    return
+                }
+
+                if (!inBlock) {
+                    throw ctx.dcx().err("no owning block to inline statements", expr.span)
+                }
+
                 var flag = false
                 when (val currentKind = currentStmt.kind) {
                     is StmtKind.Expr -> {
@@ -46,7 +56,6 @@ private class InlineBlockVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
                         err.spanLabel(block.span, "block used as expression must end with one")
                         throw err
                     }
-
                     currentBlock.stmts.addAll(currentPosition, block.stmts.dropLast(1))
                     expr.kind = (block.stmts.last().kind as StmtKind.Expr).expr.kind
                     added(block.stmts.size - 1)

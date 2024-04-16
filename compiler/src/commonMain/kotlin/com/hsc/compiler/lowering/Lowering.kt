@@ -24,7 +24,8 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         ExpandMatchPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
-        symbiotic(ConstantFoldingPass, InlineBlockPass),
+        InlineBlockPass,
+        ConstantFoldingPass,
         ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
         MapActionsPass, // Before call assignment, or will become valid expression
@@ -48,15 +49,15 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
         //val startTime = Clock.System.now()
+        //println(it::class.simpleName)
         it.run(ctx)
-        //print(it::class.simpleName)
         //print(" ")
         //println(Clock.System.now() - startTime)
-        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 
-class LoweringCtx(val ast: Ast, val sess: CompileSess, val dispatcher: CoroutineDispatcher) {
+class LoweringCtx(val ast: Ast, val sess: CompileSess) {
 
     @PublishedApi
     internal val queryCache: MutableMap<KClass<*>, List<Any>> = mutableMapOf()

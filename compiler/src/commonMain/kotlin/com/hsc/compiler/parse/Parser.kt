@@ -4,8 +4,8 @@ package com.hsc.compiler.parse
 
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.errors.DiagCtx
+import com.hsc.compiler.errors.Diagnostic
 import com.hsc.compiler.errors.Level
-import com.hsc.compiler.errors.CompileException
 import com.hsc.compiler.ir.action.ItemStack
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
@@ -60,9 +60,9 @@ class Parser(
             parseDelimited(Delimiter.Bracket) {
                 parseIdent().name
             }.getOrElse { e ->
-                if (e !is CompileException) throw e
-                e.diag.note(Level.Hint, "processor lists are declared `#[...]`")
-                e.diag.emit()
+                if (e !is Diagnostic) throw e
+                e.note(Level.Hint, "processor lists are declared `#[...]`")
+                e.emit()
                 emptyList()
             }
         } else {
@@ -95,13 +95,13 @@ class Parser(
                 "let", "val", "var" -> {
                     err.note(Level.Hint, "did you mean `#define`?")
                     // Don't recover this.
-                    throw CompileException(err)
+                    throw err
                 }
             }
         }
         val err = dcx().err("expected item, found ${token.kind}")
         err.span(token.span)
-        throw CompileException(err)
+        throw err
     }
 
     fun parseFnItem(processors: Processors? = null): Item {
@@ -147,9 +147,8 @@ class Parser(
             if (eat(TokenKind.CloseDelim(Delimiter.Brace))) {
                 break
             } else if (eat(TokenKind.Eof)) {
-                val err = dcx().err("unclosed function body")
-                err.span(startSpan)
-                throw CompileException(err) // No reason to recover this
+                throw dcx().err("unclosed function body", startSpan)
+                // No reason to recover this
             } else {
                 stmts.add(parseStmt())
             }
@@ -342,9 +341,7 @@ class Parser(
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
             return expr
         }
-        val err = dcx().err("expected expression")
-        err.span(token.span)
-        throw CompileException(err)
+        throw dcx().err("expected expression", token.span)
     }
 
     fun checkBinOp(): Boolean {
@@ -390,15 +387,15 @@ class Parser(
             cond = parseExpr()
             expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
         }.onFailure { e ->
-            if (e !is CompileException) throw e
+            if (e !is Diagnostic) throw e
             val start = token.span.lo
             var end = start
             eatUntil(TokenKind.OpenDelim(Delimiter.Brace)) {
                 end = it.span.hi
             }
-            e.diag.spans.clear()
-            e.diag.spanLabel(Span(start, end, token.span.fid), "missing parenthesis")
-            e.diag.emit()
+            e.spans.clear()
+            e.spanLabel(Span(start, end, token.span.fid), "missing parenthesis")
+            e.emit()
             // Recover
         }
         val block = if (check(TokenKind.OpenDelim(Delimiter.Brace))) {
@@ -459,9 +456,9 @@ class Parser(
             expect(TokenKind.DotDot)
             val hi = parseExpr()
             return Range(lo, hi)
-        } catch (e: CompileException) {
+        } catch (e: Diagnostic) {
             // Ignore integer limit errors. We are only interested in transforming vague parse errors
-            if (e.diag.message != "invalid integer") {
+            if (e.message != "invalid integer") {
                 // This is an overly complex way to compute the span. but I'm doing it anyway, in the case
                 // that somebody uses something like python range syntax eg: `range(1, 100)`
                 var end = start
@@ -477,7 +474,7 @@ class Parser(
                 val err = dcx().err("expected range")
                 err.span(Span(start, end, token.span.fid))
                 err.note(Level.Hint, "ranges are declared `<low>..<high>`")
-                throw CompileException(err)
+                throw err
             } else throw e
         }
     }
@@ -562,7 +559,7 @@ class Parser(
             } else {
                 try {
                     list.add(producer())
-                } catch (e: CompileException) {
+                } catch (e: Diagnostic) {
                     // Parsing failed, find end of delimited section
                     eatUntil(TokenKind.CloseDelim(delimiter))
                     return Result.failure(e)
@@ -590,15 +587,11 @@ class Parser(
             }
             else -> { /* Ignore */ }
         }
-        val err = dcx().err("expected ${kind}, found ${token.kind}")
-        err.span(token.span)
-        throw CompileException(err)
+        throw dcx().err("expected ${kind}, found ${token.kind}", token.span)
     }
 
     fun unexpected(): Nothing {
-        val err = dcx().err("unexpected token ${token.kind}")
-        err.span(token.span)
-        throw CompileException(err)
+        throw dcx().err("unexpected token ${token.kind}", token.span)
     }
 
     /**
@@ -606,9 +599,7 @@ class Parser(
      */
     fun <T : TokenKind> assert(kind: KClass<T>) {
         if (!kind.isInstance(token.kind)) {
-            val err = dcx().err("expected ${kind.name}, found ${token.kind}")
-            err.span(token.span)
-            throw CompileException(err)
+            throw dcx().err("expected ${kind.name}, found ${token.kind}", token.span)
         }
     }
 
@@ -617,9 +608,7 @@ class Parser(
      */
     fun assert(kind: TokenKind) {
         if (token.kind != kind) {
-            val err = dcx().err("expected ${kind}, found ${token.kind}")
-            err.span(token.span)
-            throw CompileException(err)
+            throw dcx().err("expected ${kind}, found ${token.kind}", token.span)
         }
     }
 
@@ -641,7 +630,7 @@ class Parser(
         if (!kind.isInstance(token.kind)) {
             val err = dcx().err("expected ${kind.name}, found ${token.kind}")
             err.spanLabel(token.span, "unexpected token")
-            throw CompileException(err)
+            throw err
         }
         bump()
     }
@@ -653,7 +642,7 @@ class Parser(
         if (token.kind != kind) {
             val err = dcx().err("expected ${kind}, found ${token.kind}")
             err.spanLabel(token.span, "unexpected token")
-            throw CompileException(err)
+            throw err
         }
         bump()
     }

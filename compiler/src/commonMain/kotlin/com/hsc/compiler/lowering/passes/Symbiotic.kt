@@ -23,6 +23,8 @@ private class SymbioticPass(val a: VolatilePass, val b: VolatilePass) : AstPass 
             else break
             a.changed = false
         }
+        a.run(ctx)
+        b.run(ctx)
     }
 
 }

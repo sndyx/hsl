@@ -41,6 +41,10 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 super.visitItem(item)
                 t.println()
             }
+            is ItemKind.Artificial -> {
+                super.visitItem(item)
+                t.println()
+            }
         }
     }
 
