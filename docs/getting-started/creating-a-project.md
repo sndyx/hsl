@@ -31,7 +31,7 @@ Source files are located in the `src` directory and end in the file
 ## Building
 
 To build your project, run `mason build`. The resultant actions will be
- located in `build/actions.json`
+ located in `build/out.json`
 
 ---
 

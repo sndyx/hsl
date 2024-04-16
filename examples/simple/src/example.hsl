@@ -1,8 +1,8 @@
-#define FIB(n) `{
-    #if ($n <= 1) $n
-    #else FIB($n - 1) + FIB($n - 2)
-}`
-
-fn main() {
-    x = FIB(20)
+fn test() {
+    x = 5
+    x += 9
+    x += y * 4
+    send_message("Hello from HSL!")
+    kill()
+    send_to_lobby("UHC Champions")
 }

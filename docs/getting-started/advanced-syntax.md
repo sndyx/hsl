@@ -30,8 +30,58 @@ Order of operations are respected for all equations.
 A function with two parameters and a return expression.
 
 ```rust
-fn print_sum(_a, _b) {
-    _result = _a + _b
-    send_message("sum of ${_a} and ${_b} is ${_result}")
+fn sum(_a, _b) {
+    return _a + _b
 }
+
+fn print_sum() {
+    send_message("sum of ${a} and ${b} is ${sum(a, b)}") 
+}
+```
+
+## Match Expression
+
+```rust
+match (x) {
+    1 => send_message("x is 1")
+    2 => send_message("x is 2")
+    else => {
+        send_message("x is neither")
+    }
+}
+```
+
+## Ranges
+
+Check if a number is within a range using `in` operator.
+
+```rust
+x = 10
+y = 9
+if (x in 1..(y + 1)) {
+    send_message("fits in range")
+}
+```
+
+## Consts
+
+```rust
+const x = 5
+```
+
+Consts can only be declared in the global scope, and will never change.
+
+## Enums
+
+```rust
+enum Color {
+    Red = 1
+    Blue = 2
+    Green = 3
+}
+```
+
+```rust
+x = Color.Red
+// x = 1
 ```

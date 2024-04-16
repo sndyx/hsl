@@ -47,6 +47,12 @@ Global variables can be declared by prefixing a variable name with `@`.
 @kills = 5
 ```
 
+Team variables are declared `team.stat`, where `team` is the team name
+ and `stat` is the stat name.
+```rust
+blue.kills = 0
+```
+
 Variables can be modified using various binary operators.
 
 ```rust
@@ -65,6 +71,36 @@ fn test() {
     x = 5 // Will compile
 }
 ```
+
+## Conditionals
+
+```rust
+if (a > b) {
+    send_message("a")
+} else {
+    send_message("b")
+}
+```
+
+In HSL, `if` can also be used as an expression.
+
+```rust
+x = if (a > b) a else b
+```
+
+## Built-in Functions
+
+Built-in functions provide direct mappings to most actions. They
+ are syntactically identical to normal functions.
+
+```rust
+send_message("Hello from HSL!")
+kill()
+send_to_lobby("UHC Champions")
+```
+
+You can get a detailed list of all built-in functions
+[here](../reference/built-ins.md).
 
 ---
 
