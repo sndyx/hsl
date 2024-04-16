@@ -5,3 +5,5 @@ gradle/
 
 build
 House.lock
+
+.DS_Store
