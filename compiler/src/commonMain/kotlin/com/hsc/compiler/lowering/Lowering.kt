@@ -15,7 +15,6 @@ import kotlin.reflect.KClass
 private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Normal to listOf(
         CheckRedeclarationPass,
-        CheckOwnedRecursiveCallPass,
         ReturnAssignPass,
         InlineConstPass,
         InlineEnumPass,
@@ -34,6 +33,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         ExpandModPass,
         CollapseTempReassignPass,
         EmptyBlockCheckPass,
+        CheckOwnedRecursiveCallPass,
         // CleanupTempVarsPass,
         CheckLimitsPass,
     ),
