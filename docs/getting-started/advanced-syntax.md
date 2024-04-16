@@ -35,7 +35,3 @@ fn print_sum(_a, _b) {
     send_message("sum of ${_a} and ${_b} is ${_result}")
 }
 ```
-
----
-
-Next: [Macros](macros.md)
