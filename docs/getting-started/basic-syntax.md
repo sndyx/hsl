@@ -82,6 +82,17 @@ if (a > b) {
 }
 ```
 
+Use `&&` (and) or `||` (or) to chain conditions. In `strict`
+ mode, `&&` and `||` must be mutually exclusive.
+
+```rust
+if (a > b && c > d) {
+    send_message("true")
+} else {
+    send_message("false")
+}
+```
+
 In HSL, `if` can also be used as an expression.
 
 ```rust
