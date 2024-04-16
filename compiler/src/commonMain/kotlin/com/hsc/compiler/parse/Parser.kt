@@ -385,7 +385,22 @@ class Parser(
             expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         }.onSuccess {
             cond = parseExpr()
-            expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
+            try {
+                expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
+            } catch (e: Diagnostic) {
+                if (check(TokenKind.Eq)) {
+                    e.note(Level.Hint, "did you mean `==`?")
+                } else if (check(TokenKind.Ident("and"))) {
+                    e.note(Level.Hint, "did you mean `&&`?")
+                } else if (check(TokenKind.Ident("or"))) {
+                    e.note(Level.Hint, "did you mean `||`?")
+                } else {
+                    throw e
+                }
+                e.emit()
+                eatUntil(TokenKind.CloseDelim(Delimiter.Parenthesis))
+                bump() // bump )
+            }
         }.onFailure { e ->
             if (e !is Diagnostic) throw e
             val start = token.span.lo
