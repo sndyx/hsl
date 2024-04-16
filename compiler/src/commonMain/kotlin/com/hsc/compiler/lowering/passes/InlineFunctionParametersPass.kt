@@ -1,9 +1,11 @@
 package com.hsc.compiler.lowering.passes
 
+import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Condition
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.similar
 import com.hsc.compiler.span.Span
 
 /**
@@ -61,6 +63,9 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
                 if (item == null && kind.args.args.isNotEmpty()) {
                     val err = ctx.dcx().err("cannot call unresolved function with parameters")
                     err.span(expr.span)
+                    similar(kind.ident.name, Action.builtins.toList()).forEach {
+                        err.note(Level.Hint, "did you mean `$it`?")
+                    }
                     err.emit()
                     emitted = true
                 }
@@ -92,6 +97,9 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
                 if (!emitted) { // Only run if we haven't already emitted an error for this
                     val span = Span(kind.args.span.lo - kind.ident.name.length, kind.args.span.hi, kind.args.span.fid)
                     val warn = ctx.dcx().warn("unresolved function")
+                    similar(kind.ident.name, Action.builtins.toList()).forEach {
+                        warn.note(Level.Hint, "did you mean `$it`?")
+                    }
                     warn.span(span)
                     warn.emit()
                 }

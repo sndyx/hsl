@@ -7,7 +7,6 @@ fun similar(input: String, list: List<String>): List<String> {
         input.split(" ")
             .filter { it.trim() != "" }
             .any { option.lowercase().contains(it.lowercase()) }
-                || levenshtein(input.lowercase(), option.lowercase()) < 5
     }
 }
 
