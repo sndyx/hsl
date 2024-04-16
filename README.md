@@ -22,7 +22,9 @@ abstractions and syntax sugar.
 
 ## Installation
 
-TODO
+You can download the latest release executables [here](https://github.com/sndyx/hsl/releases).
+
+Now, just add both to the `PATH` variable.
 
 ## Language Documentation
 
