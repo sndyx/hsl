@@ -3,7 +3,7 @@ package com.hsc.compiler.lowering.passes
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.lowering.LoweringCtx
 
-object EmptyBlockCheckPass : AstPass {
+object CheckEmptyBlockPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         ctx.query<Block>().forEach {

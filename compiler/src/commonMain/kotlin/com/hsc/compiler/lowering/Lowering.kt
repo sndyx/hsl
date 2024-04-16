@@ -1,15 +1,10 @@
 package com.hsc.compiler.lowering
 
-import com.github.ajalt.mordant.rendering.AnsiLevel
-import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.passes.*
-import com.hsc.compiler.pretty.prettyPrintAst
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.datetime.Clock
 import kotlin.reflect.KClass
 
 private val passes: Map<Mode, List<AstPass>> = mapOf(
@@ -32,7 +27,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineFunctionCallAssignmentPass,
         ExpandModPass,
         CollapseTempReassignPass,
-        EmptyBlockCheckPass,
+        CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
         // CleanupTempVarsPass,
         CheckLimitsPass,
@@ -40,7 +35,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Strict to listOf(
         CheckRedeclarationPass,
         CheckOwnedRecursiveCallPass,
-        EmptyBlockCheckPass,
+        CheckEmptyBlockPass,
         MapActionsPass,
         CheckLimitsPass,
     )
