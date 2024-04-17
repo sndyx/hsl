@@ -30,10 +30,6 @@ Now, just add both to the `PATH` variable.
 
 Documentation can be found [here](/docs/getting-started/creating-a-project.md).
 
-## Compiler
-
-TODO
-
 ## Developers
 
 This repository is divided into a few major sections.
@@ -44,13 +40,18 @@ The compiler, is located in the `compiler` directory. The main entry point
 for the compiler is `Driver.kt`. The lexer and parser are both located in
 the `com.hsc.compiler.parse` namespace. The resultant AST (defined in
 `com.hsc.compiler.ir` along with the `Action` IR) is then lowered through
-a series of passes in `com.hsc.compiler.codegen`, desugaring and validating
-the AST. Finally, the AST is converted to Actions via a single
-`AstToActionTransformer` pass.
+a series of passes in `com.hsc.lowering.passes`, desugaring and validating
+the AST. Finally, the AST is converted to Actions via `ActionTransformer`
 
 #### Compiling
 
 Compile the compiler with gradle: `./gradlew compiler:build`
+
+#### Mason
+
+Mason is located in the `mason` directory. It is an experimental build
+ tool for HSC that enables easy management of dependencies and compiler
+ options. For dependencies, `git` is executed directly.
 
 ### Standard Library
 
