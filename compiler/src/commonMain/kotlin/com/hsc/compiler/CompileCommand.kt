@@ -34,8 +34,7 @@ class CompileCommand : CliktCommand() {
         .default(EmitterType.Terminal)
         .help("Set output emitter mode")
 
-    private val output: String by option("--output", "-o")
-        .default("")
+    private val output: String? by option("--output", "-o")
 
     private val color: Color by option("--color", "-c")
         .enum<Color> { it.label }
@@ -52,7 +51,7 @@ class CompileCommand : CliktCommand() {
             println("hsc v1.0.0")
             return
         }
-        val opts = CompileOptions(houseName, target, mode, emitter, Path(output), color, parallel)
+        val opts = CompileOptions(houseName, target, mode, emitter, output?.let { Path(it) }, color, parallel)
         runCompiler(opts, paths.map { Path(it) })
     }
 

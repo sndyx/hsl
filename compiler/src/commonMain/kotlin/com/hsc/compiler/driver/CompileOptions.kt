@@ -7,7 +7,7 @@ data class CompileOptions(
     val target: Target,
     val mode: Mode,
     val emitter: EmitterType,
-    val output: Path,
+    val output: Path?,
     val color: Color,
     val parallel: Boolean,
 )

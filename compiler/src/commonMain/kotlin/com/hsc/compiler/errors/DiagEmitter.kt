@@ -40,7 +40,7 @@ class DiagEmitter(private val sourceMap: SourceMap) : Emitter() {
                     else -> null
                 }
 
-                if (severity != null) {
+                if (severity != null && diagnostic.spans.isNotEmpty()) {
                     val obj = buildJsonObject {
                         val (span, _, label) = diagnostic.spans.first()
 

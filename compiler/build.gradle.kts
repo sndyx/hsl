@@ -51,6 +51,12 @@ kotlin {
         }
     }
 
+    sourceSets.all {
+        languageSettings {
+            languageVersion = "2.0"
+        }
+    }
+
     sourceSets {
         // Kotlin Multiplatform? More like: Kotlin other-people-Multi and I freeload platform!!!!
         val commonMain by sourceSets.getting {

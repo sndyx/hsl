@@ -62,15 +62,19 @@ fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
         transformer.transform(ast)
     }
 
-    compiler.enter {
+    compiler.enter<Unit> {
         val elapsed = Clock.System.now() - startTime
         emitter.complete("test", elapsed)
 
-        val output = json.encodeToString(functions)
-        val buffer = Buffer()
-        buffer.write(output.encodeToByteArray())
-        SystemFileSystem.sink(opts.output).write(buffer, buffer.size)
+        opts.output?.let { path ->
+            val output = json.encodeToString(functions)
+            val buffer = Buffer()
+            buffer.write(output.encodeToByteArray())
+            SystemFileSystem.sink(path).write(buffer, buffer.size)
+        }
     }
+
+    compiler.emitter.close()
 }
 
 class Compiler(opts: CompileOptions) {

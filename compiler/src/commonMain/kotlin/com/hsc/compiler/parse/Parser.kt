@@ -43,6 +43,8 @@ class Parser(
     fun parseItem(): Item? {
         return if (check(TokenKind.Eof::class)) {
             null
+        } else if (check(TokenKind.Ident::class)) {
+            parseProcessorFnItem()
         } else if (eat(TokenKind.Kw(Keyword.Fn))) {
             parseFnItem()
         } else if (eat(TokenKind.Kw(Keyword.Enum))) {
@@ -58,7 +60,7 @@ class Parser(
         val lo = prev.span.lo
         val processors = if (check(TokenKind.OpenDelim(Delimiter.Bracket))) {
             parseDelimited(Delimiter.Bracket) {
-                parseIdent().name
+                removeMacroPrefix(parseIdent())
             }.getOrElse { e ->
                 if (e !is Diagnostic) throw e
                 e.note(Level.Hint, "processor lists are declared `#[...]`")
@@ -66,7 +68,7 @@ class Parser(
                 emptyList()
             }
         } else {
-            listOf(parseIdent().name)
+            listOf(removeMacroPrefix(parseIdent()))
         }
         val hi = prev.span.hi
         return if (eat(TokenKind.Kw(Keyword.Fn))) {
@@ -76,6 +78,13 @@ class Parser(
         } else {
             unexpected()
         }
+    }
+
+    private fun removeMacroPrefix(ident: Ident): String {
+        if (!ident.name.startsWith("#")) {
+            throw sess.dcx().err("expected item, found ident", prev.span)
+        }
+        return ident.name.drop(1)
     }
 
     fun tryRecoverInvalidItem(): Item {
