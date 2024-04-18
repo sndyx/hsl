@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" name="mason-jvm-1.0">
-    <output-path>$PROJECT_DIR$/mason/build/libs</output-path>
-    <root id="archive" name="mason-jvm-1.0.jar">
-      <element id="module-output" name="hsc.mason.jvmMain" />
-    </root>
-  </artifact>
-</component>
