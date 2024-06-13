@@ -10,14 +10,19 @@ import com.hsc.compiler.ir.action.ItemStack
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
 import com.hsc.compiler.ir.ast.Lit
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.decodeFromString
+import net.benwoodworth.knbt.NbtCompound
+import net.benwoodworth.knbt.StringifiedNbt
 import kotlin.reflect.KClass
 
 class Parser(
     val stream: TokenStream,
     val sess: CompileSess,
 ) {
+
+    private val snbt by lazy {
+        StringifiedNbt { }
+    }
 
     private var _token: Token? = null
     val token: Token get() = if (_token == null) {
@@ -537,7 +542,7 @@ class Parser(
                     LitKind.Str -> Lit.Str(lit.value).also { bump() }
                     LitKind.Item -> runCatching {
                         Lit.Item(
-                            ItemStack(Json.decodeFromString<JsonObject>(lit.value))
+                            ItemStack(snbt.decodeFromString<NbtCompound>(lit.value))
                         )
                     }.getOrElse {
                         throw dcx().err("error parsing item JSON: ${it.message}", token.span)

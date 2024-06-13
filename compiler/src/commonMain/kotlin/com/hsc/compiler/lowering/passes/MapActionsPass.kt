@@ -7,7 +7,7 @@ import com.hsc.compiler.lowering.ArgParser
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.similar
 
-object MapActionsPass : AstPass {
+object  MapActionsPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val visitor = MapCallActionsVisitor(ctx)
@@ -153,7 +153,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
         p.assertLength(4, "give_item(<item>, <allow_multiple>, <inventory_slot>, <replace_existing>)")
         val item = p.nextItemLit()
         val allowMultiple = p.nextBooleanLit()
-        val inventorySlot = p.nextNumberLit().toInt()
+        val inventorySlot = p.nextValue()
         val replaceExistingItem = p.nextBooleanLit()
         return Action.GiveItem(item, allowMultiple, inventorySlot, replaceExistingItem)
     }

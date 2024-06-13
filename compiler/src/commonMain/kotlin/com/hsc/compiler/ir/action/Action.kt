@@ -11,7 +11,7 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
-import kotlin.math.min
+import net.benwoodworth.knbt.NbtCompound
 
 @Serializable
 sealed class Action(
@@ -174,7 +174,7 @@ sealed class Action(
     data class GiveItem(
         val item: ItemStack,
         @SerialName("allow_multiple") val allowMultiple: Boolean,
-        @SerialName("inventory_slot") val inventorySlot: Int,
+        @SerialName("inventory_slot") val inventorySlot: StatValue,
         @SerialName("replace_existing_item") val replaceExistingItem: Boolean,
     ) : Action("GIVE_ITEM")
     @Serializable
@@ -251,7 +251,7 @@ object KeyedSerializer : KSerializer<Keyed> {
 
 @Serializable(with = ItemStackSerializer::class)
 data class ItemStack(
-    val nbt: JsonObject,
+    val nbt: NbtCompound,
 )
 
 @Serializable
@@ -328,7 +328,8 @@ object ItemStackSerializer : KSerializer<ItemStack> {
     override fun deserialize(decoder: Decoder): ItemStack { error("not implemented!") }
 
     override fun serialize(encoder: Encoder, value: ItemStack) {
-        JsonObject.serializer().serialize(encoder, value.nbt)
+        encoder.encodeString("item")
+        // JsonObject.serializer().serialize(encoder, value.nbt)
     }
 }
 
@@ -366,6 +367,7 @@ object StatStrSerializer : KSerializer<StatValue.Str> {
     override fun deserialize(decoder: Decoder): StatValue.Str { error("not implemented!") }
 }
 
+@Serializable(with = KeyedSerializer::class)
 enum class Sound(override val key: String) : Keyed {
     AmbienceCave("Ambience Cave"),
     AmbienceRain("Ambience Rain"),

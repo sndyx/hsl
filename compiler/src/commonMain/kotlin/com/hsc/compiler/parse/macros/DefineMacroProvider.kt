@@ -19,13 +19,12 @@ object DefineMacroProvider : MacroProvider {
             eatSpaces()
             // while next character is not closing paren (accounting for EOF)
             eatWhile { char ->
+                eatSpaces()
                 if (char == ')') return@eatWhile false
                 val arg = expect { isIdStart(it) } + takeWhile { isIdContinue(it) }
                 args.add(arg)
                 eatSpaces()
-                if (!eat(',')) return@eatWhile false // No comma, exit loop
-                eatSpaces()
-                true
+                first() == ','
             }
             expect(')')
         }
@@ -35,7 +34,6 @@ object DefineMacroProvider : MacroProvider {
         val src = if (eat('`')) {
             // backtick delimited macro
             takeWhile {
-                if (it == '\n') srcp.addLine(pos + 1)
                 it != '`'
             }.also { bump() }
         } else {

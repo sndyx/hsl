@@ -27,6 +27,7 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
             }
         }
         is ExprKind.Var, is ExprKind.Lit -> true
+        is ExprKind.Condition -> true
         else -> {
             // This should almost certainly never happen unless in `strict` mode.
             // But on the off chance it does, here's a bug that creates a bug!

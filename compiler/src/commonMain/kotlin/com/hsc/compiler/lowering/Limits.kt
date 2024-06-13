@@ -5,7 +5,7 @@ import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.span.Span
 
-val limits = mapOf(
+val limitsMap = mapOf(
     "APPLY_LAYOUT" to 5,
     "POTION_EFFECT" to 22,
     "BALANCE_PLAYER_TEAM" to 1,
@@ -75,13 +75,13 @@ fun stmtActionKind(stmt: Stmt): String {
 fun limits(block: Block): Map<String, Int> {
     val actions = block.stmts.map { stmtActionKind(it) }
 
-    return limits.map { (name, value) ->
+    return limitsMap.map { (name, value) ->
         name to (value - actions.count { it == name })
     }.toMap()
 }
 
 fun checkLimits(block: Block): Pair<String, Span>? {
-    val map = limits.toMutableMap()
+    val map = limitsMap.toMutableMap()
 
     for (stmt in block.stmts) {
         val kind = stmtActionKind(stmt)

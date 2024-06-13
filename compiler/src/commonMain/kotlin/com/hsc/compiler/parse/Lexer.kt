@@ -109,7 +109,9 @@ class Lexer(
             in '0'..'9' -> number(currentChar)
             else -> {
                 if (isIdStart(currentChar)) {
-                    identKwBoolMacroItem(currentChar)
+                    val result = identKwBoolMacroItem(currentChar)
+                    if (result.second == null) result.first
+                    else return Token(result.first, result.second!!)
                 } else {
                     TokenKind.Unknown(currentChar)
                 }
@@ -145,7 +147,7 @@ class Lexer(
     }
 
     // Yes it is absolutely necessary to include all of this functionality in one function. :-)
-    fun identKwBoolMacroItem(start: Char): TokenKind {
+    fun identKwBoolMacroItem(start: Char): Pair<TokenKind, Span?> {
         val startPos = pos
 
         val sb = StringBuilder("$start")
@@ -159,7 +161,7 @@ class Lexer(
             }
         }
 
-        return when (sb.toString()) {
+        return Pair(when (sb.toString()) {
             "else" -> TokenKind.Kw(Keyword.Else)
             "enum" -> TokenKind.Kw(Keyword.Enum)
             "fn" -> TokenKind.Kw(Keyword.Fn)
@@ -211,13 +213,14 @@ class Lexer(
                 if (srcp.isMacro(ident)) {
                     // Handle macro invocation
                     srcp.enterMacro(this, Span(startPos, pos, fid), ident)
-                    advanceToken().kind // We discard the span, I guess?
+                    val nextToken = advanceToken()
+                    return Pair(nextToken.kind, nextToken.span) // No we do NOT discard the span
                 } else {
                     // Just handle ident normally
                     TokenKind.Ident(ident)
                 }
             }
-        }
+        }, null)
     }
 
     fun string(): TokenKind {

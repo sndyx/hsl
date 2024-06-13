@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.hsc.compiler"
-version = "0.0.1"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -68,6 +68,7 @@ kotlin {
                 implementation("com.github.ajalt.clikt:clikt:4.2.2")
                 implementation("com.github.ajalt.mordant:mordant:2.4.0")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:2.4.0")
+                implementation("net.benwoodworth.knbt:knbt:0.11.5")
             }
         }
 
@@ -108,7 +109,7 @@ kotlin {
     }
 
     tasks.withType<KotlinCompile>().configureEach {
-        kotlinOptions {
+        compilerOptions {
             freeCompilerArgs = listOf(
                 "-opt-in=kotlin.RequiresOptIn",
                 "-Xbackend-threads=0", // Multi-threaded compilation 😎

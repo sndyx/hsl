@@ -32,6 +32,30 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         // CleanupTempVarsPass,
         CheckLimitsPass,
     ),
+    Mode.Optimize to listOf(
+        CheckRedeclarationPass,
+        ReturnAssignPass,
+        InlineConstPass,
+        InlineEnumPass,
+        InlineFunctionPass,
+        ExpandInPass,
+        ExpandMatchPass,
+        FlipNotConditionsPass,
+        RaiseNotEqPass,
+        InlineBlockPass,
+        ConstantFoldingPass,
+        ExpandComplexExpressionsPass,
+        InlineFunctionParametersPass,
+        MapActionsPass, // Before call assignment, or will become valid expression
+        MapConditionsPass,
+        InlineFunctionCallAssignmentPass,
+        ExpandModPass,
+        CollapseTempReassignPass,
+        CheckEmptyBlockPass,
+        CheckOwnedRecursiveCallPass,
+        // CleanupTempVarsPass,
+        CheckLimitsPass,
+    ),
     Mode.Strict to listOf(
         CheckRedeclarationPass,
         CheckOwnedRecursiveCallPass,
@@ -74,6 +98,11 @@ class LoweringCtx(val ast: Ast, val sess: CompileSess) {
 
 class QueryVisitor(private val type: KClass<*>) : AstVisitor {
     val visited = mutableListOf<Any>()
+
+    override fun visitFn(fn: Fn) {
+        if (type.isInstance(fn)) visited += fn
+        super.visitFn(fn)
+    }
 
     override fun visitBlock(block: Block) {
         if (type.isInstance(block)) visited += block

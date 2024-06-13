@@ -2,13 +2,14 @@ package com.hsc.compiler.parse
 
 import com.hsc.compiler.parse.macros.DefineMacroProvider
 import com.hsc.compiler.parse.macros.ForMacroProvider
+import com.hsc.compiler.parse.macros.HtslExportMacroProvider
 import com.hsc.compiler.parse.macros.IfMacroProvider
 import com.hsc.compiler.span.SourceFile
 import com.hsc.compiler.span.Span
 
 class SourceProvider(private val file: SourceFile) {
 
-    private val macros = mutableListOf(ForMacroProvider, DefineMacroProvider, IfMacroProvider)
+    private val macros = mutableListOf(ForMacroProvider, DefineMacroProvider, IfMacroProvider, HtslExportMacroProvider)
 
     private val srcStack = mutableListOf(file.provider())
 

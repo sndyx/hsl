@@ -59,7 +59,7 @@ class ActionTransformer(internal val sess: CompileSess) {
             StatValue.Str(when (val ident = kind.ident) {
                 is Ident.Player -> "%stat.player/${ident.name}%"
                 is Ident.Global -> "%stat.global/${ident.name}%"
-                is Ident.Team -> "%stat.team/${ident.name}/${ident.team}%"
+                is Ident.Team -> "%stat.team/${ident.name} ${ident.team}%"
             })
         }
         else -> {
@@ -118,7 +118,7 @@ class ActionTransformer(internal val sess: CompileSess) {
     private fun identString(ident: Ident): String = when (ident) {
         is Ident.Player -> "%stat.player/${ident.name}%"
         is Ident.Global -> "%stat.global/${ident.name}%"
-        is Ident.Team -> "%stat.team/${ident.name}/${ident.team}%"
+        is Ident.Team -> "%stat.team/${ident.name} ${ident.team}%"
     }
 
 }

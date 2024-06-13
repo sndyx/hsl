@@ -1,13 +1,11 @@
 package com.hsc.compiler.driver
 
-import kotlinx.io.files.Path
-
 data class CompileOptions(
     val houseName: String,
     val target: Target,
     val mode: Mode,
     val emitter: EmitterType,
-    val output: Path?,
+    val output: String?,
     val color: Color,
     val parallel: Boolean,
 )
@@ -26,7 +24,7 @@ enum class Target(val label: String) {
 enum class Mode(val label: String) {
     Strict("strict"),
     Normal("normal"),
-    Optimized("optimized");
+    Optimize("optimize");
 }
 
 enum class EmitterType(val label: String) {

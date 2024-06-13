@@ -3,6 +3,7 @@ package com.hsc.compiler.driver
 import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.codegen.ActionTransformer
+import com.hsc.compiler.codegen.generateHtsl
 import com.hsc.compiler.errors.*
 import com.hsc.compiler.ir.ast.Ast
 import com.hsc.compiler.lowering.LoweringCtx
@@ -11,6 +12,7 @@ import com.hsc.compiler.parse.Lexer
 import com.hsc.compiler.parse.Parser
 import com.hsc.compiler.parse.SourceProvider
 import com.hsc.compiler.parse.TokenStream
+import com.hsc.compiler.pretty.prettyPrintActions
 import com.hsc.compiler.span.SourceMap
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
@@ -66,11 +68,19 @@ fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
         val elapsed = Clock.System.now() - startTime
         emitter.complete("test", elapsed)
 
-        opts.output?.let { path ->
-            val output = json.encodeToString(functions)
-            val buffer = Buffer()
-            buffer.write(output.encodeToByteArray())
-            SystemFileSystem.sink(path).write(buffer, buffer.size)
+        opts.output?.let {
+            val actionsPath = Path("$it/actions.json")
+            val actionsOut = json.encodeToString(functions)
+            val actionsBuffer = Buffer()
+            actionsBuffer.write(actionsOut.encodeToByteArray())
+            SystemFileSystem.sink(actionsPath).write(actionsBuffer, actionsBuffer.size)
+            SystemFileSystem.createDirectories(Path("$it/htsl"))
+            functions.map { fn -> Pair(generateHtsl(sess, fn), fn.name) }.forEach { (htsl, name) ->
+                val htslPath = Path("$it/htsl/$name.htsl")
+                val htslBuffer = Buffer()
+                htslBuffer.write(htsl.encodeToByteArray())
+                SystemFileSystem.sink(htslPath).write(htslBuffer, htslBuffer.size)
+            }
         }
     }
 
@@ -82,7 +92,7 @@ class Compiler(opts: CompileOptions) {
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     val scope: CoroutineDispatcher = newSingleThreadContext("compiler")
 
-    private val terminal: Terminal = when (opts.color) {
+    val terminal: Terminal = when (opts.color) {
         Color.Auto -> Terminal()
         Color.Always -> Terminal(AnsiLevel.ANSI256)
         Color.Never -> Terminal(AnsiLevel.NONE)

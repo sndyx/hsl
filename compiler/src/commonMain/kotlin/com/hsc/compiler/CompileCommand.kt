@@ -48,10 +48,10 @@ class CompileCommand : CliktCommand() {
 
     override fun run() {
         if (version || paths.isEmpty()) {
-            println("hsc v1.0.0")
+            println("hsc v1.1.0 beta")
             return
         }
-        val opts = CompileOptions(houseName, target, mode, emitter, output?.let { Path(it) }, color, parallel)
+        val opts = CompileOptions(houseName, target, mode, emitter, output, color, parallel)
         runCompiler(opts, paths.map { Path(it) })
     }
 

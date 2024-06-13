@@ -66,6 +66,7 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
             is ExprKind.Lit -> {
                 when (val lit = kind.lit) {
                     is Lit.I64 -> StatValue.I64(lit.value)
+                    is Lit.Str -> StatValue.Str(lit.value)
                     else -> {
                         throw ctx.dcx().err("expected integer, found ${lit.str()}")
                     }
