@@ -218,7 +218,7 @@ private class HtslEncoder(val sess: CompileSess) : AbstractEncoder() {
     override fun encodeBoolean(value: Boolean) { list.add(value.toString()) }
     override fun encodeInt(value: Int) { list.add(value.toString()) }
     override fun encodeLong(value: Long) { list.add(value.toString()) }
-    override fun encodeFloat(value: Float) { list.add(value.toString()) }
+    override fun encodeDouble(value: Double) { list.add(value.toString()) }
     override fun encodeString(value: String) { list.add("\"$value\"") }
 
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {

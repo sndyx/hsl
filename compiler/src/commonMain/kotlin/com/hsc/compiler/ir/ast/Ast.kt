@@ -191,6 +191,7 @@ sealed class ExprKind  {
             is Lit -> when (this.lit) {
                 is com.hsc.compiler.ir.ast.Lit.Bool -> "bool"
                 is com.hsc.compiler.ir.ast.Lit.I64 -> "integer"
+                is com.hsc.compiler.ir.ast.Lit.F64 -> "float"
                 is com.hsc.compiler.ir.ast.Lit.Str -> "string"
                 is com.hsc.compiler.ir.ast.Lit.Item -> "item"
                 else -> "literal"
@@ -215,6 +216,10 @@ sealed class Lit {
     data class I64(val value: Long) : Lit() {
         override fun deepCopy(): Lit = copy()
     }
+
+    data class F64(val value: Double) : Lit() {
+        override fun deepCopy(): Lit = copy()
+    }
     
     data class Item(val value: ItemStack) : Lit() {
         override fun deepCopy(): Lit = copy(value = value.copy())
@@ -228,6 +233,7 @@ sealed class Lit {
         when (this) {
             is Str -> "string"
             is I64 -> "integer"
+            is F64 -> "float"
             is Item -> "item"
             is Bool -> "boolean"
             is Null -> "null"

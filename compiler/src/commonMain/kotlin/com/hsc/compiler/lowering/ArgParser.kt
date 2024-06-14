@@ -45,17 +45,38 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
 
     fun nextNumberLit(): Long {
         val expr = bump()
-        when (val kind = expr.kind) {
+        return when (val kind = expr.kind) {
             is ExprKind.Lit -> {
                 when (val lit = kind.lit) {
-                    is Lit.I64 -> return lit.value
+                    is Lit.I64 -> lit.value
+                    is Lit.F64 -> lit.value.toLong()
                     else -> {
                         throw ctx.dcx().err("expected integer, found ${lit.str()}")
                     }
                 }
             }
+
             else -> {
                 throw ctx.dcx().err("expected integer, found ${kind.str()}")
+            }
+        }
+    }
+
+    fun nextFloatLit(): Double {
+        val expr = bump()
+        return when (val kind = expr.kind) {
+            is ExprKind.Lit -> {
+                when (val lit = kind.lit) {
+                    is Lit.I64 -> lit.value.toDouble()
+                    is Lit.F64 -> lit.value.toDouble()
+                    else -> {
+                        throw ctx.dcx().err("expected float, found ${lit.str()}")
+                    }
+                }
+            }
+
+            else -> {
+                throw ctx.dcx().err("expected float, found ${kind.str()}")
             }
         }
     }
@@ -66,6 +87,7 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
             is ExprKind.Lit -> {
                 when (val lit = kind.lit) {
                     is Lit.I64 -> StatValue.I64(lit.value)
+                    is Lit.F64 -> StatValue.I64(lit.value.toLong())
                     is Lit.Str -> StatValue.Str(lit.value)
                     else -> {
                         throw ctx.dcx().err("expected integer, found ${lit.str()}")

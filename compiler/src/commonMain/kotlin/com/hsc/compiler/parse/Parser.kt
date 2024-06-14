@@ -538,7 +538,7 @@ class Parser(
                     // :clueless: surely the lexer will give me a valid boolean
                     LitKind.Bool -> Lit.Bool(lit.value.toBooleanStrict()).also { bump() }
                     LitKind.I64 -> Lit.I64(parseI64())
-                    LitKind.F64 -> Lit.I64(parseFloat())
+                    LitKind.F64 -> Lit.F64(parseFloat())
                     LitKind.Str -> Lit.Str(lit.value).also { bump() }
                     LitKind.Item -> runCatching {
                         Lit.Item(
@@ -569,8 +569,8 @@ class Parser(
         err.spanLabel(prev.span, hint)
         throw err
     }
-    fun parseFloat(): Long = parseLiteral(LitKind.F64).runCatching {
-        replace(".", "").toLong()
+    fun parseFloat(): Double = parseLiteral(LitKind.F64).runCatching {
+        toDouble()
     }.getOrElse {
         val err = dcx().err("invalid float")
         err.span(prev.span)

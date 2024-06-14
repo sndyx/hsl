@@ -102,10 +102,6 @@ private class DefinedMacroProvider(
             }
         }
 
-        val replaced = args.zip(params).fold(src) { src, (arg, value) ->
-            src.replace("\${$arg}", value).replace(Regex("\\\$$arg\\b"), value)
-        }
-
-        StringCharProvider(replaced, srcOffset)
+        ArgReplacingCharProvider(args.zip(params).toMap(), src, srcOffset)
     }
 }

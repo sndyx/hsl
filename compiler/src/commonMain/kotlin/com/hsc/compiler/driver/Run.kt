@@ -12,7 +12,6 @@ import com.hsc.compiler.parse.Lexer
 import com.hsc.compiler.parse.Parser
 import com.hsc.compiler.parse.SourceProvider
 import com.hsc.compiler.parse.TokenStream
-import com.hsc.compiler.pretty.prettyPrintActions
 import com.hsc.compiler.span.SourceMap
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock

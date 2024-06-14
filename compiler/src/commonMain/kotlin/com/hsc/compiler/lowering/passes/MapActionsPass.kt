@@ -188,7 +188,11 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
             }
             throw err
         }
-        val volume = TODO("GAHHHH, FLOAT PARSING IS DEAD")
+        val volume = p.nextFloatLit()
+        val pitch = p.nextFloatLit()
+        // val locationString = p.nextStringLit()
+        val location = p.nextStringLit()
+        return Action.PlaySound(sound, volume, pitch, location)
     }
 
     fun parseSendMessage(): Action {

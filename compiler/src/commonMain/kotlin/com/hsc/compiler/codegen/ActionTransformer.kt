@@ -44,6 +44,9 @@ class ActionTransformer(internal val sess: CompileSess) {
                 is Lit.I64 -> {
                     StatValue.I64(lit.value)
                 }
+                is Lit.F64 -> {
+                    StatValue.I64(lit.value.toLong())
+                }
                 is Lit.Str -> {
                     StatValue.Str(lit.value)
                 }

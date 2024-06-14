@@ -193,9 +193,10 @@ sealed class Action(
     @SerialName("PLAY_SOUND")
     data class PlaySound(
         val sound: Sound,
-        val volume: Float,
-        val pitch: Float,
-        val location: Location,
+        val volume: Double,
+        val pitch: Double,
+        val location: String,
+        // val location: Location,
     ) : Action("PLAY_SOUND")
     @Serializable
     @SerialName("RANDOM_ACTION")

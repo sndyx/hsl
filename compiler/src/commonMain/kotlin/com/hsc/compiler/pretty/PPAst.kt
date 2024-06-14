@@ -152,6 +152,7 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                     Lit.Null -> blue("null")
                     is Lit.Bool -> blue(lit.value.toString())
                     is Lit.I64 -> white(lit.value.toString())
+                    is Lit.F64 -> white(lit.value.toString())
                     is Lit.Item -> lit.value.toString()
                     is Lit.Str -> white("\"${lit.value}\"")
                 }

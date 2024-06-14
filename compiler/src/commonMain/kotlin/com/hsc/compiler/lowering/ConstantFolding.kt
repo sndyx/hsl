@@ -50,6 +50,24 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                             }
                             return@operation
                         }
+                        context<Lit.I64, Lit.F64> { la, lb ->
+                            val a = la.value
+                            val b = lb.value
+                            val result = when (kind.kind) {
+                                BinOpKind.Add -> a + b
+                                BinOpKind.Sub -> a - b
+                                BinOpKind.Mul -> a * b
+                                BinOpKind.Div -> a / b
+                                BinOpKind.Rem -> a % b
+                                BinOpKind.Pow -> a.toDouble().pow(b)
+                                else -> null
+                            }
+                            result?.let {
+                                expr.kind = ExprKind.Lit(Lit.F64(it))
+                                changes++
+                            }
+                            return@operation
+                        }
                         context<Lit.Str, Lit.Str> { la, lb ->
                             val a = la.value
                             val b = lb.value

@@ -1,11 +1,9 @@
 package com.hsc.compiler.lowering.passes
 
-import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.*
-import com.hsc.compiler.pretty.prettyPrintAst
 import com.hsc.compiler.span.Span
 
 object CheckLimitsPass : AstPass {
@@ -16,7 +14,6 @@ object CheckLimitsPass : AstPass {
                 limitOpt(ctx, fn, (fn.kind as ItemKind.Fn).fn.block)
             }
         }
-        // prettyPrintAst(Terminal(), ctx.ast)
         ctx.query<Block>().forEach { block ->
             limitCheck(ctx, block)
         }

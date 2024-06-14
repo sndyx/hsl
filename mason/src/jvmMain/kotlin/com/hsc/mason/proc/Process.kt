@@ -8,7 +8,7 @@ actual fun process(command: String): String {
     var cmd = command
     if (cmd.startsWith("hsc")) {
         // FOR TESTING PURPOSES ONLY.
-        cmd = "java -jar ../compiler/build/libs/compiler-jvm-0.0.1.jar" + cmd.removePrefix("hsc")
+        cmd = "java -jar ../compiler/build/libs/compiler-jvm-1.1.0.jar" + cmd.removePrefix("hsc")
     }
     println(cmd)
     return Runtime.getRuntime()
@@ -22,7 +22,7 @@ actual fun printProcess(command: String) {
     var cmd = command
     if (cmd.startsWith("hsc")) {
         // FOR TESTING PURPOSES ONLY.
-        cmd = "java -jar ../compiler/build/libs/compiler-jvm-0.0.1.jar" + cmd.removePrefix("hsc")
+        cmd = "java -jar ../compiler/build/libs/compiler-jvm-1.1.0.jar" + cmd.removePrefix("hsc")
     }
     println(cmd)
     val reader = Runtime.getRuntime()
