@@ -130,6 +130,9 @@ private fun generateHtslAction(sess: CompileSess, action: Action): String {
         is Action.ChangeTeamStat -> {
             sb.append("teamstat ${action.stat} ${action.team} ${statOpMap[action.op]} ${statVal(action.amount)}")
         }
+        is Action.ExecuteFunction -> {
+            sb.append("function \"${action.name}\" ${action.global}")
+        }
         else -> {
             sb.append(actionMap[action.actionName.lowercase()])
             val encoder = HtslEncoder(sess)
