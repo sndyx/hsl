@@ -76,6 +76,7 @@ class Lexer(
             ':' -> TokenKind.Colon
             '@' -> TokenKind.At
             '.' -> TokenKind.Dot
+            '!' -> TokenKind.Not
             '=' -> {
                 when (first()) {
                     '=' -> {
