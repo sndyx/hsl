@@ -36,7 +36,7 @@ This repository is divided into a few major sections.
 
 ### HSC (Housing Script Compiler)
 
-The compiler, is located in the `compiler` directory. The main entry point
+The compiler is located in the `compiler` directory. The main entry point
 for the compiler is `Driver.kt`. The lexer and parser are both located in
 the `com.hsc.compiler.parse` namespace. The resultant AST (defined in
 `com.hsc.compiler.ir` along with the `Action` IR) is then lowered through
