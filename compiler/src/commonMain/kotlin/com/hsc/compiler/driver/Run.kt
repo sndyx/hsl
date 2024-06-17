@@ -152,9 +152,9 @@ private fun handleError(error: Throwable, dcx: DiagCtx) {
         when (name) {
             "error_stack_overflow" -> {
                 if (dcx.srcp != null) {
-                    dcx.err("stack overflow during macro expansion", dcx.srcp.virtualSpan).emit()
+                    dcx.err("stack overflow during macro expansion", dcx.srcp.virtualSpan, error).emit()
                 } else {
-                    dcx.err("stack overflow during compilation").emit()
+                    dcx.err("stack overflow during compilation", null, error).emit()
                 }
             }
             "error_out_of_memory" -> {

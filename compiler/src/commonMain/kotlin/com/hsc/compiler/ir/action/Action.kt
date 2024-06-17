@@ -12,6 +12,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonObject
 import net.benwoodworth.knbt.NbtCompound
+import net.benwoodworth.knbt.StringifiedNbt
 
 @Serializable
 sealed class Action(
@@ -326,11 +327,11 @@ sealed class StatValue {
 object ItemStackSerializer : KSerializer<ItemStack> {
     override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
 
+    private val snbt = StringifiedNbt { }
     override fun deserialize(decoder: Decoder): ItemStack { error("not implemented!") }
 
     override fun serialize(encoder: Encoder, value: ItemStack) {
-        encoder.encodeString("item")
-        // JsonObject.serializer().serialize(encoder, value.nbt)
+        encoder.encodeString(snbt.encodeToString(value.nbt))
     }
 }
 

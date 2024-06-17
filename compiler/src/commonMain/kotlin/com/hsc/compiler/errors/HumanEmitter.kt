@@ -21,7 +21,7 @@ class HumanEmitter(
         t.println("${(bold + color)(label)}: ${bold(italicizeBackticks(diagnostic.message))}")
         diagnostic.throwable?.stackTraceToString()
             ?.lines()
-            ?.drop(1)?.take(10)
+            ?.drop(1)?.take(5)
             ?.map { it.replace("\tat", bold(" -+>")) }
             ?.forEach { t.println(it) }
         diagnostic.spans.getOrNull(0)?.let { (span, _) ->
