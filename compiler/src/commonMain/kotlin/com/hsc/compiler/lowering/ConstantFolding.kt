@@ -189,6 +189,8 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                         }
                         else -> super.visitExpr(expr)
                     }
+                } else {
+                    super.visitExpr(expr)
                 }
             }
             else -> super.visitExpr(expr)
