@@ -1,6 +1,7 @@
 package com.hsc.compiler.lowering
 
 import com.hsc.compiler.driver.CompileSess
+import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.ir.ast.*
 import kotlin.math.pow
 
@@ -50,38 +51,61 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                             }
                             return@operation
                         }
-                        context<Lit.I64, Lit.F64> { la, lb ->
+                        context<Lit.F64, Lit.F64> { la, lb ->
                             val a = la.value
                             val b = lb.value
-                            val result = when (kind.kind) {
-                                BinOpKind.Add -> a + b
-                                BinOpKind.Sub -> a - b
-                                BinOpKind.Mul -> a * b
-                                BinOpKind.Div -> a / b
-                                BinOpKind.Rem -> a % b
-                                BinOpKind.Pow -> a.toDouble().pow(b)
-                                else -> null
+                            val (result: Double?, isFloat: Boolean) = when (kind.kind) {
+                                BinOpKind.Add -> (a + b) to true
+                                BinOpKind.Sub -> (a - b) to true
+                                BinOpKind.Mul -> (a * b) to true
+                                BinOpKind.Div -> (a / b) to true
+                                BinOpKind.Rem -> (a % b) to true
+                                BinOpKind.Pow -> (a.pow(b)) to true
+
+                                // these are all comparisons and should return longs (hence false)
+                                BinOpKind.Eq -> (if (a == b) 1.0 else 0.0) to false
+                                BinOpKind.Ne -> (if (a != b) 1.0 else 0.0) to false
+                                BinOpKind.Lt -> (if (a < b) 1.0 else 0.0) to false
+                                BinOpKind.Le -> (if (a <= b) 1.0 else 0.0) to false
+                                BinOpKind.Ge -> (if (a >= b) 1.0 else 0.0) to false
+                                BinOpKind.Gt -> (if (a > b) 1.0 else 0.0) to false
+                                else -> null to false
                             }
                             result?.let {
-                                expr.kind = ExprKind.Lit(Lit.F64(it))
+                                expr.kind = if (isFloat) ExprKind.Lit(Lit.F64(it))
+                                else ExprKind.Lit(Lit.I64(it.toLong()))
                                 changes++
                             }
                             return@operation
                         }
-                        context<Lit.Str, Lit.Str> { la, lb ->
+                        context<Lit.I64, Lit.F64> { la, lb ->
                             val a = la.value
                             val b = lb.value
-                            val result = when (kind.kind) {
-                                BinOpKind.Add -> a + b
-                                else -> {
-                                    sess.dcx().err("invalid operand string ${kind.kind} string", expr.span).emit()
-                                    "error"
-                                }
+                            val (result: Double?, isFloat: Boolean) = when (kind.kind) {
+                                BinOpKind.Add -> (a + b) to true
+                                BinOpKind.Sub -> (a - b) to true
+                                BinOpKind.Mul -> (a * b) to true
+                                BinOpKind.Div -> (a / b) to true
+                                BinOpKind.Rem -> (a % b) to true
+                                BinOpKind.Pow -> (a.toDouble().pow(b)) to true
+
+                                // these are all comparisons and should return longs (hence false)
+                                BinOpKind.Eq -> (if (a.toDouble() == b) 1.0 else 0.0) to false
+                                BinOpKind.Ne -> (if (a.toDouble() != b) 1.0 else 0.0) to false
+                                BinOpKind.Lt -> (if (a < b) 1.0 else 0.0) to false
+                                BinOpKind.Le -> (if (a <= b) 1.0 else 0.0) to false
+                                BinOpKind.Ge -> (if (a >= b) 1.0 else 0.0) to false
+                                BinOpKind.Gt -> (if (a > b) 1.0 else 0.0) to false
+                                else -> null to false
                             }
-                            expr.kind = ExprKind.Lit(Lit.Str(result))
-                            changes++
+                            result?.let {
+                                expr.kind = if (isFloat) ExprKind.Lit(Lit.F64(it))
+                                else ExprKind.Lit(Lit.I64(it.toLong()))
+                                changes++
+                            }
                             return@operation
                         }
+
                         fun bool(a: Boolean, b: Boolean) {
                             val result = when (kind.kind) {
                                 BinOpKind.Eq -> a == b
@@ -108,6 +132,35 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                             bool(la.value, lb.value == 1L)
                             return@operation
                         }
+
+                        fun string(a: String, b: String) {
+                            val result = when (kind.kind) {
+                                BinOpKind.Add -> a + b
+                                else -> {
+                                    sess.dcx().err("invalid operand string ${kind.kind} string", expr.span).emit()
+                                    "error"
+                                }
+                            }
+                            expr.kind = ExprKind.Lit(Lit.Str(result))
+                            changes++
+                        }
+                        context<Lit.Str, Lit.Str> { la, lb ->
+                            string(la.value, lb.value)
+                            return@operation
+                        }
+                        context<Lit.Str, Lit.I64> { la, lb ->
+                            string(la.value, lb.value.toString())
+                            return@operation
+                        }
+                        context<Lit.Str, Lit.F64> { la, lb ->
+                            string(la.value, lb.value.toString())
+                            return@operation
+                        }
+                        context<Lit.Str, Lit.Bool> { la, lb ->
+                            string(la.value, lb.value.toString())
+                            return@operation
+                        }
+
                     }
                 }
                 else {
@@ -116,26 +169,37 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                 }
             }
             is ExprKind.If -> {
-                when (val litKind = kind.expr.kind) {
-                    is ExprKind.Lit -> {
-                        when (val lit = litKind.lit) {
-                            is Lit.I64 -> {
-                                if (lit.value == 1L) expr.kind = ExprKind.Block(kind.block)
-                                else if (lit.value == 0L) expr.kind = ExprKind.Block(kind.other!!) // should be safe
+                // DO NOT RUN THIS WHEN NOT ON OPTIMIZE! We are reorganizing their conditionals manually, this
+                // should maybe be removed in the first place if it's too confusing... User discretion of optimize
+                // is advised, I guess
+                if (sess.opts.mode == Mode.Optimize) {
+                    when (val litKind = kind.expr.kind) {
+                        is ExprKind.Lit -> {
+                            when (val lit = litKind.lit) {
+                                is Lit.I64 -> {
+                                    if (lit.value == 1L) expr.kind = ExprKind.Block(kind.block)
+                                    else if (lit.value == 0L) expr.kind = ExprKind.Block(kind.other!!) // should be safe
+                                }
+                                is Lit.Bool -> {
+                                    if (lit.value) expr.kind = ExprKind.Block(kind.block)
+                                    else expr.kind = ExprKind.Block(kind.other!!)
+                                }
+                                else -> {}
                             }
-                            is Lit.Bool -> {
-                                if (lit.value) expr.kind = ExprKind.Block(kind.block)
-                                else expr.kind = ExprKind.Block(kind.other!!)
-                            }
-                            else -> {}
                         }
-                    } else -> super.visitExpr(expr)
+                        else -> super.visitExpr(expr)
+                    }
                 }
             }
             else -> super.visitExpr(expr)
         }
     }
 
+}
+
+// this is stupid, kys kotlin compiler
+private fun retLong(block: () -> Long): Long {
+    return block()
 }
 
 private fun operation(a: Lit, b: Lit, block: OperationScope.() -> Unit) {

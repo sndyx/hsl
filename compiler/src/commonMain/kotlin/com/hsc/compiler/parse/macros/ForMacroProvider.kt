@@ -34,7 +34,8 @@ object ForMacroProvider : MacroProvider {
                 }
                 eatWhitespace()
                 val b = expectNumber()
-                a..b
+                if (a <= b) a..b
+                else a downTo b
             } catch (err: Diagnostic) {
                 err.note(Level.Hint, "ranges are declared `<low>..<high>`")
                 throw err
@@ -62,7 +63,7 @@ object ForMacroProvider : MacroProvider {
 
 private class ForCharProvider(
     override val srcOffset: Int,
-    range: LongRange,
+    range: LongProgression,
     val ident: String,
     val src: String,
 ) : CharProvider {

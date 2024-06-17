@@ -21,8 +21,8 @@ class CompileCommand : CliktCommand() {
 
     private val target: Target by option("--target", "-t")
         .enum<Target> { it.label }
-        .default(Target.Default)
-        .help("Set housing destination target")
+        .default(Target.Json)
+        .help("Set housing output target")
 
     private val mode: Mode by option("--mode", "-m")
         .enum<Mode> { it.label }

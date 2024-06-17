@@ -17,8 +17,8 @@ enum class Color(val label: String) {
 }
 
 enum class Target(val label: String) {
-    Default("default"),
-    HousingPlus("housing+");
+    Json("json"),
+    Htsl("htsl");
 }
 
 enum class Mode(val label: String) {

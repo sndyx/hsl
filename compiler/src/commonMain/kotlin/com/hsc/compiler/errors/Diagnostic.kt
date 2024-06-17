@@ -8,6 +8,7 @@ data class Diagnostic(
     override val message: String,
     val spans: MutableList<Triple<Span, Boolean, String?>>,
     val notes: MutableList<Pair<Level, String>>,
+    val throwable: Throwable? = null
 ) : RuntimeException() {
 
     fun span(span: Span) {

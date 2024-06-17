@@ -19,8 +19,8 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
-        InlineBlockPass,
         ConstantFoldingPass,
+        InlineBlockPass,
         ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
         MapActionsPass, // Before call assignment, or will become valid expression
@@ -44,8 +44,8 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
+        ConstantFoldingPass, // Before inline block, at least in optimize
         InlineBlockPass,
-        ConstantFoldingPass,
         ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
         MapActionsPass, // Before call assignment, or will become valid expression

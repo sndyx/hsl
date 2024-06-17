@@ -1,6 +1,5 @@
 package com.hsc.compiler.errors
 
-import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles.*
 import com.github.ajalt.mordant.terminal.Terminal
@@ -20,6 +19,11 @@ class HumanEmitter(
         val (label, color) = style(diagnostic.level)
 
         t.println("${(bold + color)(label)}: ${bold(italicizeBackticks(diagnostic.message))}")
+        diagnostic.throwable?.stackTraceToString()
+            ?.lines()
+            ?.drop(1)?.take(10)
+            ?.map { it.replace("\tat", bold(" -+>")) }
+            ?.forEach { t.println(it) }
         diagnostic.spans.getOrNull(0)?.let { (span, _) ->
             sourceMap.files[span.fid]?.let { file ->
 

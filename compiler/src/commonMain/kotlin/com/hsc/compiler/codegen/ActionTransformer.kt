@@ -14,7 +14,7 @@ import com.hsc.compiler.span.Span
 class ActionTransformer(internal val sess: CompileSess) {
 
     fun transform(ast: Ast): List<Function> {
-        return ast.items.filter{
+        return ast.items.filter {
             it.kind is ItemKind.Fn
         }.map { item ->
             val fn = (item.kind as ItemKind.Fn).fn

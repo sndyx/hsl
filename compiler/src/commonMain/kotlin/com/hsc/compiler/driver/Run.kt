@@ -26,7 +26,7 @@ private val json = Json { prettyPrint = true }
 fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
     val compiler = Compiler(opts)
     val startTime = Clock.System.now()
-    compiler.emitter.start("test")
+    compiler.emitter.start(opts.houseName)
 
     val ast = compiler.enter {
         val ast = Ast()
@@ -64,23 +64,43 @@ fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
     }
 
     compiler.enter<Unit> {
-        val elapsed = Clock.System.now() - startTime
-        emitter.complete("test", elapsed)
-
         opts.output?.let {
-            val actionsPath = Path("$it/actions.json")
-            val actionsOut = json.encodeToString(functions)
-            val actionsBuffer = Buffer()
-            actionsBuffer.write(actionsOut.encodeToByteArray())
-            SystemFileSystem.sink(actionsPath).write(actionsBuffer, actionsBuffer.size)
-            SystemFileSystem.createDirectories(Path("$it/htsl"))
-            functions.map { fn -> Pair(generateHtsl(sess, fn), fn.name) }.forEach { (htsl, name) ->
-                val htslPath = Path("$it/htsl/$name.htsl")
-                val htslBuffer = Buffer()
-                htslBuffer.write(htsl.encodeToByteArray())
-                SystemFileSystem.sink(htslPath).write(htslBuffer, htslBuffer.size)
+            when (opts.target) {
+                Target.Json -> {
+                    if (SystemFileSystem.exists(Path("$it/json"))) {
+                        SystemFileSystem.list(Path("$it/json")).forEach { path ->
+                            SystemFileSystem.delete(path)
+                        }
+                    }
+                    SystemFileSystem.createDirectories(Path("$it/json"))
+                    functions.map { fn -> Pair(json.encodeToString(fn.actions), fn.name) }.forEach { (text, name) ->
+                        val path = Path("$it/json/$name.json")
+                        val buffer = Buffer()
+                        buffer.write(text.encodeToByteArray())
+                        SystemFileSystem.sink(path).write(buffer, buffer.size)
+                    }
+                }
+                Target.Htsl -> {
+                    if (SystemFileSystem.exists(Path("$it/htsl"))) {
+                        SystemFileSystem.list(Path("$it/htsl")).forEach { path ->
+                            SystemFileSystem.delete(path)
+                        }
+                    }
+                    SystemFileSystem.createDirectories(Path("$it/htsl"))
+                    functions.map { fn -> Pair(generateHtsl(sess, fn), fn.name) }.forEach { (text, name) ->
+                        val path = Path("$it/htsl/$name.htsl")
+                        val buffer = Buffer()
+                        buffer.write(text.encodeToByteArray())
+                        SystemFileSystem.sink(path).write(buffer, buffer.size)
+                    }
+                }
             }
         }
+    }
+
+    compiler.enter {
+        val elapsed = Clock.System.now() - startTime
+        emitter.complete(opts.houseName, elapsed)
     }
 
     compiler.emitter.close()
@@ -91,7 +111,7 @@ class Compiler(opts: CompileOptions) {
     @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
     val scope: CoroutineDispatcher = newSingleThreadContext("compiler")
 
-    val terminal: Terminal = when (opts.color) {
+    private val terminal: Terminal = when (opts.color) {
         Color.Auto -> Terminal()
         Color.Always -> Terminal(AnsiLevel.ANSI256)
         Color.Never -> Terminal(AnsiLevel.NONE)
@@ -141,8 +161,10 @@ private fun handleError(error: Throwable, dcx: DiagCtx) {
                 dcx.err("out of memory").emit()
             }
             else -> {
-                val message = if (error.message != null) "$name: ${error.message}" else name
-                dcx.bug(message).emit()
+                val message =
+                    if (error.message != null) "$name: ${error.message!!.first().lowercase()}${error.message!!.drop(1)}"
+                    else name
+                dcx.bug(message, null, error).emit()
             }
         }
     }

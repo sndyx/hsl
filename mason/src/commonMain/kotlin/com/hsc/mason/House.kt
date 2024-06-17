@@ -46,8 +46,8 @@ enum class Mode {
 
 @Serializable
 enum class Target {
-    @SerialName("normal") Normal,
-    @SerialName("housing+") HousingPlus;
+    @SerialName("json") Json,
+    @SerialName("htsl") Htsl;
 }
 
 @Serializable(with = DependencySerializer::class)
