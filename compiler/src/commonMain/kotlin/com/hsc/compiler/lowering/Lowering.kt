@@ -15,6 +15,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineEnumPass,
         InlineFunctionPass,
         ExpandInPass,
+        ExpandModPass,
         ExpandMatchPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
@@ -26,7 +27,6 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         InlineFunctionCallAssignmentPass,
-        ExpandModPass,
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
@@ -40,6 +40,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineEnumPass,
         InlineFunctionPass,
         ExpandInPass,
+        ExpandModPass,
         ExpandMatchPass,
         FlipNotConditionsPass,
         RaiseNotEqPass,
@@ -51,7 +52,6 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         InlineFunctionCallAssignmentPass,
-        ExpandModPass,
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,

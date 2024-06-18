@@ -22,6 +22,7 @@ data class Package(
     val version: String,
     val mode: Mode?,
     val target: Target?,
+    val flags: List<String>?,
 )
 
 @Serializable

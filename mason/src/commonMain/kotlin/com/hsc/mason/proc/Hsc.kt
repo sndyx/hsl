@@ -33,10 +33,11 @@ object Hsc {
         printProcess(
             "hsc ${src.joinToString(" ")}" +
                     " $modeString" +
-                    " --house-name=${config.pkg.name}" +
+                    " --house-name=\"${sanitize(config.pkg.name)}\"" +
                     " --color=always" +
                     " $targetString" +
-                    " --output $out"
+                    " --output $out" +
+                    " " + (config.pkg.flags?.joinToString(" ") { sanitizeStrict(it) } ?: "")
         )
     }
 

@@ -7,7 +7,7 @@ data class CompileOptions(
     val emitter: EmitterType,
     val output: String?,
     val color: Color,
-    val parallel: Boolean,
+    val stupidDumbIdiotMode: Boolean,
 )
 
 enum class Color(val label: String) {

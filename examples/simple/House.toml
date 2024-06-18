@@ -3,4 +3,6 @@ name = "simple-example"
 version = "0.0.1"
 
 mode = "optimize"
-target = "json"
+target = "htsl"
+
+flags = ["--slash-idents"]

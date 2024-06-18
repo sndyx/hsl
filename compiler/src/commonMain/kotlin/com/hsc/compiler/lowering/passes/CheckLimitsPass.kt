@@ -33,6 +33,7 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
     while (pos < block.stmts.size) {
         val kind = stmtActionKind(block.stmts[pos])
 
+        println(kind)
         currentLimits[kind] = currentLimits[kind]!! - 1
         if (currentLimits[kind] == -1) { // we ran out of the current action kind
             currentLimits[kind] = 0

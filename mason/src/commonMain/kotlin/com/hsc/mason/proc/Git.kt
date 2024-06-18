@@ -12,8 +12,8 @@ object Git {
     }
 
     fun clone(dir: Path, repo: String, tag: String? = null) {
-        val branch = if (tag != null) "--branch $tag" else ""
-        printProcess("git clone --quiet --depth 1 $branch $repo $dir")
+        val branch = if (tag != null) "--branch ${sanitizeStrict(tag)}" else ""
+        printProcess("git clone --quiet --depth 1 $branch ${sanitizeStrict(repo)} $dir")
     }
 
     fun latest(repo: String, tag: String? = null): String {

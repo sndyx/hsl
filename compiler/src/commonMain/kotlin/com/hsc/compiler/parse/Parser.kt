@@ -317,7 +317,7 @@ class Parser(
         val lo = token.span.lo
 
         if (eat(TokenKind.BinOp(BinOpToken.Minus))) {
-            val expr = parseExpr()
+            val expr = parseExpr00()
             return Expr(Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Neg, expr))
         }
         if (check(TokenKind.Ident::class)) { // We are trolling with this one :-)

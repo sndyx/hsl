@@ -29,6 +29,7 @@ private class MapConditionsVisitor(val ctx: LoweringCtx) : AstVisitor {
                 p = ArgParser(ctx, kind.args)
                 val condition = when (kind.ident.name) {
                     "in_group" -> parseInGroup()
+                    "in_team" -> parseInTeam()
                     "has_permission" -> parseHasPermission()
                     "in_region" -> parseInRegion()
                     "has_item" -> parseHasItem()
@@ -54,6 +55,12 @@ private class MapConditionsVisitor(val ctx: LoweringCtx) : AstVisitor {
         return Condition.RequiredGroup(
             group, includeHigherGroups
         )
+    }
+
+    fun parseInTeam(): Condition {
+        p.assertLength(1, "in_team(<team>)")
+        val team = p.nextStringLit()
+        return Condition.RequiredTeam(team)
     }
 
     fun parseHasPermission(): Condition {

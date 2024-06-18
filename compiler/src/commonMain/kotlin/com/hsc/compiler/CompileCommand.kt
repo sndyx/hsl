@@ -44,14 +44,14 @@ class CompileCommand : CliktCommand() {
     private val version: Boolean by option("--version", "-v").flag()
         .help("Show version")
 
-    private val parallel: Boolean by option("--parallel").flag()
+    private val slashIdents: Boolean by option("--slash-idents").flag()
 
     override fun run() {
         if (version || paths.isEmpty()) {
-            println("hsc v1.1.0 beta")
+            println("hsc v1.1.3 beta")
             return
         }
-        val opts = CompileOptions(houseName, target, mode, emitter, output, color, parallel)
+        val opts = CompileOptions(houseName, target, mode, emitter, output, color, slashIdents)
         runCompiler(opts, paths.map { Path(it) })
     }
 

@@ -1,6 +1,7 @@
 package com.hsc.compiler.lowering
 
 import com.hsc.compiler.ir.ast.Block
+import com.hsc.compiler.ir.ast.ExprKind
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.span.Span
@@ -45,9 +46,11 @@ val limitsMap = mapOf(
     "SET_COMPASS_TARGET" to 5,
     "TELEPORT_PLAYER" to 5,
     "SEND_TO_LOBBY" to 1,
+    "" to 1000000000,
 )
 
 fun stmtActionKind(stmt: Stmt): String {
+    println(stmt)
     return when (val kind = stmt.kind) {
         is StmtKind.Action -> {
             kind.action.actionName
@@ -60,15 +63,14 @@ fun stmtActionKind(stmt: Stmt): String {
             if (kind.ident.isGlobal) "CHANGE_GLOBAL_STAT"
             else "CHANGE_STAT"
         }
-        StmtKind.Break -> ""
-        StmtKind.Continue -> ""
         is StmtKind.Expr -> {
-            //
-            ""
+            when (val exprKind = kind.expr.kind) {
+                is ExprKind.If -> "CONDITIONAL"
+                is ExprKind.Call -> "TRIGGER_FUNCTION"
+                else -> ""
+            }
         }
-        is StmtKind.For -> ""
-        is StmtKind.Ret -> ""
-        is StmtKind.While -> ""
+        else -> ""
     }
 }
 

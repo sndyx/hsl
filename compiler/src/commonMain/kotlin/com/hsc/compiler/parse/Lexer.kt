@@ -15,7 +15,9 @@ class Lexer(
     val pos: Int get() = srcp.pos
 
     fun isIdStart(char: Char): Boolean = char.isLetter() || char == '_' || char == '#'
-    fun isIdContinue(char: Char): Boolean = char.isDigit() || char.isLetter() || char == '_'
+    fun isIdContinue(char: Char): Boolean =
+        if (sess.opts.stupidDumbIdiotMode) char.isDigit() || char.isLetter() || char == '_' || char == '/'
+        else char.isDigit() || char.isLetter() || char == '_'
 
     fun advanceToken(): Token {
         eatWhile { it.isWhitespace() }
