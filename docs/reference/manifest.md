@@ -16,6 +16,8 @@ version = "1.0.0"
 # Optional properties
 mode = "strict" # strict, normal, optimize
 target = "htsl" # json, htsl
+
+flags = ["--slash-idents"] # --slash-idents
 ```
 
 ## Dependencies
