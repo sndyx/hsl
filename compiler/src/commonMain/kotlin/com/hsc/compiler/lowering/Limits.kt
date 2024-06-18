@@ -50,7 +50,6 @@ val limitsMap = mapOf(
 )
 
 fun stmtActionKind(stmt: Stmt): String {
-    println(stmt)
     return when (val kind = stmt.kind) {
         is StmtKind.Action -> {
             kind.action.actionName
