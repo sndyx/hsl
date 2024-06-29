@@ -4,13 +4,14 @@ HSL (Housing Scripting Language) is a programming language that provides
 a near 1:1 mapping of housing actions while also maintaining many optional
 abstractions and syntax sugar.
 
+> [Discord Server](https://discord.gg/Z3NSvDv7)
+
 ## Table of contents
 
 <!--- TOC -->
 
 - [Installation](#installation)
 - [Language Documentation](#language-documentation)
-- [Compiler](#compiler)
 - [Developers](#developers)
     - [Compiler](#hsc-housing-script-compiler)
         - [Compiling](#compiling)
