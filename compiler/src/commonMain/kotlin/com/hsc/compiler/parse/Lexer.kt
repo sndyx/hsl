@@ -79,6 +79,7 @@ class Lexer(
             '@' -> TokenKind.At
             '.' -> TokenKind.Dot
             '!' -> TokenKind.Not
+            '~' -> TokenKind.Tilde
             '=' -> {
                 when (first()) {
                     '=' -> {
@@ -177,6 +178,7 @@ class Lexer(
             "continue" -> TokenKind.Kw(Keyword.Continue)
             "return" -> TokenKind.Kw(Keyword.Return)
             "const" -> TokenKind.Kw(Keyword.Const)
+            "random" -> TokenKind.Kw(Keyword.Random)
             "true" -> TokenKind.Literal(Lit(LitKind.Bool, "true"))
             "false" -> TokenKind.Literal(Lit(LitKind.Bool, "false"))
             // Can just parse null as 0. On the other hand, booleans should stay bool literals because of

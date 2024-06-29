@@ -68,6 +68,9 @@ sealed class TokenKind {
     data object Colon : TokenKind() {
         override fun toString(): String = ":"
     }
+    data object Tilde : TokenKind() {
+        override fun toString(): String = "~"
+    }
 
     data class BinOp(val type: BinOpToken) : TokenKind() {
         override fun toString(): String = type.toString()
@@ -132,7 +135,8 @@ enum class Keyword(val value: String) {
     Break("break"),
     Continue("continue"),
     Return("return"),
-    Const("const");
+    Const("const"),
+    Random("random");
 
 }
 

@@ -2,8 +2,12 @@ package com.hsc.compiler.lowering
 
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
+import com.hsc.compiler.ir.action.Comparison
+import com.hsc.compiler.ir.action.Condition
+import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.*
 import kotlin.math.pow
+import kotlin.math.roundToLong
 
 fun fold(sess: CompileSess, expr: Expr) {
     val visitor = EvaluateConstantEquationsVisitor(sess)
@@ -20,6 +24,18 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {
             is ExprKind.Binary -> {
+
+                fun binOpToComparison(binOp: BinOpKind): Comparison? {
+                    return when (kind.kind) {
+                        BinOpKind.Eq -> Comparison.Eq
+                        BinOpKind.Gt -> Comparison.Gt
+                        BinOpKind.Ge -> Comparison.Ge
+                        BinOpKind.Lt -> Comparison.Lt
+                        BinOpKind.Le -> Comparison.Le
+                        else -> null
+                    }
+                }
+
                 if (kind.a.kind is ExprKind.Lit && kind.b.kind is ExprKind.Lit) {
                     val exprA = kind.a.kind as ExprKind.Lit
                     val exprB = kind.b.kind as ExprKind.Lit
@@ -134,38 +150,80 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                         }
 
                         fun string(a: String, b: String) {
-                            val result = when (kind.kind) {
-                                BinOpKind.Add -> a + b
-                                else -> {
-                                    sess.dcx().err("invalid operand string ${kind.kind} string", expr.span).emit()
-                                    "error"
-                                }
-                            }
-                            expr.kind = ExprKind.Lit(Lit.Str(result))
+                            expr.kind = ExprKind.Lit(Lit.Str(a + b))
                             changes++
                         }
+                        fun placeholder(a: String, b: Long) {
+                            val comparison = binOpToComparison(kind.kind)
+                                ?: throw sess.dcx().err("invalid operand types string ${kind.kind} number", expr.span)
+
+                            expr.kind = ExprKind.Condition(Condition.RequiredPlaceholderNumber(a, comparison, StatValue.I64(b)))
+                            changes++
+                        }
+
                         context<Lit.Str, Lit.Str> { la, lb ->
-                            string(la.value, lb.value)
+                            if (kind.kind == BinOpKind.Add) string(la.value, lb.value)
+                            else throw sess.dcx().err("invalid operand types string ${kind.kind} string", expr.span)
                             return@operation
                         }
                         context<Lit.Str, Lit.I64> { la, lb ->
-                            string(la.value, lb.value.toString())
+                            if (kind.kind == BinOpKind.Add) string(la.value, lb.value.toString())
+                            else placeholder(la.value, lb.value)
                             return@operation
                         }
                         context<Lit.Str, Lit.F64> { la, lb ->
-                            string(la.value, lb.value.toString())
+                            if (kind.kind == BinOpKind.Add) string(la.value, lb.value.toString())
+                            else placeholder(la.value, lb.value.roundToLong())
                             return@operation
                         }
                         context<Lit.Str, Lit.Bool> { la, lb ->
-                            string(la.value, lb.value.toString())
+                            if (kind.kind == BinOpKind.Add) string(la.value, lb.value.toString())
+                            else placeholder(la.value, if (lb.value) 1 else 0)
                             return@operation
                         }
+                        // TODO: Location arithmetic
+                        /*
+                        context<Lit.Location, Lit.Location> { la, lb ->
+                            var x = la.x
+                            var y = la.y
+                            var z = la.z
+                            var pitch = la.pitch
+                            var yaw = la.yaw
 
+                            when (kind.kind) {
+                                BinOpKind.Add -> {
+                                    la.x = Expr(la.x!!.span, ExprKind.Binary(BinOpKind.Add, la.x!!, lb.x!!))
+                                    la.y = Expr(la.y!!.span, ExprKind.Binary(BinOpKind.Add, la.y!!, lb.y!!))
+                                    la.z = Expr(la.z!!.span, ExprKind.Binary(BinOpKind.Add, la.z!!, lb.z!!))
+                                    la.pitch = lb.pitch?.let {  } ?: Expr(la.pitch!!.span, ExprKind.Binary(BinOpKind.Add, la.pitch!!, lb.pitch!!))
+                                    la.yaw = Expr(la.yaw!!.span, ExprKind.Binary(BinOpKind.Add, la.yaw!!, lb.yaw!!))
+                                }
+                                BinOpKind.Sub -> {
+
+                                }
+                                BinOpKind.Mul -> (a * b) to true
+                                BinOpKind.Div -> (a / b) to true
+                            }
+
+                            return@operation
+                        }
+                         */
                     }
                 }
                 else {
                     visitExpr(kind.a)
                     visitExpr(kind.b)
+                }
+                if (kind.a.kind is ExprKind.Lit
+                    && (kind.a.kind as ExprKind.Lit).lit is Lit.Str
+                    && kind.b.kind is ExprKind.Var) { // placeholder comparison var
+                    val comparison = binOpToComparison(kind.kind)
+                        ?: throw sess.dcx().err("invalid operand types string ${kind.kind} variable", expr.span)
+                    val placeholder = ((kind.a.kind as ExprKind.Lit).lit as Lit.Str).value
+                    val variable = (kind.b.kind as ExprKind.Var).ident.name
+
+                    expr.kind = ExprKind.Condition(Condition.RequiredPlaceholderNumber(placeholder, comparison, StatValue.Str(variable)))
+                    changes++
                 }
             }
             is ExprKind.If -> {

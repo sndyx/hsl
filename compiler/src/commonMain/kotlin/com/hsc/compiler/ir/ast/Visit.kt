@@ -30,7 +30,9 @@ interface AstVisitor {
     fun visitProcessors(processors: Processors) { /* Ignore */ }
     fun visitFnSig(fnSig: FnSig) { /* Ignore */ }
     fun visitIdent(ident: Ident) { /* Ignore */ }
-    fun visitLit(lit: Lit) { /* Ignore */  }
+    fun visitLit(lit: Lit) {
+        walkLit(this, lit)
+    }
 }
 
 open class BlockAwareVisitor : AstVisitor {
@@ -161,6 +163,7 @@ fun walkStmt(v: AstVisitor, stmt: Stmt) {
             v.visitExpr(kind.cond)
             v.visitBlock(kind.block)
         }
+        is StmtKind.Random -> v.visitBlock(kind.block)
         StmtKind.Break, StmtKind.Continue -> { /* Ignore */ }
     }
 }
@@ -173,4 +176,15 @@ fun walkArm(v: AstVisitor, arm: Arm) {
 fun walkRange(v: AstVisitor, range: Range) {
     v.visitExpr(range.lo)
     v.visitExpr(range.hi)
+}
+
+// we are walking literals... the compiler is fine 😂
+fun walkLit(v: AstVisitor, lit: Lit) {
+    if (lit is Lit.Location) {
+        lit.x?.let(v::visitExpr)
+        lit.y?.let(v::visitExpr)
+        lit.z?.let(v::visitExpr)
+        lit.pitch?.let(v::visitExpr)
+        lit.yaw?.let(v::visitExpr)
+    }
 }

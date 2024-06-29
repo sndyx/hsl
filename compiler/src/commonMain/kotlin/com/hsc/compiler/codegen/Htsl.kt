@@ -121,6 +121,13 @@ private fun generateHtslAction(sess: CompileSess, action: Action): String {
                 sb.append("\n}")
             }
         }
+        is Action.RandomAction -> {
+            sb.append("random {\n")
+            action.actions.forEach {
+                sb.append(generateHtslAction(sess, it)).append("\n")
+            }
+            sb.append("}")
+        }
         is Action.ChangePlayerStat -> {
             sb.append("stat ${action.stat} ${statOpMap[action.op]} ${statVal(action.amount)}")
         }
@@ -166,6 +173,9 @@ private fun generateHtslCondition(sess: CompileSess, condition: Condition): Stri
         }
         is Condition.RequiredDamageAmount -> {
             sb.append("damageAmount ${comparisonMap[condition.mode]} ${statVal(condition.amount)}")
+        }
+        is Condition.RequiredPlaceholderNumber -> {
+            sb.append("placeholder ${condition.placeholder} ${comparisonMap[condition.mode]} ${statVal(condition.amount)}")
         }
         else -> {
             sb.append(conditionMap[condition.conditionName.lowercase()])
@@ -213,6 +223,22 @@ private class HtslEncoder(val sess: CompileSess) : AbstractEncoder() {
             } else idx + 1
             encodeString("item$num")
         }
+        else if (value is Location) {
+            when (value) {
+                is Location.Custom -> {
+                    fun rel(bool: Boolean) = if (bool) "~" else ""
+                    fun nil(any: Any?) = if (any != null) any else ""
+                    encodeString("custom_coordinates")
+                    encodeString("${rel(value.relX)}${nil(value.x)}" +
+                            " ${rel(value.relY)}${nil(value.y)}" +
+                            " ${rel(value.relZ)}${nil(value.z)}" +
+                            if (value.pitch == null) "" else " ${value.pitch} ${value.yaw}")
+                }
+                is Location.CurrentLocation -> encodeString("current_location")
+                is Location.InvokersLocation -> encodeString("invokers_location")
+                is Location.HouseSpawn -> encodeString("house_spawn")
+            }
+        }
         else {
             super.encodeSerializableElement(descriptor, index, serializer, value)
         }
@@ -221,6 +247,7 @@ private class HtslEncoder(val sess: CompileSess) : AbstractEncoder() {
     override fun encodeBoolean(value: Boolean) { list.add(value.toString()) }
     override fun encodeInt(value: Int) { list.add(value.toString()) }
     override fun encodeLong(value: Long) { list.add(value.toString()) }
+    override fun encodeFloat(value: Float) { list.add(value.toString()) }
     override fun encodeDouble(value: Double) { list.add(value.toString()) }
     override fun encodeString(value: String) { list.add("\"$value\"") }
 

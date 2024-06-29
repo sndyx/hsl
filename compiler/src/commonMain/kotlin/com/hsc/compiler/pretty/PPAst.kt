@@ -100,6 +100,11 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                 t.println(white(")"))
                 visitBlock(kind.block)
             }
+            is StmtKind.Random -> {
+                t.println("${blue("random")} ${white("{")}")
+                visitBlock(kind.block)
+                t.print(white("${i}}"))
+            }
         }
     }
 
@@ -154,6 +159,7 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
                     is Lit.I64 -> white(lit.value.toString())
                     is Lit.F64 -> white(lit.value.toString())
                     is Lit.Item -> lit.value.toString()
+                    is Lit.Location -> white("location")
                     is Lit.Str -> white("\"${lit.value}\"")
                 }
                 t.print(value)

@@ -113,7 +113,6 @@ sealed class StmtKind {
     data class Action(val action: com.hsc.compiler.ir.action.Action) : StmtKind() {
         override fun deepCopy(): StmtKind = copy()
     }
-
     data class For(var label: Ident, var range: Range, var block: Block) : StmtKind() {
         override fun deepCopy(): StmtKind = copy(range = range.deepCopy(), block = block.deepCopy())
     }
@@ -137,6 +136,9 @@ sealed class StmtKind {
     }
     data class Ret(var expr: com.hsc.compiler.ir.ast.Expr?) : StmtKind() {
         override fun deepCopy(): StmtKind = copy(expr = expr?.deepCopy())
+    }
+    data class Random(var block: Block) : StmtKind() {
+        override fun deepCopy(): StmtKind = copy(block = block.deepCopy())
     }
 }
 
@@ -224,6 +226,14 @@ sealed class Lit {
     data class Item(val value: ItemStack) : Lit() {
         override fun deepCopy(): Lit = copy(value = value.copy())
     }
+
+    data class Location(
+        val relX: Boolean, val relY: Boolean, val relZ: Boolean,
+        var x: Expr?, var y: Expr?, var z: Expr?,
+        var pitch: Expr?, var yaw: Expr?,
+    ) : Lit() {
+        override fun deepCopy(): Lit = copy()
+    }
     
     data object Null : Lit() {
         override fun deepCopy(): Lit = this
@@ -235,6 +245,7 @@ sealed class Lit {
             is I64 -> "integer"
             is F64 -> "float"
             is Item -> "item"
+            is Location -> "location"
             is Bool -> "boolean"
             is Null -> "null"
         }

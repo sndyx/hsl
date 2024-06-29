@@ -25,6 +25,9 @@ fun ActionTransformer.transformStmt(stmt: Stmt): Action {
         is StmtKind.Expr -> {
             transformExpr(kind.expr)
         }
+        is StmtKind.Random -> {
+            return Action.RandomAction(transformBlock(kind.block))
+        }
         is StmtKind.For, is StmtKind.Ret, is StmtKind.While,
         StmtKind.Break, StmtKind.Continue -> {
             strict(stmt.span) {

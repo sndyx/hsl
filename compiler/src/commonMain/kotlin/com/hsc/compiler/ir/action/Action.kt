@@ -21,39 +21,38 @@ sealed class Action(
 
     companion object {
         val builtins = setOf(
-            "apply_layout",
-            "potion_effect",
-            "balance_player_team",
+            "set_layout",
+            "effect",
+            "balance_team",
             "cancel_event",
             "change_health",
             "change_hunger_level",
             "change_max_health",
-            "change_player_group",
+            "set_group",
             "clear_effects",
             "close_menu",
             "action_bar",
-            "display_menu",
+            "open_menu",
             "title",
             "enchant_held_item",
             "exit",
             "fail_parkour",
-            "full_heal",
+            "heal",
             "give_exp_levels",
             "give_item",
             "spawn",
             "kill",
             "parkour_checkpoint",
             "pause",
-            "play_sound",
-            // "random_action",
-            "send_message",
+            "sound",
+            "message",
             "reset_inventory",
             "remove_item",
-            "set_player_team",
-            "use_held_item",
+            "set_team",
+            "remove_held_item",
             "set_gamemode",
             "set_compass_target",
-            "teleport_player",
+            "tp",
             "send_to_lobby"
         )
     }
@@ -196,8 +195,7 @@ sealed class Action(
         val sound: Sound,
         val volume: Double,
         val pitch: Double,
-        val location: String,
-        // val location: Location,
+        val location: Location,
     ) : Action("PLAY_SOUND")
     @Serializable
     @SerialName("RANDOM_ACTION")
@@ -257,25 +255,84 @@ data class ItemStack(
 )
 
 @Serializable
-data class Location(
-    val relX: Long,
-    val relY: Long,
-    val relZ: Long,
-    val x: Long,
-    val y: Long,
-    val z: Long,
-    val pitch: Float,
-    val yaw: Float,
-)
+sealed class Location() {
 
-enum class PotionEffect(override val key: String) : Keyed {
-    Strength("STRENGTH"),
-    Regeneration("REGENERATION");
+    @Serializable
+    @SerialName("custom_coordinates")
+    class Custom(
+        val relX: Boolean,
+        val relY: Boolean,
+        val relZ: Boolean,
+        val x: Double?,
+        val y: Double?,
+        val z: Double?,
+        val pitch: Float?,
+        val yaw: Float?,
+    ) : Location()
+
+    @Serializable
+    @SerialName("house_spawn")
+    object HouseSpawn : Location()
+
+    @Serializable
+    @SerialName("current_location")
+    object CurrentLocation : Location()
+
+    @Serializable
+    @SerialName("invokers_location")
+    object InvokersLocation : Location()
+
 }
 
-enum class Enchantment {
-    @SerialName("protection")
-    Protection;
+enum class PotionEffect(override val key: String) : Keyed {
+    Speed("Speed"),
+    Slowness("Slowness"),
+    Haste("Haste"),
+    MiningFatigue("Mining Fatigue"),
+    Strength("Strength"),
+    InstantHealth("Instant Health"),
+    InstantDamage("Instant Damage"),
+    JumpBoost("Jump Boost"),
+    Nausea("Nausea"),
+    Regeneration("Regeneration"),
+    Resistance("Resistance"),
+    FireResistance("Fire Resistance"),
+    WaterBreathing("Water Breathing"),
+    Invisibility("Invisibility"),
+    Blindness("Blindness"),
+    NightVision("Night Vision"),
+    Hunger("Hunger"),
+    Weakness("Weakness"),
+    Poison("Poison"),
+    Wither("Wither"),
+    HealthBoost("Health Boost"),
+    Absorption("Absorption");
+}
+
+enum class Enchantment(override val key: String) : Keyed {
+    Protection("Protection"),
+    FireProtection("Fire Protection"),
+    FeatherFalling("Feather Falling"),
+    BlastProtection("Blast Protection"),
+    ProjectileProtection("Projectile Protection"),
+    Respiration("Respiration"),
+    AquaAffinity("Aqua Affinity"),
+    Thorns("Thorns"),
+    DepthStrider("Depth Strider"),
+    Sharpness("Sharpness"),
+    Smite("Smite"),
+    BaneOfArthropods("Bane Of Arthropods"),
+    Knockback("Knockback"),
+    FireAspect("Fire Aspect"),
+    Looting("Looting"),
+    Efficiency("Efficiency"),
+    SilkTouch("Silk Touch"),
+    Unbreaking("Unbreaking"),
+    Fortune("Fortune"),
+    Power("Power"),
+    Punch("Punch"),
+    Flame("Flame"),
+    Infinity("Infinity");
 }
 
 enum class GameMode(override val key: String) : Keyed {

@@ -48,7 +48,7 @@ class CompileCommand : CliktCommand() {
 
     override fun run() {
         if (version || paths.isEmpty()) {
-            println("hsc v1.1.3 beta")
+            println("hsc v1.2.0 beta")
             return
         }
         val opts = CompileOptions(houseName, target, mode, emitter, output, color, slashIdents)

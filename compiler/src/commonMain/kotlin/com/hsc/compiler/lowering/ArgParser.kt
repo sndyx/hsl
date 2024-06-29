@@ -62,8 +62,7 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
         }
     }
 
-    fun nextFloatLit(): Double {
-        val expr = bump()
+    private fun expectFloat(expr: Expr): Double {
         return when (val kind = expr.kind) {
             is ExprKind.Lit -> {
                 when (val lit = kind.lit) {
@@ -80,6 +79,8 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
             }
         }
     }
+
+    fun nextFloatLit(): Double = expectFloat(bump())
 
     fun nextValue(): StatValue {
         val expr = bump()
@@ -139,7 +140,38 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
     }
 
     fun nextLocation(): Location {
-        TODO()
+        val expr = bump()
+        when (val kind = expr.kind) {
+            is ExprKind.Lit -> {
+                return when (val lit = kind.lit) {
+                    is Lit.Location -> {
+                        val x = lit.x?.let(::expectFloat)
+                        val y = lit.y?.let(::expectFloat)
+                        val z = lit.z?.let(::expectFloat)
+                        val pitch = lit.pitch?.let(::expectFloat)
+                        val yaw = lit.yaw?.let(::expectFloat)
+                        Location.Custom(
+                            lit.relX, lit.relY, lit.relZ, x, y, z, pitch?.toFloat(), yaw?.toFloat()
+                        )
+                    }
+
+                    is Lit.Str -> when (lit.value) {
+                        "house_spawn" -> Location.HouseSpawn
+                        "current_location" -> Location.CurrentLocation
+                        "invokers_location" -> Location.InvokersLocation
+                        else -> throw ctx.dcx().err("expected location, found ${lit.str()}")
+
+                    }
+
+                    else -> {
+                        throw ctx.dcx().err("expected location, found ${lit.str()}")
+                    }
+                }
+            }
+            else -> {
+                throw ctx.dcx().err("expected location, found ${kind.str()}")
+            }
+        }
     }
 
 

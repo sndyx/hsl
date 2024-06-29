@@ -5,6 +5,7 @@ import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.passes.*
+import kotlinx.datetime.Clock
 import kotlin.reflect.KClass
 
 private val passes: Map<Mode, List<AstPass>> = mapOf(

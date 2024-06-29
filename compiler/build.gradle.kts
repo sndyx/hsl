@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -13,10 +14,15 @@ repositories {
     mavenCentral()
 }
 
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
 
     jvm {
         withJava()
+        mainRun {
+            args("../examples/simple/src/example.hsl --mode=optimize --house-name=\"simple-example\" --color=always --target=htsl --output ../examples/simple/build --slash-idents".split(" "))
+            mainClass.set("com.hsc.mason.MainKt")
+        }
     }
     mingwX64 {
         binaries {
@@ -72,6 +78,12 @@ kotlin {
             }
         }
 
+        val commonTest by sourceSets.getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+
         val jvmMain by sourceSets.getting {
 
         }
@@ -117,6 +129,5 @@ kotlin {
             )
         }
     }
-
 
 }

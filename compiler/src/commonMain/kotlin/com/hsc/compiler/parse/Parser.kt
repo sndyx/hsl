@@ -64,7 +64,7 @@ class Parser(
     fun parseProcessorFnItem(): Item {
         val lo = prev.span.lo
         val processors = if (check(TokenKind.OpenDelim(Delimiter.Bracket))) {
-            parseDelimited(Delimiter.Bracket) {
+            parseDelimitedCommaSequence(Delimiter.Bracket) {
                 removeMacroPrefix(parseIdent())
             }.getOrElse { e ->
                 if (e !is Diagnostic) throw e
@@ -154,26 +154,18 @@ class Parser(
     }
 
     fun parseBlock(): Block {
-        val stmts = mutableListOf<Stmt>()
-        expect(TokenKind.OpenDelim(Delimiter.Brace))
-        val startSpan = prev.span
-        while (true) {
-            if (eat(TokenKind.CloseDelim(Delimiter.Brace))) {
-                break
-            } else if (eat(TokenKind.Eof)) {
-                throw dcx().err("unclosed function body", startSpan)
-                // No reason to recover this
-            } else {
-                stmts.add(parseStmt())
-            }
-        }
+        val startSpan = token.span
+        val stmts = parseDelimitedSequence(Delimiter.Brace) { parseStmt() }.getOrThrow()
+
+
         val hi = prev.span.hi
-        return Block(Span(startSpan.lo, hi, fid), stmts)
+
+        return Block(Span(startSpan.lo, hi, fid), stmts.toMutableList())
     }
 
     fun parseFnSig(): FnSig {
         val lo = token.span.lo
-        val args = parseDelimited(Delimiter.Parenthesis) {
+        val args = parseDelimitedCommaSequence(Delimiter.Parenthesis) {
             parseIdent()
         }.getOrThrow()
         val hi = prev.span.hi
@@ -205,7 +197,7 @@ class Parser(
                 return Stmt(Span(lo, prev.span.hi, fid), StmtKind.AssignOp(kind, ident, expr))
             } else if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
                 val loArgs = token.span.lo
-                val exprs = parseDelimited(Delimiter.Parenthesis) {
+                val exprs = parseDelimitedCommaSequence(Delimiter.Parenthesis) {
                     parseExpr()
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
@@ -227,6 +219,8 @@ class Parser(
                 val expr = parseExpr()
                 return Stmt(Span(lo, token.span.hi, fid), StmtKind.Ret(expr))
             }
+        } else if (eat(TokenKind.Kw(Keyword.Random))) {
+            return parseRandom()
         }
         val expr = parseExpr()
         return Stmt(Span(lo, prev.span.hi, fid), StmtKind.Expr(expr))
@@ -260,17 +254,17 @@ class Parser(
         )
     }
 
-    fun parseExpr(lookahead: Expr? = null): Expr {
-        val expr = parseExpr0(lookahead)
+    fun parseExpr(lookahead: Expr? = null, parseCondition: Boolean = true): Expr {
+        val expr = parseExpr0(lookahead, parseCondition = parseCondition)
         if (eat(TokenKind.Kw(Keyword.In))) {
-            val other = parseExpr()
+            val other = parseExpr(parseCondition = parseCondition)
             return Expr(
                 Span(expr.span.lo, other.span.hi, fid),
                 ExprKind.Binary(BinOpKind.In, expr, other)
             )
         }
         if (eat(TokenKind.DotDot)) {
-            val other = parseExpr0() // We should stop chained ranges, probably
+            val other = parseExpr0(parseCondition = parseCondition) // We should stop chained ranges, probably
             val range = Range(expr, other)
             return Expr(
                 Span(expr.span.lo, other.span.hi, fid),
@@ -281,7 +275,7 @@ class Parser(
         }
     }
 
-    private fun parseExpr0(lookahead: Expr? = null): Expr {
+    private fun parseExpr0(lookahead: Expr? = null, parseCondition: Boolean = true): Expr {
         // Simple shunting-yard impl
         val exprStack = mutableListOf(lookahead ?: parseExpr00())
         val opStack = mutableListOf<Pair<BinOpKind, Int>>()
@@ -297,7 +291,7 @@ class Parser(
             exprStack.add(newExpr)
         }
 
-        while (checkBinOp()) {
+        while (checkBinOp(parseCondition)) {
             val op = parseBinOp()
             while ((opStack.lastOrNull()?.second ?: -1) >= op.second) {
                 popStack()
@@ -325,7 +319,7 @@ class Parser(
                 val lit = parseLiteral()
                 return Expr(Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
             }
-        } else if (check(TokenKind.Literal::class)) {
+        } else if (check(TokenKind.Literal::class) || check(TokenKind.Lt::class)) { // <
             val lit = parseLiteral()
             return Expr(Span(lo, prev.span.hi, fid), ExprKind.Lit(lit))
         }
@@ -333,7 +327,7 @@ class Parser(
             val ident = parseIdent()
             return if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
                 val loArgs = token.span.lo
-                val exprs = parseDelimited(Delimiter.Parenthesis) {
+                val exprs = parseDelimitedCommaSequence(Delimiter.Parenthesis) {
                     parseExpr()
                 }.getOrThrow().toMutableList()
                 val hiArgs = prev.span.hi
@@ -358,14 +352,15 @@ class Parser(
         throw dcx().err("expected expression", token.span)
     }
 
-    fun checkBinOp(): Boolean {
+    fun checkBinOp(parseCondition: Boolean): Boolean {
         // Don't handle in here, it sucks :(
         return check(TokenKind.BinOp::class)
                 || check(TokenKind.AndAnd)
                 || check(TokenKind.OrOr)
-                || check(TokenKind.Gt) || check(TokenKind.Ge)
+                || ((check(TokenKind.Gt) || check(TokenKind.Ge)
                 || check(TokenKind.EqEq)
-                || check(TokenKind.Lt) || check(TokenKind.Le)
+                || check(TokenKind.Lt) || check(TokenKind.Le))
+                && parseCondition)
     }
 
     fun parseBinOp(): Pair<BinOpKind, Int> {
@@ -452,15 +447,9 @@ class Parser(
         val expr = parseExpr()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
         expect(TokenKind.OpenDelim(Delimiter.Brace))
-        val arms = buildList {
-            while (true) {
-                if (token.kind == TokenKind.CloseDelim(Delimiter.Brace)) {
-                    bump()
-                    break
-                }
-                add(parseMatchArm())
-            }
-        }
+        val arms = parseDelimitedSequence(Delimiter.Brace) {
+            parseMatchArm()
+        }.getOrThrow()
         return Expr(Span(lo, prev.span.hi, fid), ExprKind.Match(expr, arms))
     }
 
@@ -476,6 +465,13 @@ class Parser(
         }
         val expr = parseExpr()
         return Arm(exprs, expr)
+    }
+
+    fun parseRandom(): Stmt {
+        val lo = prev.span.lo
+        val block = parseBlock()
+        val hi = prev.span.hi
+        return Stmt(Span(lo, hi, fid), StmtKind.Random(block))
     }
 
     fun parseRange(): Range {
@@ -550,7 +546,11 @@ class Parser(
                     LitKind.Null -> Lit.Null
                 }
             }
-            else -> { /* Ignore */ }
+            else -> {
+                if (token.kind == TokenKind.Lt) {
+                    return parseLocation()
+                }
+            }
         }
         // We recover these 😎😎 (this could cause bad things...)
         val err = dcx().err("expected literal, found ${token.kind}")
@@ -577,14 +577,17 @@ class Parser(
         throw err
     } // We do some trolling... this now parses an int :-)
     fun parseString(): String = parseLiteral(LitKind.Str)
+    fun parseNumber(): Double = try { parseI64().toDouble() } catch (e: Diagnostic) { parseFloat() }
 
-    fun <T> parseDelimited(delimiter: Delimiter, producer: () -> T): Result<List<T>> {
+    fun <T> parseDelimitedCommaSequence(delimiter: Delimiter, producer: () -> T): Result<List<T>> {
         expect(TokenKind.OpenDelim(delimiter))
         val list = mutableListOf<T>()
         while (true) {
             if (token.kind == TokenKind.CloseDelim(delimiter)) {
                 bump()
                 break
+            } else if (token.kind == TokenKind.Eof) {
+                unexpected()
             } else {
                 try {
                     list.add(producer())
@@ -595,6 +598,62 @@ class Parser(
                 }
                 if (!eat(TokenKind.Comma::class)) { // If no comma, list must end
                     assert(TokenKind.CloseDelim(delimiter))
+                }
+            }
+        }
+        // Bracket closed
+        return Result.success(list)
+    }
+
+    fun parseLocation(): Lit {
+        bump() // bump <
+        var cont = false
+        val xyz = (0..2).map { i ->
+            Pair(
+                eat(TokenKind.Tilde),
+                runCatching { parseExpr(parseCondition = false) }.getOrNull(),
+            ).also {
+                if (i != 2) expect(TokenKind.Comma)
+                else cont = eat(TokenKind.Comma)
+            }
+        }
+
+        if (!cont) return Lit.Location(
+            xyz[0].first, xyz[1].first, xyz[2].first,
+            xyz[0].second, xyz[1].second, xyz[2].second,
+            null, null,
+        ).also { expect(TokenKind.Gt) } // >
+
+        val pitchYaw = (0..1).map { i ->
+            runCatching { parseExpr(parseCondition = false) }.getOrNull().also {
+                if (i == 0) expect(TokenKind.Comma)
+                else expect(TokenKind.Gt) // >
+            }
+        }
+
+        return Lit.Location(
+            xyz[0].first, xyz[1].first, xyz[2].first,
+            xyz[0].second, xyz[1].second, xyz[2].second,
+            pitchYaw[0], pitchYaw[1],
+        )
+    }
+
+    fun <T> parseDelimitedSequence(delimiter: Delimiter, producer: () -> T): Result<List<T>> {
+        expect(TokenKind.OpenDelim(delimiter))
+        val list = mutableListOf<T>()
+        while (true) {
+            if (token.kind == TokenKind.CloseDelim(delimiter)) {
+                bump()
+                break
+            } else if (token.kind == TokenKind.Eof) {
+                unexpected()
+            } else {
+                try {
+                    list.add(producer())
+                } catch (e: Diagnostic) {
+                    // Parsing failed, find end of delimited section
+                    eatUntil(TokenKind.CloseDelim(delimiter))
+                    return Result.failure(e)
                 }
             }
         }

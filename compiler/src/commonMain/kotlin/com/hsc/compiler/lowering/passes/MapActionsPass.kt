@@ -28,35 +28,35 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                 if (kind.ident.isGlobal || !Action.builtins.contains(kind.ident.name)) return
                 p = ArgParser(ctx, kind.args)
                 val action = when (kind.ident.name) {
-                    "apply_layout" -> parseApplyLayout()
-                    "potion_effect" -> parsePotionEffect()
-                    "balance_player_team" -> Action.BalancePlayerTeam
+                    "set_layout" -> parseApplyLayout()
+                    "effect" -> parsePotionEffect()
+                    "balance_team" -> Action.BalancePlayerTeam
                     "cancel_event" -> Action.CancelEvent
-                    "change_player_group" -> parseChangePlayerGroup()
+                    "set_group" -> parseChangePlayerGroup()
                     "clear_effects" -> Action.ClearAllPotionEffects
                     "close_menu" -> Action.CloseMenu
                     "action_bar" -> parseActionBar()
-                    "display_menu" -> parseDisplayMenu()
-                    "display_title" -> parseDisplayTitle()
+                    "open_menu" -> parseDisplayMenu()
+                    "title" -> parseDisplayTitle()
                     "enchant_held_item" -> parseEnchantHeldItem()
                     "exit" -> Action.Exit
                     "fail_parkour" -> parseFailParkour()
-                    "full_heal" -> Action.FullHeal
+                    "heal" -> Action.FullHeal
                     "give_exp_levels" -> parseGiveExpLevels()
                     "give_item" -> parseGiveItem()
                     "spawn" -> Action.GoToHouseSpawn
                     "kill" -> Action.KillPlayer
                     "parkour_checkpoint" -> Action.ParkourCheckpoint
                     "pause" -> parsePause()
-                    "play_sound" -> parsePlaySound()
-                    "send_message" -> parseSendMessage()
+                    "sound" -> parsePlaySound()
+                    "message" -> parseSendMessage()
                     "reset_inventory" -> Action.ResetInventory
                     "remove_item" -> parseRemoveItem()
-                    "set_player_team" -> parseSetPlayerTeam()
-                    "use_held_item" -> Action.UseHeldItem
+                    "set_team" -> parseSetPlayerTeam()
+                    "remove_held_item" -> Action.UseHeldItem
                     "set_gamemode" -> parseSetGameMode()
                     "set_compass_target" -> parseSetCompassTarget()
-                    "teleport_player" -> parseTeleportPlayer()
+                    "tp" -> parseTeleportPlayer()
                     "send_to_lobby" -> parseSendToLobby()
                     else -> null
                 }
@@ -76,19 +76,22 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseApplyLayout(): Action {
-        p.assertLength(1, "apply_layout(<layout>)")
+        p.assertLength(1, "set_layout(<layout>)")
         return Action.ApplyInventoryLayout(
             p.nextStringLit()
         )
     }
 
     fun parsePotionEffect(): Action {
-        p.assertLength(4, "potion_effect(<effect>, <duration>, <level>, <override_existing_effects>)")
-        val effectStr = p.nextStringLit()
-        val effect = runCatching {
-            PotionEffect.valueOf(effectStr)
-        }.getOrElse {
-            throw ctx.dcx().err("invalid potion effect `$effectStr`")
+        p.assertLength(4, "effect(<effect>, <duration>, <level>, <override_existing_effects>)")
+        val effectString = p.nextStringLit()
+        val effect = PotionEffect.entries.find { it.key.lowercase() == effectString.lowercase() } ?: run {
+            val err = ctx.dcx().err("invalid effect `$effectString`", p.args.span)
+            val options = PotionEffect.entries.map { it.key }
+            similar(effectString, options).forEach {
+                err.note(Level.Hint, "did you mean `$it`?")
+            }
+            throw err
         }
         val duration = p.nextNumberLit().toInt()
         val level = p.nextNumberLit().toInt()
@@ -97,7 +100,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseChangePlayerGroup(): Action {
-        p.assertLength(2, "change_player_group(<group>, <protect_demotion>)")
+        p.assertLength(2, "set_group(<group>, <protect_demotion>)")
         val group = p.nextStringLit()
         val protectDemotion = p.nextBooleanLit()
         return Action.ChangePlayerGroup(group, protectDemotion)
@@ -110,13 +113,13 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseDisplayMenu(): Action {
-        p.assertLength(1, "display_menu(<menu>)")
+        p.assertLength(1, "open_menu(<menu>)")
         val menu = p.nextStringLit()
         return Action.DisplayMenu(menu)
     }
 
     fun parseDisplayTitle(): Action {
-        p.assertLength(5, "display_title(<title>, <subtitle>, <fadein>, <stay>, <fadeout>)")
+        p.assertLength(5, "title(<title>, <subtitle>, <fadein>, <stay>, <fadeout>)")
         val title = p.nextStringLit()
         val subtitle = p.nextStringLit()
         val fadeIn = p.nextNumberLit().toInt()
@@ -128,10 +131,13 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     fun parseEnchantHeldItem(): Action {
         p.assertLength(2, "enchant_held_item(<enchantment>, <level>)")
         val enchantString = p.nextStringLit()
-        val enchant = runCatching {
-            Enchantment.valueOf(enchantString)
-        }.getOrElse {
-            throw ctx.dcx().err("invalid enchantment `$enchantString`")
+        val enchant = Enchantment.entries.find { it.key.lowercase() == enchantString.lowercase() } ?: run {
+            val err = ctx.dcx().err("invalid enchant `$enchantString`", p.args.span)
+            val options = Enchantment.entries.map { it.key }
+            similar(enchantString, options).forEach {
+                err.note(Level.Hint, "did you mean `$it`?")
+            }
+            throw err
         }
         val level = p.nextNumberLit().toInt()
         return Action.EnchantHeldItem(enchant, level)
@@ -164,21 +170,8 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
         return Action.PauseExecution(ticks)
     }
 
-    /*
-    @Serializable
-    @SerialName("PLAY_SOUND")
-    data class PlaySound(
-        val sound: Sound,
-        val volume: Float,
-        val pitch: Float,
-        // This is a terrible way to handle location but the serialization would be a nightmare otherwise...
-        // users beware!
-        val location: Location,
-        val coordinates: String?,
-    )
-    */
     fun parsePlaySound(): Action {
-        p.assertLength(4, "play_sound(<sound>, <TODO>)")
+        p.assertLength(4, "sound(<sound>, <volume>, <pitch>, <location>)")
         val soundString = p.nextStringLit()
         val sound = Sound.entries.find { it.key.lowercase() == soundString.lowercase() } ?: run {
             val err = ctx.dcx().err("invalid sound `$soundString`", p.args.span)
@@ -190,13 +183,12 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
         }
         val volume = p.nextFloatLit()
         val pitch = p.nextFloatLit()
-        // val locationString = p.nextStringLit()
-        val location = p.nextStringLit()
+        val location = p.nextLocation()
         return Action.PlaySound(sound, volume, pitch, location)
     }
 
     fun parseSendMessage(): Action {
-        p.assertLength(1, "send_message(<message>)")
+        p.assertLength(1, "message(<message>)")
         val message = p.nextStringLit()
         return Action.SendMessage(message)
     }
@@ -208,7 +200,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseSetPlayerTeam(): Action {
-        p.assertLength(1, "set_player_team(<team>)")
+        p.assertLength(1, "set_team(<team>)")
         val team = p.nextStringLit()
         return Action.SetPlayerTeam(team)
     }
@@ -234,7 +226,7 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     }
 
     fun parseTeleportPlayer(): Action {
-        p.assertLength(1, "teleport_player(<location>)")
+        p.assertLength(1, "teleport(<location>)")
         val location = p.nextLocation()
         return Action.TeleportPlayer(location)
     }
