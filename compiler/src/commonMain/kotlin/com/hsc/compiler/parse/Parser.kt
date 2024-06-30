@@ -446,7 +446,6 @@ class Parser(
         expect(TokenKind.OpenDelim(Delimiter.Parenthesis))
         val expr = parseExpr()
         expect(TokenKind.CloseDelim(Delimiter.Parenthesis))
-        expect(TokenKind.OpenDelim(Delimiter.Brace))
         val arms = parseDelimitedSequence(Delimiter.Brace) {
             parseMatchArm()
         }.getOrThrow()
