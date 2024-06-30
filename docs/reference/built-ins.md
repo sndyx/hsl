@@ -36,7 +36,7 @@ Built-in functions map 1:1 with housing actions.
 - [Use Held Item](#use-held-item)
 - [Set Gamemode](#set-gamemode)
 - [Set Compass Target](#set-compass-target)
-- [Teleport](#teleport-player)
+- [Teleport Player](#teleport-player)
 - [Send to Lobby](#send-to-lobby)
 
 <!--- END -->
@@ -44,22 +44,20 @@ Built-in functions map 1:1 with housing actions.
 ### Apply Layout
 
 ```rust
-apply_layout("my_layout")
+set_layout("my_layout")
 ```
 
-### Potion Effect*
+### Potion Effect
 
 ```rust
 // effect, duration, level, override_existing_effects
-potion_effect("strength", 100, 2, false)
+effect("strength", 100, 2, false)
 ```
-
-*currently not implemented
 
 ### Balance Player Team
 
 ```rust
-balance_player_team()
+balance_team()
 ```
 
 ### Cancel Event
@@ -72,7 +70,7 @@ cancel_event()
 
 ```rust
 // group, protect_demotion
-change_player_group("my_group", true)
+set_group("my_group", true)
 ```
 
 ### Clear Effects
@@ -96,24 +94,22 @@ action_bar("My message!")
 ### Display Menu
 
 ```rust
-display_menu("my_menu")
+open_menu("my_menu")
 ```
 
 ### Display Title
 
 ```rust
 // title, subtitle, fadein, stay, fadeout
-display_title("My title", "My subtitle", 1, 1, 1)
+title("My title", "My subtitle", 1, 1, 1)
 ```
 
-### Enchant Held Item*
+### Enchant Held Item
 
 ```rust
 // enchantment, level
 enchant_held_item("sharpness", 5)
 ```
-
-*currently not implemented
 
 ### Exit
 
@@ -130,7 +126,7 @@ fail_parkour("My message!")
 ### Full Heal
 
 ```rust
-full_heal()
+heal()
 ```
 
 ### Give Experience Levels
@@ -172,9 +168,12 @@ parkour_checkpoint()
 pause(20)
 ```
 
-### Play Sound*
+### Play Sound
 
-*currently not implemented
+```rust
+// sound, volume, pitch, location
+sound("Note Pling", 1.0, 1.0, "invokers_location")
+```
 
 ### Send Message
 
@@ -197,13 +196,13 @@ remove_item(my_item)
 ### Set Player Team
 
 ```rust
-set_player_team("my_team")
+set_team("my_team")
 ```
 
 ### Use Held Item
 
 ```rust
-use_held_item()
+remove_held_item()
 ```
 
 ### Set Gamemode
@@ -212,13 +211,19 @@ use_held_item()
 set_gamemode("Creative")
 ```
 
-### Set Compass Target*
+### Set Compass Target
 
-*currently not implemented
+```rust
+// location
+set_compass_target(<1, 2, 3>)
+```
 
-### Teleport
+### Teleport Player
 
-*currently not implemented
+```rust
+// location
+tp(<1, 2, 3>)
+```
 
 ### Send to Lobby
 
