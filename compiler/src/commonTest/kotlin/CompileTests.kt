@@ -1,10 +1,13 @@
 import com.hsc.compiler.driver.Color
 import com.hsc.compiler.driver.CompileOptions
+import com.hsc.compiler.driver.Compiler
 import com.hsc.compiler.driver.EmitterType
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.driver.Target
 import com.hsc.compiler.driver.runCompiler
 import kotlinx.io.files.Path
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 data class CompileOptionsBuilder(
     var houseName: String = "test",
@@ -18,16 +21,32 @@ data class CompileOptionsBuilder(
     fun build(): CompileOptions = CompileOptions(houseName, target, mode, emitter, output, color, stupidDumbIdiotMode)
 }
 
-fun List<String>.compileWith(
-    builder: CompileOptionsBuilder.() -> Unit
-) {
-    runCompiler(CompileOptionsBuilder().apply(builder).build(), map { Path(it) })
+class CompilerResult(val compiler: Compiler) {
+
+    fun assertSuccess() {
+        assertFalse(compiler.emitter.emittedError, "Compiler emitted error")
+    }
+
+    fun assertFailed() {
+        assertTrue(compiler.emitter.emittedError, "Compiler did not emit error")
+        assertFalse(compiler.emitter.emittedBug, "Compiler emitted bug")
+    }
+
 }
 
-fun List<String>.compile(): Unit = compileWith {  }
+fun List<String>.compileWith(
+    builder: CompileOptionsBuilder.() -> Unit
+): CompilerResult {
+    return runCompiler(
+        CompileOptionsBuilder().apply(builder).build(),
+        map { Path(it) }
+    ).let { CompilerResult(it) }
+}
+
+fun List<String>.compile(): CompilerResult = compileWith {  }
 
 fun String.compileWith(
     builder: CompileOptionsBuilder.() -> Unit
-): Unit = listOf(this).compileWith(builder)
+): CompilerResult = listOf(this).compileWith(builder)
 
-fun String.compile(): Unit = compileWith {  }
+fun String.compile(): CompilerResult = compileWith {  }

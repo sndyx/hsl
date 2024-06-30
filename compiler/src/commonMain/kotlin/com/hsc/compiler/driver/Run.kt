@@ -23,7 +23,7 @@ import kotlinx.serialization.json.Json
 
 private val json = Json { prettyPrint = true }
 
-fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
+fun runCompiler(opts: CompileOptions, files: List<Path>): Compiler = runBlocking {
     val compiler = Compiler(opts)
     val startTime = Clock.System.now()
     compiler.emitter.start(opts.houseName)
@@ -104,6 +104,8 @@ fun runCompiler(opts: CompileOptions, files: List<Path>) = runBlocking {
     }
 
     compiler.emitter.close()
+
+    compiler
 }
 
 class Compiler(opts: CompileOptions) {

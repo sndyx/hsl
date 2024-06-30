@@ -6,9 +6,11 @@ abstract class Emitter {
 
     var pass: String = "none"
     var emittedError = false
+    var emittedBug = false
 
     fun emit(diagnostic: Diagnostic) {
         if (diagnostic.level == Level.Error) emittedError = true
+        if (diagnostic.level == Level.Bug) emittedBug = true
         print(diagnostic)
     }
 
