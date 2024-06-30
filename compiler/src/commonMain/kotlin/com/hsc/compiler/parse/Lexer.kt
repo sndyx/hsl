@@ -4,6 +4,7 @@ package com.hsc.compiler.parse
 
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.span.Span
+import kotlin.math.pow
 
 class Lexer(
     val sess: CompileSess,
@@ -251,7 +252,17 @@ class Lexer(
             num.append('.')
             bump()
             num.append(digits())
+            if (first() == 'e') {
+                // this is a funny way of handling this, i suppose
+                bump()
+                val scientific = (num.toString().toDouble() * (10.0.pow(digits().toInt()))).toString()
+                return TokenKind.Literal(Lit(LitKind.F64, scientific))
+            }
             TokenKind.Literal(Lit(LitKind.F64, num.toString()))
+        } else if (first() == 'e') {
+            bump()
+            val scientific = (num.toString().toLong() * (10.0.pow(digits().toInt()))).toLong().toString()
+            return TokenKind.Literal(Lit(LitKind.I64, scientific))
         } else {
             TokenKind.Literal(Lit(LitKind.I64, num.toString()))
         }
