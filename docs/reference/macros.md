@@ -20,7 +20,7 @@ Using this macro, we can insert `value` wherever `NAME` is used.
 #define HELLO_WORLD "Hello, world!"
 
 fn test() {
-    send_message(HELLO_WORLD)
+    message(HELLO_WORLD)
     // Sends "Hello, world!"
 }
 ```
@@ -83,16 +83,16 @@ The `#for` macro is the compile-time equivalent of a `for` loop. It is used as
 
 ```rust
 #for (i in 1..5) {
-    send_message("Count: $i")
+    message("Count: $i")
 }
 ```
 ```rust
 // Expands to:
-send_message("Count: 1")
-send_message("Count: 2")
-send_message("Count: 3")
-send_message("Count: 4")
-send_message("Count: 5")
+message("Count: 1")
+message("Count: 2")
+message("Count: 3")
+message("Count: 4")
+message("Count: 5")
 ```
 
 Anything within the `#for` body will be repeated for every index of the range,
@@ -107,15 +107,15 @@ The `#if` macro is the compile-time equivalent of a `if` statement. It has the
 
 ```rust
 #if (100 + 10 == 110) {
-    send_message("Hello!")
+    message("Hello!")
 } #else {
-    send_message("Goodbye!")
+    message("Goodbye!")
 }
 ```
 
 ```rust
 // Expands to:
-send_message("Hello!")
+message("Hello!")
 ```
 
 The conditions within the `#if` macro must be known at compile-time, or the
