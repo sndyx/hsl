@@ -28,7 +28,7 @@ A basic function.
 
 ```rust
 fn test() {
-    send_message("Hello world!")
+    message("Hello world!")
 }
 ```
 
@@ -76,9 +76,9 @@ fn test() {
 
 ```rust
 if (a > b) {
-    send_message("a")
+    message("a")
 } else {
-    send_message("b")
+    message("b")
 }
 ```
 
@@ -87,9 +87,9 @@ Use `&&` (and) or `||` (or) to chain conditions. In `strict`
 
 ```rust
 if (a > b && c > d) {
-    send_message("true")
+    message("true")
 } else {
-    send_message("false")
+    message("false")
 }
 ```
 
@@ -105,7 +105,7 @@ Built-in functions provide direct mappings to most actions. They
  are syntactically identical to normal functions.
 
 ```rust
-send_message("Hello from HSL!")
+message("Hello from HSL!")
 kill()
 send_to_lobby("UHC Champions")
 ```
