@@ -35,7 +35,7 @@ fn sum(_a, _b) {
 }
 
 fn print_sum() {
-    send_message("sum of ${a} and ${b} is ${sum(a, b)}") 
+    message("sum of ${a} and ${b} is ${sum(a, b)}") 
 }
 ```
 
@@ -43,10 +43,10 @@ fn print_sum() {
 
 ```rust
 match (x) {
-    1 => send_message("x is 1")
-    2 => send_message("x is 2")
+    1 => message("x is 1")
+    2 => message("x is 2")
     else => {
-        send_message("x is neither")
+        message("x is neither")
     }
 }
 ```
@@ -59,7 +59,7 @@ Check if a number is within a range using `in` operator.
 x = 10
 y = 9
 if (x in 1..(y + 1)) {
-    send_message("fits in range")
+    message("fits in range")
 }
 ```
 
