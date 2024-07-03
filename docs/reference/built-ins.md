@@ -178,7 +178,7 @@ sound("Note Pling", 1.0, 1.0, "invokers_location")
 ### Send Message
 
 ```rust
-send_message("My message!")
+message("My message!")
 ```
 
 ### Reset Inventory
