@@ -2,10 +2,9 @@ package com.hsc.compiler.span
 
 import com.hsc.compiler.parse.CharProvider
 import com.hsc.compiler.parse.StringCharProvider
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
+import okio.FileSystem
+import okio.Path
+import okio.SYSTEM
 import kotlin.random.Random
 
 data class SourceMap(
@@ -13,7 +12,9 @@ data class SourceMap(
 ) {
 
     fun loadFile(path: Path): SourceFile {
-        val src = SystemFileSystem.source(path).buffered().readString()
+        val src = FileSystem.SYSTEM.read(path) {
+            readUtf8()
+        }
         val file = SourceFile(path, src)
         files[file.fid] = file
         return file

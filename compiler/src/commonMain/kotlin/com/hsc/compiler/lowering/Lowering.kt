@@ -10,6 +10,7 @@ import kotlin.reflect.KClass
 
 private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Normal to listOf(
+        NameItemsPass,
         CheckRedeclarationPass,
         ReturnAssignPass,
         InlineConstPass,
@@ -31,10 +32,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
-        // CleanupTempVarsPass,
+        CheckLimitsPass,
+        CleanupTempVarsPass,
         CheckLimitsPass,
     ),
     Mode.Optimize to listOf(
+        NameItemsPass,
         CheckRedeclarationPass,
         ReturnAssignPass,
         InlineConstPass,
@@ -56,10 +59,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
-        // CleanupTempVarsPass,
+        CheckLimitsPass,
+        CleanupTempVarsPass,
         CheckLimitsPass,
     ),
     Mode.Strict to listOf(
+        NameItemsPass,
         CheckRedeclarationPass,
         CheckOwnedRecursiveCallPass,
         CheckEmptyBlockPass,
@@ -125,6 +130,11 @@ class QueryVisitor(private val type: KClass<*>) : AstVisitor {
     override fun visitStmt(stmt: Stmt) {
         if (type.isInstance(stmt)) visited += stmt
         super.visitStmt(stmt)
+    }
+
+    override fun visitLit(lit: Lit) {
+        if (type.isInstance(lit)) visited += lit
+        super.visitLit(lit)
     }
 
 }

@@ -2,6 +2,7 @@ package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.span.Span
 
 object InlineFunctionPass : AstPass {
 
@@ -57,10 +58,13 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                         // deepCopy() to remove ref! Will otherwise link multiple parts badly
                         val inlineBlock = fn.block.deepCopy()
 
+                        val assignments = mutableListOf<Pair<Ident, Expr>>()
+
                         // backwards-inline args
                         fn.sig.args.forEachIndexed { idx, ident ->
                             val visitor = InlinedFunctionTransformerVisitor(ident, kind.args.args[idx])
                             visitor.visitBlock(inlineBlock)
+                            if (visitor.stopEarly) assignments += Pair(ident, kind.args.args[idx])
                         }
                         kind.args.args.clear()
 
@@ -68,7 +72,16 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                         // currentBlock.stmts.removeAt(currentPosition)
 
                         currentBlock.stmts.addAll(currentPosition, inlineBlock.stmts)
+
+                        val assignStmts = assignments.map { (ident, expr) ->
+                            Stmt(Span.none, StmtKind.Assign(ident, expr.deepCopy()))
+                        }
+
+                        currentBlock.stmts.addAll(currentPosition, assignStmts)
+
                         added(inlineBlock.stmts.size)
+                        added(assignStmts.size)
+
                         changes++
                     }
                 }
@@ -77,12 +90,19 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
         }
     }
 
-
 }
 
 private class InlinedFunctionTransformerVisitor(val old: Ident, val new: Expr) : AstVisitor {
 
+    var ident: Ident? = null
+    var stopEarly = false
+
+    init {
+        if (new.kind is ExprKind.Var) ident = (new.kind as ExprKind.Var).ident
+    }
+
     override fun visitExpr(expr: Expr) {
+        if (stopEarly) return
         when (val kind = expr.kind) {
             is ExprKind.Var -> {
                 if (kind.ident == old) {
@@ -91,6 +111,32 @@ private class InlinedFunctionTransformerVisitor(val old: Ident, val new: Expr) :
                 }
             } else -> super.visitExpr(expr)
         }
+    }
+
+    override fun visitStmt(stmt: Stmt) {
+        if (stopEarly) return
+        when (val kind = stmt.kind) {
+            is StmtKind.Assign -> {
+                if (kind.ident == old) {
+                    if (ident == null) {
+                        stopEarly = true
+                    } else {
+                        kind.ident = ident!!
+                    }
+                }
+            }
+            is StmtKind.AssignOp -> {
+                if (kind.ident == old) {
+                    if (ident == null) {
+                        stopEarly = true
+                    } else {
+                        kind.ident = ident!!
+                    }
+                }
+            }
+            else -> {}
+        }
+        super.visitStmt(stmt)
     }
 
 }

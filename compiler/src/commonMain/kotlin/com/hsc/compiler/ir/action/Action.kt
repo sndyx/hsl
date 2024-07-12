@@ -252,6 +252,7 @@ object KeyedSerializer : KSerializer<Keyed> {
 @Serializable(with = ItemStackSerializer::class)
 data class ItemStack(
     val nbt: NbtCompound,
+    var name: String? = null,
 )
 
 @Serializable

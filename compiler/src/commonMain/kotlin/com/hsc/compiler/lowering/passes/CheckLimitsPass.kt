@@ -25,10 +25,8 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
     if (checkLimits(block) == null) return
     // limits surpassed, somewhere
 
-    val map = limits(block)
-    var conditionals = map["CONDITIONAL"]!! // amount of conditionals we have left
-
     val currentLimits = limitsMap.toMutableMap()
+
     var pos = 0
     while (pos < block.stmts.size) {
         val kind = stmtActionKind(block.stmts[pos])
@@ -36,7 +34,7 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
         currentLimits[kind] = currentLimits[kind]!! - 1
         if (currentLimits[kind] == -1) { // we ran out of the current action kind
             currentLimits[kind] = 0
-            if (conditionals < 1) {
+            if (currentLimits["CONDITIONAL"]!! < 1) {
                 // make function continuation
                 val contStmts = mutableListOf<Stmt>()
                 while (block.stmts.size > pos) {
@@ -45,9 +43,13 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
                 val newFn = Fn(null, FnSig(Span.none, emptyList()), Block(item.span, contStmts))
 
                 val name = item.ident.name
-                val newName = if (name.last().isDigit()) {
-                    name.dropLast(1) + (name.last().digitToInt() + 1)
-                } else name + "2"
+                val newName = if (
+                    name.split("_").lastOrNull()?.startsWith("c") == true // _c
+                    && name.split("_").last().drop(1).toIntOrNull() != null // _cInteger
+                    ) {
+                    val part = name.split("_").dropLast(1).joinToString("_")
+                    part + "_c" + (name.split("_").last().drop(1).toInt() + 1)
+                } else name + "_c2"
 
                 val newItem = Item(item.span, Ident.Player(newName), ItemKind.Fn(newFn))
                 ctx.ast.items.add(newItem)
@@ -79,7 +81,7 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
             for (i in pos..(pos + count - 2)) {
                 block.stmts.removeAt(pos + 1)
             }
-            conditionals--
+            currentLimits["CONDITIONAL"] = currentLimits["CONDITIONAL"]!! - 1
         }
         pos++
     }

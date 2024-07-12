@@ -6,6 +6,10 @@ import com.hsc.compiler.codegen.ActionTransformer
 import com.hsc.compiler.codegen.generateHtsl
 import com.hsc.compiler.errors.*
 import com.hsc.compiler.ir.ast.Ast
+import com.hsc.compiler.ir.ast.AstVisitor
+import com.hsc.compiler.ir.ast.ExprKind
+import com.hsc.compiler.ir.ast.ItemKind
+import com.hsc.compiler.ir.ast.Lit
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.Lexer
@@ -15,13 +19,21 @@ import com.hsc.compiler.parse.TokenStream
 import com.hsc.compiler.span.SourceMap
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
-import kotlinx.io.Buffer
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import net.benwoodworth.knbt.NbtCompound
+import net.benwoodworth.knbt.StringifiedNbt
+import okio.FileSystem
+import okio.Path
+import okio.SYSTEM
+import okio.Path.Companion.toPath
 
 private val json = Json { prettyPrint = true }
+private val snbtp = StringifiedNbt { prettyPrint = true }
+private val snbt = StringifiedNbt { }
 
 fun runCompiler(opts: CompileOptions, files: List<Path>): Compiler = runBlocking {
     val compiler = Compiler(opts)
@@ -64,35 +76,55 @@ fun runCompiler(opts: CompileOptions, files: List<Path>): Compiler = runBlocking
     }
 
     compiler.enter<Unit> {
-        opts.output?.let {
+        opts.output?.let { outDir ->
             when (opts.target) {
                 Target.Json -> {
-                    if (SystemFileSystem.exists(Path("$it/json"))) {
-                        SystemFileSystem.list(Path("$it/json")).forEach { path ->
-                            SystemFileSystem.delete(path)
+                    if (FileSystem.SYSTEM.exists("$outDir/json".toPath())) {
+                        FileSystem.SYSTEM.list("$outDir/json".toPath()).forEach { path ->
+                            FileSystem.SYSTEM.delete(path)
                         }
                     }
-                    SystemFileSystem.createDirectories(Path("$it/json"))
+                    FileSystem.SYSTEM.createDirectories("$outDir/json".toPath())
                     functions.map { fn -> Pair(json.encodeToString(fn.actions), fn.name) }.forEach { (text, name) ->
-                        val path = Path("$it/json/$name.json")
-                        val buffer = Buffer()
-                        buffer.write(text.encodeToByteArray())
-                        SystemFileSystem.sink(path).write(buffer, buffer.size)
+                        val path = "$outDir/json/$name.json".toPath()
+                        FileSystem.SYSTEM.write(path) {
+                            writeUtf8(text)
+                        }
+                    }
+                    ast.items.filter { it.kind is ItemKind.Const }.forEach {
+                        val path = "$outDir/json/${it.ident.name}.snbt".toPath()
+                        val item = (((it.kind as ItemKind.Const).value.kind as ExprKind.Lit).lit as Lit.Item).value
+                        FileSystem.SYSTEM.write(path) {
+                            writeUtf8(snbtp.encodeToString(NbtCompound.serializer(), item.nbt))
+                        }
                     }
                 }
                 Target.Htsl -> {
-                    if (SystemFileSystem.exists(Path("$it/htsl"))) {
-                        SystemFileSystem.list(Path("$it/htsl")).forEach { path ->
-                            SystemFileSystem.delete(path)
+                    if (FileSystem.SYSTEM.exists("$outDir/htsl".toPath())) {
+                        FileSystem.SYSTEM.list("$outDir/htsl".toPath()).forEach { path ->
+                            FileSystem.SYSTEM.delete(path)
                         }
                     }
-                    SystemFileSystem.createDirectories(Path("$it/htsl"))
+                    FileSystem.SYSTEM.createDirectories("$outDir/htsl".toPath())
                     functions.map { fn -> Pair(generateHtsl(sess, fn), fn.name) }.forEach { (text, name) ->
-                        val path = Path("$it/htsl/$name.htsl")
-                        val buffer = Buffer()
-                        buffer.write(text.encodeToByteArray())
-                        SystemFileSystem.sink(path).write(buffer, buffer.size)
+                        val path = "$outDir/htsl/$name.htsl".toPath()
+                        FileSystem.SYSTEM.write(path) {
+                            writeUtf8(text)
+                        }
                     }
+                    object : AstVisitor { // serialize & write all items
+                        override fun visitLit(lit: Lit) {
+                            if (lit !is Lit.Item) return
+                            val str = snbt.encodeToString(NbtCompound.serializer(), lit.value.nbt)
+                            val path = "$outDir/htsl/${lit.value.name}.json".toPath()
+                            val jsonObject = buildJsonObject {
+                                put("item", str)
+                            }
+                            FileSystem.SYSTEM.write(path) {
+                                writeUtf8(Json.encodeToString(JsonObject.serializer(), jsonObject))
+                            }
+                        }
+                    }.visitAst(ast)
                 }
             }
         }

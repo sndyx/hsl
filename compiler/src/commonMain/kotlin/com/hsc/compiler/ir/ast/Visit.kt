@@ -1,5 +1,8 @@
 package com.hsc.compiler.ir.ast
 
+import com.hsc.compiler.ir.action.Action
+import com.hsc.compiler.ir.action.Condition
+
 interface AstVisitor {
     fun visitAst(ast: Ast) {
         walkAst(this, ast)
@@ -116,6 +119,18 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
             v.visitExpr(kind.a)
             v.visitExpr(kind.b)
         }
+        is ExprKind.Condition -> {
+            // KILLLLL MEEEEEEE
+            when (val condition = kind.condition) {
+                is Condition.IsItem -> {
+                    v.visitLit(Lit.Item(condition.item))
+                }
+                is Condition.HasItem -> {
+                    v.visitLit(Lit.Item(condition.item))
+                }
+                else -> {}
+            }
+        }
         is ExprKind.Block -> v.visitBlock(kind.block)
         is ExprKind.Call -> {
             v.visitCall(kind)
@@ -137,13 +152,23 @@ fun walkExpr(v: AstVisitor, expr: Expr) {
         }
         is ExprKind.Unary -> v.visitExpr(kind.expr)
         is ExprKind.Var -> v.visitIdent(kind.ident)
-        is ExprKind.Condition -> {}
     }
 }
 
 fun walkStmt(v: AstVisitor, stmt: Stmt) {
     when (val kind = stmt.kind) {
-        is StmtKind.Action -> {}
+        is StmtKind.Action -> {
+            // this is stupid kill me already
+            when (val action = kind.action) {
+                is Action.GiveItem -> {
+                    v.visitLit(Lit.Item(action.item))
+                }
+                is Action.RemoveItem -> {
+                    v.visitLit(Lit.Item(action.item))
+                }
+                else -> {}
+            }
+        }
         is StmtKind.Assign -> {
             v.visitIdent(kind.ident)
             v.visitExpr(kind.expr)

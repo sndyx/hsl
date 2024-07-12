@@ -8,6 +8,7 @@ data class CompileOptions(
     val output: String?,
     val color: Color,
     val stupidDumbIdiotMode: Boolean,
+    val tempPrefix: String = "_",
 )
 
 enum class Color(val label: String) {

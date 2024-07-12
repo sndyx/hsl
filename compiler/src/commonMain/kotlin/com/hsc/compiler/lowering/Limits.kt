@@ -2,6 +2,7 @@ package com.hsc.compiler.lowering
 
 import com.hsc.compiler.ir.ast.Block
 import com.hsc.compiler.ir.ast.ExprKind
+import com.hsc.compiler.ir.ast.Ident
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.span.Span
@@ -55,12 +56,18 @@ fun stmtActionKind(stmt: Stmt): String {
             kind.action.actionName
         }
         is StmtKind.Assign -> {
-            if (kind.ident.isGlobal) "CHANGE_GLOBAL_STAT"
-            else "CHANGE_STAT"
+            when (kind.ident) {
+                is Ident.Player -> "CHANGE_STAT"
+                is Ident.Global -> "CHANGE_GLOBAL_STAT"
+                is Ident.Team -> "CHANGE_TEAM_STAT"
+            }
         }
         is StmtKind.AssignOp -> {
-            if (kind.ident.isGlobal) "CHANGE_GLOBAL_STAT"
-            else "CHANGE_STAT"
+            when (kind.ident) {
+                is Ident.Player -> "CHANGE_STAT"
+                is Ident.Global -> "CHANGE_GLOBAL_STAT"
+                is Ident.Team -> "CHANGE_TEAM_STAT"
+            }
         }
         is StmtKind.Expr -> {
             when (val exprKind = kind.expr.kind) {
@@ -71,6 +78,16 @@ fun stmtActionKind(stmt: Stmt): String {
         }
         else -> ""
     }
+}
+
+fun optimizeLimits(block: Block): Map<String, Int> {
+    val mut = limits(block).toMutableMap()
+    limitsMap.forEach { (key, value) ->
+        if (key != "CONDITIONAL") {
+            mut[key] = mut[key]!! + (value * mut["CONDITIONAL"]!!)
+        }
+    }
+    return mut
 }
 
 fun limits(block: Block): Map<String, Int> {

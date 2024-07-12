@@ -3,22 +3,12 @@ package com.hsc.compiler.codegen
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.ir.action.*
 import com.hsc.compiler.ir.action.Function
-import kotlinx.io.Buffer
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractEncoder
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import net.benwoodworth.knbt.Nbt
-import net.benwoodworth.knbt.NbtCompound
-import net.benwoodworth.knbt.StringifiedNbt
 
 private val actionMap = mapOf(
     "apply_layout" to "applyLayout",
@@ -187,13 +177,6 @@ private fun generateHtslCondition(sess: CompileSess, condition: Condition): Stri
     return sb.toString()
 }
 
-object ItemCache {
-
-    val items = mutableSetOf<String>()
-    val snbt = StringifiedNbt { }
-
-}
-
 @OptIn(ExperimentalSerializationApi::class)
 private class HtslEncoder(val sess: CompileSess) : AbstractEncoder() {
     override val serializersModule: SerializersModule = EmptySerializersModule()
@@ -207,21 +190,7 @@ private class HtslEncoder(val sess: CompileSess) : AbstractEncoder() {
         value: T
     ) {
         if (value is ItemStack) {
-            val str = ItemCache.snbt.encodeToString(NbtCompound.serializer(), value.nbt)
-            val idx = ItemCache.items.indexOf(str)
-            val num = if (idx == -1) {
-                ItemCache.items.add(str)
-                val idx2 = ItemCache.items.size
-                val itemPath = Path(sess.opts.output!! + "/htsl/item$idx2.json")
-                val buffer = Buffer()
-                val jsonObject = buildJsonObject {
-                    put("item", str)
-                }
-                buffer.write(Json.encodeToString(JsonObject.serializer(), jsonObject).encodeToByteArray())
-                SystemFileSystem.sink(itemPath).write(buffer, buffer.size)
-                idx2
-            } else idx + 1
-            encodeString("item$num")
+            encodeString(value.name!!)
         }
         else if (value is Location) {
             when (value) {

@@ -21,8 +21,9 @@ class HumanEmitter(
         t.println("${(bold + color)(label)}: ${bold(italicizeBackticks(diagnostic.message))}")
         diagnostic.throwable?.stackTraceToString()
             ?.lines()
+            ?.filter { it.contains("kfun:") }
             ?.drop(1)?.take(5)
-            ?.map { it.replace("\tat", bold(" -+>")) }
+            ?.map { bold(" -+> ") + it.split("kfun:").last() }
             ?.forEach { t.println(it) }
         diagnostic.spans.getOrNull(0)?.let { (span, _) ->
             sourceMap.files[span.fid]?.let { file ->

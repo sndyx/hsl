@@ -10,7 +10,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.hsc.compiler.driver.*
 import com.hsc.compiler.driver.Target
-import kotlinx.io.files.Path
+import okio.Path.Companion.toPath
 
 class CompileCommand : CliktCommand() {
 
@@ -48,11 +48,11 @@ class CompileCommand : CliktCommand() {
 
     override fun run() {
         if (version || paths.isEmpty()) {
-            println("hsc v1.2.0 beta")
+            println("hsc v1.3.0")
             return
         }
         val opts = CompileOptions(houseName, target, mode, emitter, output, color, slashIdents)
-        runCompiler(opts, paths.map { Path(it) })
+        runCompiler(opts, paths.map { it.toPath() })
     }
 
 }

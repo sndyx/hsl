@@ -70,7 +70,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0-RC.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.4.0")
+                implementation("com.squareup.okio:okio:3.9.0")
                 implementation("com.github.ajalt.clikt:clikt:4.2.2")
                 implementation("com.github.ajalt.mordant:mordant:2.4.0")
                 implementation("com.github.ajalt.mordant:mordant-coroutines:2.4.0")

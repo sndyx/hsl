@@ -11,7 +11,10 @@ object InlineConstPass : AstPass {
             inlineConst(expr, consts)
         }
         consts.forEach {
-            ctx.ast.items.remove(it)
+            val kind = (it.kind as ItemKind.Const).value.kind
+            if (!(kind is ExprKind.Lit && kind.lit is Lit.Item)) {
+                ctx.ast.items.remove(it)
+            } // remove all consts that aren't items
         }
         ctx.clearQuery<Item>()
     }

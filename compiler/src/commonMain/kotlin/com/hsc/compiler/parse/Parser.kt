@@ -150,6 +150,12 @@ class Parser(
         expect(TokenKind.Eq)
         val expr = parseExpr()
         val hi = prev.span.hi
+
+        val kind = expr.kind
+        if (kind is ExprKind.Lit && kind.lit is Lit.Item) {
+            (kind.lit as Lit.Item).value.name = ident.name
+        }
+
         return Item(Span(lo, hi, fid), ident, ItemKind.Const(expr))
     }
 
