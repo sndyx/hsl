@@ -46,12 +46,16 @@ class CompileCommand : CliktCommand() {
 
     private val slashIdents: Boolean by option("--slash-idents").flag()
 
+    private val tempPrefix: String by option("--temp-prefix")
+        .default("_")
+        .help("Set temp variable prefix")
+
     override fun run() {
         if (version || paths.isEmpty()) {
             println("hsc v1.3.0")
             return
         }
-        val opts = CompileOptions(houseName, target, mode, emitter, output, color, slashIdents)
+        val opts = CompileOptions(houseName, target, mode, emitter, output, color, slashIdents, tempPrefix)
         runCompiler(opts, paths.map { it.toPath() })
     }
 
