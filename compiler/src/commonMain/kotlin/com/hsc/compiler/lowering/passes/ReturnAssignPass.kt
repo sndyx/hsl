@@ -40,7 +40,7 @@ private class ReturnAssignVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
             is StmtKind.Ret -> {
                 // change _return to return value
                 if (kind.expr != null) {
-                    val assign = StmtKind.Assign(Ident.Player("_return"), kind.expr!!)
+                    val assign = StmtKind.Assign(Ident.Player(ctx.sess.opts.tempPrefix + "return"), kind.expr!!)
                     stmt.kind = assign // I believe this is fine?
                     currentBlock.stmts = currentBlock.stmts.take(currentPosition + 1).toMutableList()
                 }

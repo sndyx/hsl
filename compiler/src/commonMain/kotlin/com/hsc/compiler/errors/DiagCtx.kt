@@ -1,9 +1,10 @@
 package com.hsc.compiler.errors
 
+import com.hsc.compiler.driver.Driver
 import com.hsc.compiler.parse.SourceProvider
 import com.hsc.compiler.span.Span
 
-class DiagCtx(private val emitter: Emitter, val srcp: SourceProvider? = null) {
+class DiagCtx(private val emitter: Driver, val srcp: SourceProvider? = null) {
 
     fun bug(
         message: String,
@@ -32,7 +33,7 @@ class DiagCtx(private val emitter: Emitter, val srcp: SourceProvider? = null) {
         if (srcp != null && srcp.isVirtual) {
             diagnostic.reference(srcp.virtualSpan!!, "macro expansion here")
         }
-        emitter.emit(diagnostic)
+        emitter.emitDiagnostic(diagnostic)
     }
 
 }

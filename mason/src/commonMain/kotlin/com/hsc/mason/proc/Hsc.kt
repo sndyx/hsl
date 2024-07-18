@@ -16,7 +16,7 @@ object Hsc {
         }.isSuccess
     }
 
-    suspend fun compile(src: List<Path>, out: Path, config: House) = coroutineScope {
+    suspend fun compile(src: List<Path>, out: Path, config: House, run: Boolean) = coroutineScope {
         val t = Terminal()
 
         val modeString = when (config.pkg.mode ?: Mode.Normal) {
@@ -37,6 +37,7 @@ object Hsc {
                     " --color=always" +
                     " $targetString" +
                     " --output $out" +
+                    if (run) " --driver=interpreter " else "" +
                     " " + (config.pkg.flags?.joinToString(" ") { sanitizeStrict(it) } ?: "")
         )
     }

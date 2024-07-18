@@ -12,6 +12,8 @@ object CleanupTempVarsPass : AstPass {
         val cleanUp = mutableSetOf<Ident>()
 
         ctx.query<Item>().filter { it.kind is ItemKind.Fn }.forEach { item ->
+            if (item.ident.name == "main") return@forEach
+
             val fn = (item.kind as ItemKind.Fn).fn
 
             val visitor = CleanupTempVarsVisitor(ctx)
@@ -95,12 +97,12 @@ private class CleanupTempVarsVisitor(val ctx: LoweringCtx) : AstVisitor {
     override fun visitStmt(stmt: Stmt) {
         when (val kind = stmt.kind) {
             is StmtKind.Assign -> {
-                if (kind.ident.name.startsWith(ctx.sess.opts.tempPrefix)) {
+                if (kind.ident.name.startsWith(ctx.sess.opts.tempPrefix) && kind.ident.name != ctx.sess.opts.tempPrefix + "return") {
                     tempVars.add(kind.ident)
                 }
             }
             is StmtKind.AssignOp -> {
-                if (kind.ident.name.startsWith(ctx.sess.opts.tempPrefix)) {
+                if (kind.ident.name.startsWith(ctx.sess.opts.tempPrefix) && kind.ident.name != ctx.sess.opts.tempPrefix + "return") {
                     tempVars.add(kind.ident)
                 }
             }

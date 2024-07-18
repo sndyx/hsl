@@ -246,6 +246,16 @@ class Lexer(
     }
 
     fun number(firstDigit: Char): TokenKind {
+        if (firstDigit == '0') {
+            if (first() == 'b') {
+                bump()
+                return binary()
+            }
+            if (first() == 'x') {
+                bump()
+                return hex()
+            }
+        }
         val num = StringBuilder("$firstDigit")
         num.append(digits())
         return if (first() == '.' && second() != '.') {
@@ -281,6 +291,36 @@ class Lexer(
             }
         }
         return sb.toString()
+    }
+
+    fun binary(): TokenKind {
+        val sb = StringBuilder()
+        while (true) {
+            if (first() == '_') {
+                bump()
+            } else if (first() in '0'..'1') {
+                sb.append(first())
+                bump()
+            } else {
+                break
+            }
+        }
+        return TokenKind.Literal(Lit(LitKind.I64, sb.toString().toLong(2).toString()))
+    }
+
+    fun hex(): TokenKind {
+        val sb = StringBuilder()
+        while (true) {
+            if (first() == '_') {
+                bump()
+            } else if (first() in '0'..'9' || first() in 'a'..'f' || first() in 'A'..'F') {
+                sb.append(first())
+                bump()
+            } else {
+                break
+            }
+        }
+        return TokenKind.Literal(Lit(LitKind.I64, sb.toString().toLong(16).toString()))
     }
 
     fun bump(): Char? {

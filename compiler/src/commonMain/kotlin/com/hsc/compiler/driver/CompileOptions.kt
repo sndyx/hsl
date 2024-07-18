@@ -4,11 +4,12 @@ data class CompileOptions(
     val houseName: String,
     val target: Target,
     val mode: Mode,
-    val emitter: EmitterType,
+    val driver: DriverMode,
     val output: String?,
     val color: Color,
     val stupidDumbIdiotMode: Boolean,
     val tempPrefix: String,
+    val instant: Boolean,
 )
 
 enum class Color(val label: String) {
@@ -28,9 +29,8 @@ enum class Mode(val label: String) {
     Optimize("optimize");
 }
 
-enum class EmitterType(val label: String) {
-    Terminal("terminal"),
-    Minecraft("minecraft"),
-    Internal("internal"),
-    Webview("webview"),
+enum class DriverMode(val label: String) {
+    Diagnostics("diagnostics"),
+    Interpreter("interpreter"),
+    Output("output"),
 }

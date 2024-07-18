@@ -1,10 +1,13 @@
 package com.hsc.compiler.lowering
 
+import com.github.ajalt.mordant.rendering.AnsiLevel
+import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.passes.*
+import com.hsc.compiler.pretty.prettyPrintAst
 import kotlinx.datetime.Clock
 import kotlin.reflect.KClass
 
@@ -24,11 +27,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         RaiseUnaryMinusPass,
         ConstantFoldingPass,
         InlineBlockPass,
-        ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
+        ExpandComplexExpressionsPass,
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         InlineFunctionCallAssignmentPass,
+        ExpandIfExpressionPass,
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
@@ -51,11 +55,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         RaiseUnaryMinusPass,
         ConstantFoldingPass, // Before inline block, at least in optimize
         InlineBlockPass,
-        ExpandComplexExpressionsPass,
         InlineFunctionParametersPass,
+        ExpandComplexExpressionsPass,
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         InlineFunctionCallAssignmentPass,
+        ExpandIfExpressionPass,
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
@@ -67,6 +72,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         NameItemsPass,
         CheckRedeclarationPass,
         CheckOwnedRecursiveCallPass,
+        RaiseUnaryMinusPass,
         CheckEmptyBlockPass,
         MapActionsPass,
         CheckLimitsPass,

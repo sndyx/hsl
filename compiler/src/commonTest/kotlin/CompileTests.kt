@@ -1,7 +1,7 @@
 import com.hsc.compiler.driver.Color
 import com.hsc.compiler.driver.CompileOptions
 import com.hsc.compiler.driver.Compiler
-import com.hsc.compiler.driver.EmitterType
+import com.hsc.compiler.driver.DriverMode
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.driver.Target
 import com.hsc.compiler.driver.runCompiler
@@ -13,7 +13,7 @@ data class CompileOptionsBuilder(
     var houseName: String = "test",
     var target: Target = Target.Htsl,
     var mode: Mode = Mode.Normal,
-    var emitter: EmitterType = EmitterType.Internal,
+    var emitter: DriverMode = DriverMode.Internal,
     var output: String? = "test/build",
     var color: Color = Color.Auto,
     var stupidDumbIdiotMode: Boolean = false,

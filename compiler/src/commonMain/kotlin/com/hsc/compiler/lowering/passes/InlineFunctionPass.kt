@@ -20,7 +20,13 @@ object InlineFunctionPass : AstPass {
                 ctx.ast.items.remove(it)
             }
         }
+        // CLEAR QUERY
+        ctx.clearQuery<Expr>()
+        ctx.clearQuery<Stmt>()
+        ctx.clearQuery<Block>()
         ctx.clearQuery<Item>()
+        ctx.clearQuery<Fn>()
+        ctx.clearQuery<Lit>()
     }
 
 }
@@ -106,7 +112,7 @@ private class InlinedFunctionTransformerVisitor(val old: Ident, val new: Expr) :
         when (val kind = expr.kind) {
             is ExprKind.Var -> {
                 if (kind.ident == old) {
-                    expr.kind = new.kind
+                    expr.kind = new.kind.deepCopy()
                     expr.span = new.span
                 }
             } else -> super.visitExpr(expr)

@@ -178,9 +178,6 @@ sealed class Action(
         @SerialName("replace_existing_item") val replaceExistingItem: Boolean,
     ) : Action("GIVE_ITEM")
     @Serializable
-    @SerialName("SPAWN")
-    data object GoToHouseSpawn : Action("SPAWN")
-    @Serializable
     @SerialName("KILL")
     data object KillPlayer : Action("KILL")
     @Serializable

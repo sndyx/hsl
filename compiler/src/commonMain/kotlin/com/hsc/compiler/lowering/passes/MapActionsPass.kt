@@ -44,7 +44,6 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                     "heal" -> Action.FullHeal
                     "give_exp_levels" -> parseGiveExpLevels()
                     "give_item" -> parseGiveItem()
-                    "spawn" -> Action.GoToHouseSpawn
                     "kill" -> Action.KillPlayer
                     "parkour_checkpoint" -> Action.ParkourCheckpoint
                     "pause" -> parsePause()

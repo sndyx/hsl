@@ -14,14 +14,18 @@ object CheckLimitsPass : AstPass {
                 limitOpt(ctx, fn, (fn.kind as ItemKind.Fn).fn.block)
             }
         }
+        val mainBlock = (ctx.query<Item>().filter { it.kind is ItemKind.Fn }.find { it.ident.name == "main" }?.kind as? ItemKind.Fn)?.fn?.block
         ctx.query<Block>().forEach { block ->
-            limitCheck(ctx, block)
+            if (block != mainBlock) {
+                limitCheck(ctx, block)
+            }
         }
     }
 
 }
 
 private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
+    if (item.ident.name == "main") return
     if (checkLimits(block) == null) return
     // limits surpassed, somewhere
 

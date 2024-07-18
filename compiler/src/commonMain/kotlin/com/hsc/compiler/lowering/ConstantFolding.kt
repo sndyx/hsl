@@ -154,8 +154,7 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                             changes++
                         }
                         fun placeholder(a: String, b: Long) {
-                            val comparison = binOpToComparison(kind.kind)
-                                ?: throw sess.dcx().err("invalid operand types string ${kind.kind} number", expr.span)
+                            val comparison = binOpToComparison(kind.kind) ?: return
 
                             expr.kind = ExprKind.Condition(Condition.RequiredPlaceholderNumber(a, comparison, StatValue.I64(b)))
                             changes++
@@ -218,7 +217,7 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                     && (kind.a.kind as ExprKind.Lit).lit is Lit.Str
                     && kind.b.kind is ExprKind.Var) { // placeholder comparison var
                     val comparison = binOpToComparison(kind.kind)
-                        ?: throw sess.dcx().err("invalid operand types string ${kind.kind} variable", expr.span)
+                        ?: return
                     val placeholder = ((kind.a.kind as ExprKind.Lit).lit as Lit.Str).value
                     val variable = (kind.b.kind as ExprKind.Var).ident.name
 

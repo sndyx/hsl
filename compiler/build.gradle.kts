@@ -20,7 +20,7 @@ kotlin {
     jvm {
         withJava()
         mainRun {
-            args("../examples/simple/src/example.hsl --mode=optimize --house-name=\"simple-example\" --color=always --target=htsl --output ../examples/simple/build --slash-idents".split(" "))
+            args(("C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\simple\\src\\example.hsl --driver=interpreter --instant --mode=optimize --color=always").split(" "))
             mainClass.set("com.hsc.mason.MainKt")
         }
     }
@@ -69,7 +69,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0-RC.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
                 implementation("com.squareup.okio:okio:3.9.0")
                 implementation("com.github.ajalt.clikt:clikt:4.2.2")
                 implementation("com.github.ajalt.mordant:mordant:2.4.0")
@@ -85,13 +85,14 @@ kotlin {
         }
 
         val jvmMain by sourceSets.getting {
-
+            dependsOn(commonMain)
         }
 
         val posixMain by sourceSets.creating {
             dependsOn(commonMain)
         }
         val mingwX64Main by getting {
+            dependsOn(commonMain)
             // cannot depend on posixMain thanks to _popen! :-)
         }
         val linuxX64Main by getting {

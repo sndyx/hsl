@@ -7,7 +7,7 @@ object Git {
 
     suspend fun isInstalled(): Boolean = coroutineScope {
         runCatching {
-            printProcess("git --version")
+            process("git --version")
         }.isSuccess
     }
 
