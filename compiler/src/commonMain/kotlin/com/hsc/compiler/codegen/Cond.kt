@@ -102,8 +102,18 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
                     throw sess.dcx().bug("unexpected bin op", cond.span)
                 }
             }
+
+
             val ident = when (val a = kind.a.kind) {
                 is ExprKind.Var -> a.ident
+                is ExprKind.Lit -> {
+                    if (a.lit is Lit.Str) {
+                        val other = unwrapStatValue(kind.b)
+                        return Condition.RequiredPlaceholderNumber((a.lit as Lit.Str).value, comparison, other)
+                    } else {
+                        throw sess.dcx().err("left side of a comparison must be a variable", cond.span)
+                    }
+                }
                 else -> {
                     throw sess.dcx().err("left side of a comparison must be a variable", cond.span)
                 }

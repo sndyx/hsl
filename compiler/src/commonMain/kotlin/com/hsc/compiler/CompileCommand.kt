@@ -62,7 +62,7 @@ class CompileCommand : com.github.ajalt.clikt.core.CliktCommand() {
         .help("Show version")
 
     override fun run() {
-        if (version || (files == null && virtualFiles == null)) {
+        if (version || ((files == null || files?.isEmpty() == true) && virtualFiles == null)) {
             println("hsc v$VERSION")
             return
         }

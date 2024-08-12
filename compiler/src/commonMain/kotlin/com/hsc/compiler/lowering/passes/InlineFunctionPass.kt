@@ -58,7 +58,7 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                 val calleeName = kind.ident.name
                 val callee = ctx.query<Item>().find { it.kind is ItemKind.Fn && it.ident.name == calleeName }
                 if (callee != null) {
-                    val fn = (callee.kind as ItemKind.Fn).fn
+                    val fn = (callee.kind as ItemKind.Fn).fn.deepCopy()
                     if (fn.processors?.list?.contains("inline") == true) {
 
                         // deepCopy() to remove ref! Will otherwise link multiple parts badly
@@ -68,9 +68,9 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
 
                         // backwards-inline args
                         fn.sig.args.forEachIndexed { idx, ident ->
-                            val visitor = InlinedFunctionTransformerVisitor(ident, kind.args.args[idx])
+                            val visitor = InlinedFunctionTransformerVisitor(ident, kind.args.args[idx].deepCopy())
                             visitor.visitBlock(inlineBlock)
-                            if (visitor.stopEarly) assignments += Pair(ident, kind.args.args[idx])
+                            if (visitor.stopEarly) assignments += Pair(ident, kind.args.args[idx].deepCopy())
                         }
                         kind.args.args.clear()
 

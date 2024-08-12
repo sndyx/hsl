@@ -20,7 +20,7 @@ kotlin {
     jvm {
         withJava()
         mainRun {
-            args(("C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\simple\\src\\example.hsl --driver=interpreter --instant --mode=optimize --color=always").split(" "))
+            args(("C:\\Users\\Sandy\\IdeaProjects\\hsc\\examples\\simple\\src\\example.hsl --target=htsl --mode=optimize --driver=interpreter --instant --color=always").split(" "))
             mainClass.set("com.hsc.mason.MainKt")
         }
     }

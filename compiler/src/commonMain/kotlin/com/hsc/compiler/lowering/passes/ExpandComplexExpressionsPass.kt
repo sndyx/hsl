@@ -2,6 +2,7 @@ package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.firstAvailableTemp
 
 /**
  * A pass that should flatten complex expressions.
@@ -28,11 +29,11 @@ object ExpandComplexExpressionsPass : AstPass {
         ctx.query<Item>()
             .filter { it.kind is ItemKind.Fn }
             .forEach {
-                val visitor = FlattenComplexExpressionsVisitor()
+                val fn = (it.kind as ItemKind.Fn).fn
+                val visitor = FlattenComplexExpressionsVisitor(ctx, fn)
                 do {
                     visitor.changed = false
                     visitor.visitItem(it)
-                    visitor.passes++
                     if (visitor.changed) changed = true
                 } while (visitor.changed)
             }
@@ -41,52 +42,40 @@ object ExpandComplexExpressionsPass : AstPass {
 
 }
 
-private class FlattenComplexExpressionsVisitor : BlockAwareVisitor() {
+private class FlattenComplexExpressionsVisitor(val ctx: LoweringCtx, val fn: Fn) : BlockAwareVisitor() {
 
     var changed = false
-    var passes = 0
-    var cident: Ident? = null
+    var assignIdent: Ident? = null
 
     override fun visitStmt(stmt: Stmt) {
-        cident = when (val kind = stmt.kind) {
-            is StmtKind.Assign -> {
-                kind.ident
-            }
-            else -> {
-                null
-            }
-        }
+        assignIdent = stmt.assign()?.ident
         super.visitStmt(stmt)
     }
 
     override fun visitExpr(expr: Expr) {
-        when (val kind = expr.kind) {
-            is ExprKind.Binary -> {
-                when (kind.kind) {
-                    BinOpKind.Add, BinOpKind.Sub, BinOpKind.Mul, BinOpKind.Div, BinOpKind.Rem -> {
-                        val assignTemp = Stmt(
-                            kind.a.span,
-                            StmtKind.Assign(cident ?: Ident.Player("_temp$passes"), kind.a)
-                        )
-                        val assignOp = Stmt(
-                            kind.b.span,
-                            StmtKind.AssignOp(kind.kind, cident ?: Ident.Player("_temp$passes"), kind.b)
-                        )
-                        currentBlock.stmts.add(currentPosition, assignTemp)
-                        currentBlock.stmts.add(currentPosition + 1, assignOp)
-                        if (cident == null) {
-                            expr.kind = ExprKind.Var(Ident.Player("_temp$passes"))
-                        } else {
-                            currentBlock.stmts.removeAt(currentPosition + 2)
-                        }
-                        added(if (cident != null) 1 else 2)
-                        changed = true
-                    }
-                    else -> super.visitExpr(expr) // Do(n't) flatten conditions
-                }
-            }
-            else -> super.visitExpr(expr)
+        val binExpr = expr.binary() ?: return
+
+        if (binExpr.kind !in
+            listOf(BinOpKind.Add, BinOpKind.Sub, BinOpKind.Mul, BinOpKind.Div, BinOpKind.Rem)
+        ) return super.visitExpr(expr)
+
+        val tempIdent = binExpr.a.variable()
+            ?.takeIf { it.isLastUsage }?.ident
+            ?: firstAvailableTemp(ctx, fn, expr)
+
+        val a = Stmt(binExpr.a.span, StmtKind.Assign(assignIdent ?: tempIdent, binExpr.a))
+        val b = Stmt(binExpr.b.span, StmtKind.AssignOp(binExpr.kind, assignIdent ?: tempIdent, binExpr.b))
+
+        currentBlock.stmts.add(currentPosition, a)
+        currentBlock.stmts.add(currentPosition + 1, b)
+
+        if (assignIdent == null) {
+            expr.kind = ExprKind.Var(tempIdent, true)
+        } else {
+            currentBlock.stmts.removeAt(currentPosition + 2)
         }
+        added(if (assignIdent != null) 1 else 2)
+        changed = true
     }
 
 }

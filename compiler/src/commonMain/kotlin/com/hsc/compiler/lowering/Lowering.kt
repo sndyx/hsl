@@ -19,6 +19,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineConstPass,
         InlineEnumPass,
         InlineFunctionPass,
+        CheckTempVariablesAssignedBeforeUsePass, // after InlineFunctionPass, for several reasons
         ExpandInPass,
         ExpandModPass,
         ExpandMatchPass,
@@ -36,6 +37,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
+        FindTempVariablesPass,
         CheckLimitsPass,
         CleanupTempVarsPass,
         CheckLimitsPass,
@@ -47,6 +49,9 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         InlineConstPass,
         InlineEnumPass,
         InlineFunctionPass,
+        FindTempVariablesPass, // earlier to allow all temp variables in ExpandComplexExpressionsPass
+        FindLastVariableUsagePass,
+        CheckTempVariablesAssignedBeforeUsePass, // after InlineFunctionPass, for several reasons
         ExpandInPass,
         ExpandModPass,
         ExpandMatchPass,
@@ -81,12 +86,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
-        //val startTime = Clock.System.now()
-        //println(it::class.simpleName)
+        val startTime = Clock.System.now()
+        // println(it::class.simpleName)
         it.run(ctx)
-        //print(" ")
-        //println(Clock.System.now() - startTime)
-        //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        // print(" ")
+        // println(Clock.System.now() - startTime)
+        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 

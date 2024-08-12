@@ -38,6 +38,7 @@ private class InlineBlockVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
                 }
 
                 var flag = false
+
                 when (val currentKind = currentStmt.kind) {
                     is StmtKind.Expr -> {
                         if (currentKind.expr == expr) {

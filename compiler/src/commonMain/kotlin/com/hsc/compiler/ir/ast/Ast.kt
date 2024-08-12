@@ -28,6 +28,11 @@ sealed class Ident(
     data class Global(override var name: String) : Ident(name)
     data class Team(val team: String, override var name: String) : Ident(name)
     data class Player(override var name: String) : Ident(name)
+
+    fun prefix(prefix: String): Ident {
+        name = prefix + name
+        return this
+    }
 }
 
 data class Item(
@@ -63,6 +68,8 @@ data class Fn(
     var processors: Processors?,
     var sig: FnSig,
     var block: Block,
+
+    val tempVariables: MutableSet<Ident> = mutableSetOf()
 ) {
     fun deepCopy(): Fn = copy(processors = processors?.deepCopy(), sig = sig.deepCopy(), block = block.deepCopy())
 }
@@ -82,7 +89,7 @@ data class FnSig(
 }
 
 data class Args(val span: Span, var args: MutableList<Expr>) {
-    fun deepCopy(): Args = copy(args = args.toMutableList())
+    fun deepCopy(): Args = copy(args = args.map { it.deepCopy() }.toMutableList())
 
     fun isEmpty() = args.isEmpty()
 }
@@ -105,6 +112,14 @@ data class Stmt(
     var kind: StmtKind,
 ) {
     fun deepCopy(): Stmt = copy(kind = kind.deepCopy())
+
+    fun action(): StmtKind.Action? = this.kind as? StmtKind.Action
+    fun assign(): StmtKind.Assign? = this.kind as? StmtKind.Assign
+    fun assignOp(): StmtKind.AssignOp? = this.kind as? StmtKind.AssignOp
+    fun expr(): StmtKind.Expr? = this.kind as? StmtKind.Expr
+    fun exit(): StmtKind.Break? = this.kind as? StmtKind.Break
+    fun ret(): StmtKind.Ret? = this.kind as? StmtKind.Ret
+    fun random(): StmtKind.Random? = this.kind as? StmtKind.Random
 }
 
 sealed class StmtKind {
@@ -147,11 +162,23 @@ data class Expr(
     var kind: ExprKind,
 ) {
     fun deepCopy(): Expr = copy(kind = kind.deepCopy())
+
+    fun variable(): ExprKind.Var? { return kind as? ExprKind.Var }
+    fun call(): ExprKind.Call? { return kind as? ExprKind.Call }
+    fun binary(): ExprKind.Binary? { return kind as? ExprKind.Binary }
+    fun unary(): ExprKind.Unary? { return kind as? ExprKind.Unary }
+    fun lit(): ExprKind.Lit? { return kind as? ExprKind.Lit }
+    fun range(): ExprKind.Range? { return kind as? ExprKind.Range }
+    fun conditional(): ExprKind.If? { return kind as? ExprKind.If }
+    fun match(): ExprKind.Match? { return kind as? ExprKind.Match }
+    fun block(): ExprKind.Block? { return kind as? ExprKind.Block }
+    fun condition(): ExprKind.Condition? { return kind as? ExprKind.Condition }
 }
+
 
 sealed class ExprKind  {
     abstract fun deepCopy(): ExprKind
-    data class Var(var ident: Ident) : ExprKind() {
+    data class Var(var ident: Ident, var isLastUsage: Boolean = false) : ExprKind() {
         override fun deepCopy(): ExprKind = copy()
     }
     data class Call(var ident: Ident, var args: Args) : ExprKind() {
@@ -212,7 +239,7 @@ sealed class Lit {
     }
     
     data class Str(val value: String) : Lit() {
-        override fun deepCopy(): Lit = copy()
+        override fun deepCopy(): Lit = copy(value = value.toString())
     }
     
     data class I64(val value: Long) : Lit() {

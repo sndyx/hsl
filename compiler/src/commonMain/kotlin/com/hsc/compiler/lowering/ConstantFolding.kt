@@ -6,6 +6,7 @@ import com.hsc.compiler.ir.action.Comparison
 import com.hsc.compiler.ir.action.Condition
 import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.span.Span
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
@@ -22,6 +23,7 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
     var changes = 0
 
     override fun visitExpr(expr: Expr) {
+
         when (val kind = expr.kind) {
             is ExprKind.Binary -> {
 
@@ -235,11 +237,17 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                             when (val lit = litKind.lit) {
                                 is Lit.I64 -> {
                                     if (lit.value == 1L) expr.kind = ExprKind.Block(kind.block)
-                                    else if (lit.value == 0L) expr.kind = ExprKind.Block(kind.other!!) // should be safe
+                                    else if (lit.value == 0L) {
+                                        if (kind.other != null) expr.kind = ExprKind.Block(kind.other!!)
+                                        else expr.kind = ExprKind.Var(Ident.Player("@nothing"))
+                                    }
                                 }
                                 is Lit.Bool -> {
                                     if (lit.value) expr.kind = ExprKind.Block(kind.block)
-                                    else expr.kind = ExprKind.Block(kind.other!!)
+                                    else {
+                                        if (kind.other != null) expr.kind = ExprKind.Block(kind.other!!)
+                                        else expr.kind = ExprKind.Var(Ident.Player("@nothing"))
+                                    }
                                 }
                                 else -> {}
                             }

@@ -1,0 +1,6 @@
+[package]
+name = "regions-example"
+version = "0.0.1"
+
+mode = "optimize"
+target = "htsl"

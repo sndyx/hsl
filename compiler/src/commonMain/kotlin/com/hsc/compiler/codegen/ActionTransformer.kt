@@ -66,7 +66,6 @@ class ActionTransformer(internal val sess: CompileSess) {
             })
         }
         else -> {
-            println(expr)
             val err = sess.dcx().err("expected integer or placeholder")
             err.span(expr.span)
             if (sess.opts.mode == Mode.Strict) {
