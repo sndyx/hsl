@@ -44,7 +44,7 @@ private class InlineBlockVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
                         if (currentKind.expr == expr) {
                             currentBlock.stmts.removeAt(currentPosition)
                             currentBlock.stmts.addAll(currentPosition, block.stmts)
-                            added(block.stmts.size - 1)
+                            offset(block.stmts.size - 1)
                         } else flag = true
                     }
                     else -> flag = true
@@ -59,7 +59,7 @@ private class InlineBlockVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
                     }
                     currentBlock.stmts.addAll(currentPosition, block.stmts.dropLast(1))
                     expr.kind = (block.stmts.last().kind as StmtKind.Expr).expr.kind
-                    added(block.stmts.size - 1)
+                    offset(block.stmts.size - 1)
                 }
 
                 changed = true

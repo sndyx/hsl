@@ -85,7 +85,7 @@ private class InlineFunctionParametersVisitor(val ctx: LoweringCtx) : BlockAware
                         Stmt(Span.none, StmtKind.Assign(ident, kind.args.args[idx]))
                     }
                     currentBlock.stmts.addAll(currentPosition, stmts)
-                    added(stmts.size)
+                    offset(stmts.size)
                     if (stmts.isNotEmpty()) changes++
                     kind.args.args.clear()
                     alreadyInlined.add(kind)

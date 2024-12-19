@@ -6,27 +6,34 @@ import com.hsc.compiler.ir.ast.Fn
 import com.hsc.compiler.ir.ast.Ident
 import com.hsc.compiler.ir.ast.Stmt
 
-fun Ident.isTemp(ctx: LoweringCtx): Boolean =
-    name.startsWith(ctx.sess.opts.tempPrefix)
+fun LoweringCtx.isTemp(ident: Ident): Boolean =
+    ident.name.startsWith(sess.opts.tempPrefix)
 
-fun firstAvailableTemp(ctx: LoweringCtx, fn: Fn, currentExpr: Expr): Ident {
-    val visitor = TempVariablesInUseVisitor(ctx, currentExpr)
+fun LoweringCtx.firstAvailableTemp(fn: Fn, currentExpr: Expr): Ident {
+    val visitor = TempVariablesInUseVisitor(this, currentExpr)
     visitor.visitBlock(fn.block)
 
     return fn.tempVariables
         .filterNot { it in visitor.variablesInUse }
-        .firstOrNull() ?: createNewTempVariable(ctx, fn)
+        .firstOrNull() ?: createNewTempVariable(fn)
 }
 
-fun createNewTempVariable(ctx: LoweringCtx, fn: Fn): Ident {
+fun LoweringCtx.createNewTempVariable(fn: Fn): Ident {
     repeat(Int.MAX_VALUE) { i ->
-        val ident = Ident.Player(ctx.sess.opts.tempPrefix + "temp" + i)
+        val ident = Ident.Player(sess.opts.tempPrefix + "temp" + i)
         if (!fn.tempVariables.contains(ident)) {
             fn.tempVariables.add(ident)
             return ident
         }
     }
-    error("??? how ???")
+    error("unreachable")
+}
+
+fun LoweringCtx.isTempInUse(ident: Ident, fn: Fn, currentExpr: Expr): Boolean {
+    val visitor = TempVariablesInUseVisitor(this, currentExpr)
+    visitor.visitBlock(fn.block)
+
+    return visitor.variablesInUse.contains(ident)
 }
 
 private class TempVariablesInUseVisitor(val ctx: LoweringCtx, val currentExpr: Expr) : AstVisitor {
@@ -52,7 +59,7 @@ private class TempVariablesInUseVisitor(val ctx: LoweringCtx, val currentExpr: E
         val variable = expr.variable() ?: return
         val ident = variable.ident
 
-        if (!ident.isTemp(ctx)) return
+        if (!ctx.isTemp(ident)) return
 
         if (variable.isLastUsage) {
             if (!lock) variablesInUse.remove(ident)

@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("multiplatform")
@@ -16,6 +15,14 @@ repositories {
 
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 kotlin {
+
+    compilerOptions {
+        freeCompilerArgs = listOf(
+            "-opt-in=kotlin.RequiresOptIn",
+            "-Xbackend-threads=0", // Multi-threaded compilation 😎
+            "-Xcontext-parameters"
+        )
+    }
 
     jvm {
         withJava()
@@ -54,12 +61,6 @@ kotlin {
                 baseName = "hsc"
                 entryPoint = "com.hsc.compiler.main"
             }
-        }
-    }
-
-    sourceSets.all {
-        languageSettings {
-            languageVersion = "2.0"
         }
     }
 
@@ -118,16 +119,6 @@ kotlin {
             from({
                 main.runtimeDependencyFiles.files.filter { it.name.endsWith("jar") }.map { zipTree(it) }
             })
-        }
-    }
-
-    tasks.withType<KotlinCompile>().configureEach {
-        compilerOptions {
-            freeCompilerArgs = listOf(
-                "-opt-in=kotlin.RequiresOptIn",
-                "-Xbackend-threads=0", // Multi-threaded compilation 😎
-                "-Xcontext-receivers"
-            )
         }
     }
 

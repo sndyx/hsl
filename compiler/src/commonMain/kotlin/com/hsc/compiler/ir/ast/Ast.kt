@@ -3,7 +3,6 @@ package com.hsc.compiler.ir.ast
 import com.hsc.compiler.ir.action.ItemStack
 import com.hsc.compiler.span.Span
 
-
 data class Ast(
     val items: MutableList<Item>,
 ) {
@@ -39,8 +38,12 @@ data class Item(
     val span: Span,
     val ident: Ident,
     val kind: ItemKind,
-) {
+) : Visitable {
     fun deepCopy(): Item = copy(kind = kind.deepCopy())
+
+    override fun visit(v: AstVisitor) {
+        v.visitItem(this)
+    }
 }
 sealed class ItemKind {
 
@@ -70,8 +73,12 @@ data class Fn(
     var block: Block,
 
     val tempVariables: MutableSet<Ident> = mutableSetOf()
-) {
+) : Visitable {
     fun deepCopy(): Fn = copy(processors = processors?.deepCopy(), sig = sig.deepCopy(), block = block.deepCopy())
+
+    override fun visit(v: AstVisitor) {
+        v.visitFn(this)
+    }
 }
 
 data class Processors(
@@ -103,14 +110,18 @@ data class Enum(
 data class Block(
     val span: Span,
     var stmts: MutableList<Stmt>,
-) {
+) : Visitable {
     fun deepCopy(): Block = copy(stmts = stmts.map { it.deepCopy() }.toMutableList())
+
+    override fun visit(v: AstVisitor) {
+        v.visitBlock(this)
+    }
 }
 
 data class Stmt(
     val span: Span,
     var kind: StmtKind,
-) {
+) : Visitable {
     fun deepCopy(): Stmt = copy(kind = kind.deepCopy())
 
     fun action(): StmtKind.Action? = this.kind as? StmtKind.Action
@@ -120,6 +131,10 @@ data class Stmt(
     fun exit(): StmtKind.Break? = this.kind as? StmtKind.Break
     fun ret(): StmtKind.Ret? = this.kind as? StmtKind.Ret
     fun random(): StmtKind.Random? = this.kind as? StmtKind.Random
+
+    override fun visit(v: AstVisitor) {
+        v.visitStmt(this)
+    }
 }
 
 sealed class StmtKind {
@@ -160,7 +175,7 @@ sealed class StmtKind {
 data class Expr(
     var span: Span,
     var kind: ExprKind,
-) {
+) : Visitable {
     fun deepCopy(): Expr = copy(kind = kind.deepCopy())
 
     fun variable(): ExprKind.Var? { return kind as? ExprKind.Var }
@@ -173,6 +188,10 @@ data class Expr(
     fun match(): ExprKind.Match? { return kind as? ExprKind.Match }
     fun block(): ExprKind.Block? { return kind as? ExprKind.Block }
     fun condition(): ExprKind.Condition? { return kind as? ExprKind.Condition }
+
+    override fun visit(v: AstVisitor) {
+        v.visitExpr(this)
+    }
 }
 
 

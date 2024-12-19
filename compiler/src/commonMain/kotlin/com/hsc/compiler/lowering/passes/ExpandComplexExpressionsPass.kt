@@ -61,7 +61,7 @@ private class FlattenComplexExpressionsVisitor(val ctx: LoweringCtx, val fn: Fn)
 
         val tempIdent = binExpr.a.variable()
             ?.takeIf { it.isLastUsage }?.ident
-            ?: firstAvailableTemp(ctx, fn, expr)
+            ?: ctx.firstAvailableTemp(fn, expr)
 
         val a = Stmt(binExpr.a.span, StmtKind.Assign(assignIdent ?: tempIdent, binExpr.a))
         val b = Stmt(binExpr.b.span, StmtKind.AssignOp(binExpr.kind, assignIdent ?: tempIdent, binExpr.b))
@@ -74,7 +74,7 @@ private class FlattenComplexExpressionsVisitor(val ctx: LoweringCtx, val fn: Fn)
         } else {
             currentBlock.stmts.removeAt(currentPosition + 2)
         }
-        added(if (assignIdent != null) 1 else 2)
+        offset(if (assignIdent != null) 1 else 2)
         changed = true
     }
 

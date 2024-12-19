@@ -59,6 +59,13 @@ private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
                 ctx.ast.items.add(newItem)
                 limitOpt(ctx, newItem, newFn.block)
 
+                val callStmt = Stmt(
+                    Span.none, StmtKind.Expr(
+                        Expr(Span.none, ExprKind.Call(Ident.Player(newName), Args(Span.none, mutableListOf())))
+                    )
+                )
+                block.stmts.add(callStmt)
+
                 return
             }
 

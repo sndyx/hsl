@@ -29,14 +29,14 @@ private class FindTempVariablesVisitor(val ctx: LoweringCtx, val fn: Fn) : AstVi
         super.visitStmt(stmt)
         val ident = stmt.assign()?.ident ?: stmt.assignOp()?.ident ?: return
 
-        if (ident.isTemp(ctx)) {
+        if (ctx.isTemp(ident)) {
             fn.tempVariables.add(ident)
         }
     }
 
     override fun visitExpr(expr: Expr) {
         expr.variable()?.let {
-            if (it.ident.isTemp(ctx)) {
+            if (ctx.isTemp(it.ident)) {
                 fn.tempVariables.add(it.ident)
             }
         }

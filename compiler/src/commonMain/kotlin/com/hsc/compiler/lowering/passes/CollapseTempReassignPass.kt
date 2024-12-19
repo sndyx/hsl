@@ -2,7 +2,6 @@ package com.hsc.compiler.lowering.passes
 
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
-import kotlinx.coroutines.*
 
 /**
  * A pass that will flatten temp vars that are immediately reassigned.
@@ -40,6 +39,8 @@ private object CollapseTempReassignVisitor : BlockAwareVisitor() {
         prevTempAssign = null
         prevIdent = null
         super.visitBlock(block)
+        prevTempAssign = null
+        prevIdent = null
     }
 
     override fun visitStmt(stmt: Stmt) {
@@ -50,10 +51,10 @@ private object CollapseTempReassignVisitor : BlockAwareVisitor() {
                         if (exprKind.ident == prevIdent) {
                             kind.expr = prevTempAssign!!
                             currentBlock.stmts.removeAt(currentPosition - 1)
-                            added(-1)
+                            offset(-1)
                         } else if (exprKind.ident == kind.ident) {
                             currentBlock.stmts.removeAt(currentPosition)
-                            added(-1)
+                            offset(-1)
                             super.visitStmt(stmt)
                             return
                         }
@@ -75,7 +76,7 @@ private object CollapseTempReassignVisitor : BlockAwareVisitor() {
                 if (kind is StmtKind.Expr && kind.expr.kind is ExprKind.Var) {
                     // Remove useless vars
                     currentBlock.stmts.removeAt(currentPosition)
-                    added(-1)
+                    offset(-1)
                 }
                 prevTempAssign = null
                 prevIdent = null

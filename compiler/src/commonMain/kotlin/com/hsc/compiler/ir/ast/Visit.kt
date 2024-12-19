@@ -3,6 +3,10 @@ package com.hsc.compiler.ir.ast
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Condition
 
+interface Visitable {
+    fun visit(v: AstVisitor)
+}
+
 interface AstVisitor {
     fun visitAst(ast: Ast) {
         walkAst(this, ast)
@@ -71,7 +75,7 @@ open class BlockAwareVisitor : AstVisitor {
         if (positions.isNotEmpty()) positions.add(positions.removeLast() + 1)
     }
 
-    fun added(amount: Int) {
+    fun offset(amount: Int) {
         positions.add(positions.removeLast() + amount)
     }
 

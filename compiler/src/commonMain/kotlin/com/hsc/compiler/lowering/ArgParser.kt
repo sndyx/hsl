@@ -160,7 +160,6 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                         "current_location" -> Location.CurrentLocation
                         "invokers_location" -> Location.InvokersLocation
                         else -> throw ctx.dcx().err("expected location, found ${lit.str()}")
-
                     }
 
                     else -> {

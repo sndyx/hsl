@@ -55,12 +55,6 @@ kotlin {
         }
     }
 
-    sourceSets.all {
-        languageSettings {
-            languageVersion = "2.0"
-        }
-    }
-
     sourceSets {
         val commonMain by sourceSets.getting {
             dependencies {

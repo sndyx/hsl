@@ -1,3 +1,3 @@
 package com.hsc.compiler
 
-const val VERSION = "1.4.0"
+const val VERSION = "1.4.1"

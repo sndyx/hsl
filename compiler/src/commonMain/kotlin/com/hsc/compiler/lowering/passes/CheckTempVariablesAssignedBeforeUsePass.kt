@@ -34,7 +34,7 @@ private class CheckTempVariablesAssignedBeforeUseVisitor(val ctx: LoweringCtx, v
 
     override fun visitExpr(expr: Expr) {
         expr.variable()?.let {
-            if (it.ident.isTemp(ctx) && it.ident !in variablesDefined) {
+            if (ctx.isTemp(it.ident) && !it.ident.name.endsWith("return") && it.ident !in variablesDefined) {
                 ctx.dcx().warn("temp variable used before assigned", expr.span).emit()
             }
         }

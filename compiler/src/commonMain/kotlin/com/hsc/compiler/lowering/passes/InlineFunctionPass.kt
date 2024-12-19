@@ -85,8 +85,8 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
 
                         currentBlock.stmts.addAll(currentPosition, assignStmts)
 
-                        added(inlineBlock.stmts.size)
-                        added(assignStmts.size)
+                        offset(inlineBlock.stmts.size)
+                        offset(assignStmts.size)
 
                         changes++
                     }

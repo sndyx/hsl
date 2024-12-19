@@ -7,7 +7,7 @@ import com.hsc.compiler.lowering.ArgParser
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.similar
 
-object  MapActionsPass : AstPass {
+object MapActionsPass : AstPass {
 
     override fun run(ctx: LoweringCtx) {
         val visitor = MapCallActionsVisitor(ctx)

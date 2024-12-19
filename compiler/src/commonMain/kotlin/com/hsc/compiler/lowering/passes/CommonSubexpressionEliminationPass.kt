@@ -4,7 +4,7 @@ import com.hsc.compiler.ir.ast.Expr
 import com.hsc.compiler.ir.ast.Item
 import com.hsc.compiler.ir.ast.ItemKind
 import com.hsc.compiler.lowering.LoweringCtx
-import com.hsc.compiler.lowering.traverse
+import com.hsc.compiler.lowering.walk
 
 object CommonSubexpressionEliminationPass : AstPass {
 
@@ -24,6 +24,6 @@ object CommonSubexpressionEliminationPass : AstPass {
 
 private data class MappedExpr(val expr: Expr) {
     val idents = buildList {
-        traverse(expr) { expr.variable()?.ident?.let(::add) }
+        walk(expr) { expr.variable()?.ident?.let(::add) }
     }
 }

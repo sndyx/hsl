@@ -75,13 +75,13 @@ private class InlineFunctionCallAssignmentVisitor(val ctx: LoweringCtx) : BlockA
         if (inlined == 0) {
             functionsUsedAsExpressions.add(Pair(callExpr.ident.name, expr.span))
             expr.kind = returnKind
-            added(1)
+            offset(1)
         } else {
-            val ident = firstAvailableTemp(ctx, currentFn!!, expr)
+            val ident = ctx.firstAvailableTemp(currentFn!!, expr)
             val newStmt2 = Stmt(expr.span, StmtKind.Assign(ident, Expr(expr.span, returnKind)))
             currentBlock.stmts.add(currentPosition - offset + 1, newStmt2)
             expr.kind = ExprKind.Var(ident)
-            added(2)
+            offset(2)
         }
         inlined++
     }

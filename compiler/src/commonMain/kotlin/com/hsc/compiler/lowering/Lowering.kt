@@ -58,9 +58,9 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
+        InlineFunctionParametersWrapper,
         ConstantFoldingPass, // Before inline block, at least in optimize
         InlineBlockPass,
-        InlineFunctionParametersPass,
         ExpandComplexExpressionsPass,
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
@@ -86,12 +86,12 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
 
 fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
-        val startTime = Clock.System.now()
-        // println(it::class.simpleName)
+        //val startTime = Clock.System.now()
+        //println(it::class.simpleName)
         it.run(ctx)
-        // print(" ")
-        // println(Clock.System.now() - startTime)
-        // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
+        //print(" ")
+        //println(Clock.System.now() - startTime)
+        //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
 }
 
