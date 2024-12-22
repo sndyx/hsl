@@ -7,7 +7,7 @@ Docs / Reference / [Manifest](manifest.md)
 ## Project
 
 ```toml
-[project]
+[package]
 
 # Required properties
 name = "example"
