@@ -7,7 +7,7 @@ import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 
 fun Player.executeFunction(name: String) {
-    val item = VirtualHousing.functions.find { it.ident.name == name } ?:
+    val item = housing.functions.find { it.ident.name == name } ?:
         throw ActionRuntimeException("cannot find function $name", trace)
 
     val fn = (item.kind as ItemKind.Fn).fn

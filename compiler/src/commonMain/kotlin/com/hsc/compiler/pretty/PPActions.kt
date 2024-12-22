@@ -82,6 +82,7 @@ class PPActionsEncoder(val t: Terminal, startIndent: Int) : AbstractEncoder() {
     override fun encodeInt(value: Int) = with(t) { println(white("$value")) }
     override fun encodeLong(value: Long) = with(t) { println(white("$value")) }
     override fun encodeFloat(value: Float) = with(t) { println(white("$value")) }
+    override fun encodeDouble(value: Double) = with(t) { println(white("$value")) }
     override fun encodeString(value: String) = with(t) { println((green + dim)("\"$value\"")) }
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) = with(t) {
         println(white(enumDescriptor.getElementName(index).lowercase()))

@@ -24,6 +24,20 @@ object CheckLimitsPass : AstPass {
 
 }
 
+private fun checkLimits(block: Block): Pair<String, Span>? {
+    val map = limitsMap.toMutableMap()
+
+    for (stmt in block.stmts) {
+        val kind = stmtActionKind(stmt)
+        map[kind] = (map[kind] ?: Int.MAX_VALUE) - 1
+        if (map[kind] == -1) {
+            return Pair(kind, stmt.span)
+        }
+    }
+
+    return null
+}
+
 private fun limitOpt(ctx: LoweringCtx, item: Item, block: Block) {
     if (item.ident.name == "main") return
     if (checkLimits(block) == null) return

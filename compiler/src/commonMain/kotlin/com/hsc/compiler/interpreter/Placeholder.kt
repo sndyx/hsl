@@ -34,12 +34,12 @@ fun Player.placeholderString(placeholder: String): String {
         "player.team.name" -> team ?: "No Team"
         "player.team.tag" -> "[${team?.uppercase() ?: ""}]"
         "player.team.color" -> ""
-        "player.team.players" -> VirtualHousing.players.count { it.team == args[0] }.toString()
+        "player.team.players" -> housing.players.count { it.team == args[0] }.toString()
         "house.name" -> "HSL Runtime v${VERSION}"
-        "house.guests" -> VirtualHousing.players.size.toString()
+        "house.guests" -> housing.players.size.toString()
         "house.cookies" -> "0"
         "house.visitingrules" -> "PRIVATE"
-        "house.players" -> VirtualHousing.players.size.toString()
+        "house.players" -> housing.players.size.toString()
         "date.day" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.dayOfMonth.toString()
         "date.month" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.monthNumber.toString()
         "date.year" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.year.toString()
@@ -49,8 +49,8 @@ fun Player.placeholderString(placeholder: String): String {
         "date.unix" -> Clock.System.now().epochSeconds.toString()
         "random.int" -> Random.nextInt(args[0].toInt(), args[1].toInt()).toString()
         "stat.player" -> stats[args[0]]?.toString() ?: "0"
-        "stat.global" -> VirtualHousing.globalStats[args[0]]?.toString() ?: "0"
-        "stat.team" -> VirtualHousing.teamStats[args[1]]?.get(args[0])?.toString() ?: "0"
+        "stat.global" -> housing.globalStats[args[0]]?.toString() ?: "0"
+        "stat.team" -> housing.teamStats[args[1]]?.get(args[0])?.toString() ?: "0"
         else -> "%$placeholder%"
     }
 }
@@ -71,10 +71,10 @@ fun Player.placeholderValue(placeholder: String): Long {
         "player.location.pitch" -> pitch.toLong()
         "player.location.yaw" -> yaw.toLong()
         "player.group.priority" -> 0L
-        "player.team.players" -> VirtualHousing.players.count { it.team == args[0] }.toLong()
-        "house.guests" -> VirtualHousing.players.size.toLong()
+        "player.team.players" -> housing.players.count { it.team == args[0] }.toLong()
+        "house.guests" -> housing.players.size.toLong()
         "house.cookies" -> 0L
-        "house.players" -> VirtualHousing.players.size.toLong()
+        "house.players" -> housing.players.size.toLong()
         "date.day" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.dayOfMonth.toLong()
         "date.month" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.monthNumber.toLong()
         "date.year" -> Clock.System.now().toLocalDateTime(TimeZone.of(args[0])).date.year.toLong()
@@ -84,8 +84,8 @@ fun Player.placeholderValue(placeholder: String): Long {
         "date.unix" -> Clock.System.now().epochSeconds
         "random.int" -> Random.nextInt(args[0].toInt(), args[1].toInt()).toLong()
         "stat.player" -> stats[args[0]]?.toLong() ?: 0L
-        "stat.global" -> VirtualHousing.globalStats[args[0]]?.toLong() ?: 0L
-        "stat.team" -> VirtualHousing.teamStats[args[1]]?.get(args[0])?.toLong() ?: 0L
+        "stat.global" -> housing.globalStats[args[0]]?.toLong() ?: 0L
+        "stat.team" -> housing.teamStats[args[1]]?.get(args[0])?.toLong() ?: 0L
         else -> 0L
     }
 }

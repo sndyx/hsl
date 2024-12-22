@@ -3,7 +3,7 @@ package com.hsc.compiler.interpreter
 import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.ir.ast.Item
 
-object VirtualHousing {
+class VirtualHousing {
 
     val functions: MutableList<Item> = mutableListOf()
 

@@ -5,6 +5,7 @@ import com.hsc.compiler.ir.ast.Ident
 import com.hsc.compiler.ir.ast.Stmt
 
 data class Player(
+    val housing: VirtualHousing,
     val name: String,
     var gamemode: GameMode = GameMode.Survival,
 
@@ -23,7 +24,7 @@ data class Player(
     var group: String? = null,
     var team: String? = null,
 
-    val t: Terminal = VirtualHousing.terminal!!,
+    val t: Terminal = housing.terminal!!,
 
     val stats: MutableMap<String, Long> = mutableMapOf(),
 
@@ -35,16 +36,16 @@ data class Player(
     fun getStat(ident: Ident): Long {
         return when (ident) {
             is Ident.Player -> stats[ident.name] ?: 0L
-            is Ident.Global -> VirtualHousing.globalStats[ident.name] ?: 0L
-            is Ident.Team -> VirtualHousing.teamStats[ident.team]?.get(ident.name) ?: 0L
+            is Ident.Global -> housing.globalStats[ident.name] ?: 0L
+            is Ident.Team -> housing.teamStats[ident.team]?.get(ident.name) ?: 0L
         }
     }
 
     fun setStat(ident: Ident, value: Long) {
         when (ident) {
             is Ident.Player -> stats[ident.name] = value
-            is Ident.Global -> VirtualHousing.globalStats[ident.name] = value
-            is Ident.Team -> VirtualHousing.teamStats.getOrPut(ident.team) { mutableMapOf() }[ident.name] = value
+            is Ident.Global -> housing.globalStats[ident.name] = value
+            is Ident.Team -> housing.teamStats.getOrPut(ident.team) { mutableMapOf() }[ident.name] = value
         }
     }
 

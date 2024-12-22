@@ -6,6 +6,10 @@ import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.lowering.newpasses.PassWrapper
+import com.hsc.compiler.lowering.newpasses.checkLimits
+import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
+import com.hsc.compiler.lowering.newpasses.extendLimits
 import com.hsc.compiler.lowering.passes.*
 import com.hsc.compiler.pretty.prettyPrintAst
 import kotlinx.datetime.Clock
@@ -58,10 +62,10 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
-        InlineFunctionParametersWrapper,
+        InlineFunctionParametersPass,
         ConstantFoldingPass, // Before inline block, at least in optimize
         InlineBlockPass,
-        ExpandComplexExpressionsPass,
+        PassWrapper(::expandComplexExpressions),
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         InlineFunctionCallAssignmentPass,
@@ -69,9 +73,10 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
-        CheckLimitsPass,
+        PassWrapper(::extendLimits),
         CleanupTempVarsPass,
-        CheckLimitsPass,
+        PassWrapper(::extendLimits),
+        PassWrapper(::checkLimits)
     ),
     Mode.Strict to listOf(
         NameItemsPass,
@@ -88,6 +93,7 @@ fun lower(ctx: LoweringCtx) {
     passes[ctx.sess.opts.mode]!!.forEach {
         //val startTime = Clock.System.now()
         //println(it::class.simpleName)
+        //if (it is PassWrapper) println(it.pass.toString())
         it.run(ctx)
         //print(" ")
         //println(Clock.System.now() - startTime)

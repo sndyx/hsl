@@ -56,7 +56,7 @@ fun Player.executeAction(action: Action) {
         is Action.EnchantHeldItem -> { /* Do nothing */ }
         is Action.ExecuteFunction -> {
             if (action.global) {
-                VirtualHousing.players.forEach {
+                housing.players.forEach {
                     executeFunction(action.name)
                 }
             }
@@ -74,7 +74,7 @@ fun Player.executeAction(action: Action) {
         Action.ResetInventory -> { /* Do nothing */ }
         is Action.SendMessage -> logMessage(action.message)
         is Action.SendToLobby -> {
-            VirtualHousing.players.remove(this@executeAction)
+            housing.players.remove(this@executeAction)
             throw ActionExitException()
         }
         is Action.SetCompassTarget -> { /* Do nothing */ }

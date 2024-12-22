@@ -8,12 +8,12 @@ import com.hsc.compiler.ir.action.Sound
 fun Player.logMessage(message: String) {
     val formatted = formatText(message.replace(Regex("%([^%]+)%")) { placeholderString(it.groupValues[1]) })
 
-    if (VirtualHousing.players.size == 1) t.println(formatted)
+    if (housing.players.size == 1) t.println(formatted)
     else t.println("${bold(name)}: $formatted")
 }
 
 fun Player.logActionBar(message: String) {
-    if (VirtualHousing.players.size == 1) t.println(message)
+    if (housing.players.size == 1) t.println(message)
     else t.println("${bold(name)}: $message")
 }
 

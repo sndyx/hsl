@@ -11,14 +11,15 @@ import kotlinx.coroutines.runBlocking
 class InterpreterSession(val sess: CompileSess, val ast: Ast, val terminal: Terminal) {
 
     fun run() = runBlocking {
-        VirtualHousing.terminal = terminal
-        VirtualHousing.functions.addAll(ast.items.filter { it.kind is ItemKind.Fn })
-        val main = Player("main")
-        VirtualHousing.players.add(main)
+        val housing = VirtualHousing()
+        housing.terminal = terminal
+        housing.functions.addAll(ast.items.filter { it.kind is ItemKind.Fn })
+        val main = Player(housing, "main")
+        housing.players.add(main)
         main.executeFunction("main")
-        while (VirtualHousing.isActive()) {
+        while (housing.isActive()) {
             if (!sess.opts.instant) delay(50)
-            VirtualHousing.tick()
+            housing.tick()
         }
     }
 

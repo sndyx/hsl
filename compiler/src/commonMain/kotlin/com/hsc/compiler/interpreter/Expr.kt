@@ -9,7 +9,7 @@ fun Player.executeExpr(expr: Expr) {
     when (val kind = expr.kind) {
         is ExprKind.Call -> {
             if (kind.ident.isGlobal) {
-                for (player in VirtualHousing.players) {
+                for (player in housing.players) {
                     player.executeFunction(kind.ident.name)
                 }
             } else {
@@ -35,10 +35,10 @@ fun Player.exprValue(expr: Expr): Long {
                     stats[ident.name] ?: 0L
                 }
                 is Ident.Global -> {
-                    VirtualHousing.globalStats[ident.name] ?: 0L
+                    housing.globalStats[ident.name] ?: 0L
                 }
                 is Ident.Team -> {
-                    VirtualHousing.teamStats[ident.team]?.get(ident.name) ?: 0L
+                    housing.teamStats[ident.team]?.get(ident.name) ?: 0L
                 }
             }
         }

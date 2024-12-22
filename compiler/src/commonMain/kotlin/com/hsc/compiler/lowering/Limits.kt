@@ -97,17 +97,3 @@ fun limits(block: Block): Map<String, Int> {
         name to (value - actions.count { it == name })
     }.toMap()
 }
-
-fun checkLimits(block: Block): Pair<String, Span>? {
-    val map = limitsMap.toMutableMap()
-
-    for (stmt in block.stmts) {
-        val kind = stmtActionKind(stmt)
-        map[kind] = (map[kind] ?: Int.MAX_VALUE) - 1
-        if (map[kind] == -1) {
-            return Pair(kind, stmt.span)
-        }
-    }
-
-    return null
-}

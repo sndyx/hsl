@@ -1,7 +1,9 @@
 package com.hsc.compiler.driver
 
+import com.github.ajalt.mordant.rendering.AnsiLevel
 import com.github.ajalt.mordant.rendering.TextColors.*
 import com.github.ajalt.mordant.rendering.TextStyles.*
+import com.github.ajalt.mordant.terminal.Terminal
 import com.hsc.compiler.codegen.ActionTransformer
 import com.hsc.compiler.errors.printDiagnostic
 import com.hsc.compiler.errors.DiagCtx
@@ -13,6 +15,7 @@ import com.hsc.compiler.lowering.lower
 import com.hsc.compiler.parse.Lexer
 import com.hsc.compiler.parse.Parser
 import com.hsc.compiler.parse.TokenStream
+import com.hsc.compiler.pretty.prettyPrintAst
 import com.hsc.compiler.span.SourceMap
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -63,6 +66,11 @@ class InterpreterDriver(opts: CompileOptions) : Driver(opts) {
         enter {
             val interpreter = InterpreterSession(sess, ast, t)
             interpreter.run()
+        }
+
+        if (opts.test) {
+            println("=====")
+            prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ast)
         }
 
     } }.let { time ->

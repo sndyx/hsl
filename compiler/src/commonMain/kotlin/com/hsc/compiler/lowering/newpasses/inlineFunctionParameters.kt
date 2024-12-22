@@ -1,21 +1,28 @@
-package com.hsc.compiler.lowering.passes
+package com.hsc.compiler.lowering.newpasses
 
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Condition
-import com.hsc.compiler.ir.ast.*
+import com.hsc.compiler.ir.ast.Expr
+import com.hsc.compiler.ir.ast.ExprKind
+import com.hsc.compiler.ir.ast.Stmt
+import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.lowering.*
 
-object InlineFunctionParametersWrapper : AstPass {
-
-    override fun run(ctx: LoweringCtx) {
-        inlineFunctionParameters(ctx)
-        ctx.clearQuery<Expr>()
-        ctx.clearQuery<Stmt>()
-    }
-
-}
-
+/**
+ * A pass that inlines function parameters into the owning block.
+ *
+ * eg:
+ * ```
+ * add(a, b)
+ * ```
+ * becomes:
+ * ```
+ * _param1 = a
+ * _param2 = b
+ * add()
+ * ```
+ */
 fun inlineFunctionParameters(ctx: LoweringCtx) = with(ctx) {
     getFunctions().forEach { fn ->
         val alreadyInlined = mutableListOf<Expr>()
@@ -72,16 +79,19 @@ fun inlineFunctionParameters(ctx: LoweringCtx) = with(ctx) {
 
                         currentBlock.stmts.add(currentPosition, Stmt(expr.span,
                             StmtKind.Assign(swapIdent, Expr(expr.span, ExprKind.Var(arg)))
-                        ))
+                        )
+                        )
                         offset(1) // only offset one because swap back is ahead of current position
                         currentBlock.stmts.add(currentPosition + 1, Stmt(expr.span,
                             StmtKind.Assign(arg, Expr(expr.span, ExprKind.Var(swapIdent)))
-                        ))
+                        )
+                        )
                     }
 
                     currentBlock.stmts.add(currentPosition, Stmt(expr.span,
                         StmtKind.Assign(arg, call.args.args[index])
-                    ))
+                    )
+                    )
                     offset(1)
                 }
 

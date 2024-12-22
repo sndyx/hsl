@@ -42,5 +42,11 @@ class VirtualFileProvider(private val base64: String) : FileProvider {
 
 }
 
+class VirtualFileProviderFlat(val content: String) : FileProvider {
+    override fun getFiles(): List<SourceFile> {
+        return listOf(SourceFile("test.hsl".toPath(), content))
+    }
+}
+
 @Serializable
 class VirtualFile(val path: String, val src: String)

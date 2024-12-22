@@ -48,7 +48,8 @@ abstract class Driver(val opts: CompileOptions) {
     }
 
     private fun fatal(): Nothing {
-        exitProcess(0)
+        if (!opts.test) exitProcess(0)
+        else throw Error("Fail")
     }
 
     private fun handleError(error: Throwable, dcx: DiagCtx) {

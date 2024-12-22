@@ -10,6 +10,7 @@ data class CompileOptions(
     val stupidDumbIdiotMode: Boolean,
     val tempPrefix: String,
     val instant: Boolean,
+    val test: Boolean = false,
 )
 
 enum class Color(val label: String) {
