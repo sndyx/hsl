@@ -10,6 +10,7 @@ import com.hsc.compiler.lowering.newpasses.PassWrapper
 import com.hsc.compiler.lowering.newpasses.checkLimits
 import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
 import com.hsc.compiler.lowering.newpasses.extendLimits
+import com.hsc.compiler.lowering.newpasses.inlineFunctionParameters
 import com.hsc.compiler.lowering.passes.*
 import com.hsc.compiler.pretty.prettyPrintAst
 import kotlinx.datetime.Clock
@@ -62,7 +63,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
-        InlineFunctionParametersPass,
+        PassWrapper(::inlineFunctionParameters),
         ConstantFoldingPass, // Before inline block, at least in optimize
         InlineBlockPass,
         PassWrapper(::expandComplexExpressions),

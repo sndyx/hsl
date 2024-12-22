@@ -73,19 +73,17 @@ fun inlineFunctionParameters(ctx: LoweringCtx) = with(ctx) {
                 changed = true
 
                 callee.sig.args.forEachIndexed { index, arg ->
-                    if (isTemp(arg) && isTempInUse(arg, fn, expr)) {
+                    if (isTemp(arg) && isTempInUse(arg, fn, expr) && call.args.args[index].variable()?.ident != arg) {
                         // setting this parameter would disturb the code around it
                         val swapIdent = firstAvailableTemp(fn, expr)
 
                         currentBlock.stmts.add(currentPosition, Stmt(expr.span,
                             StmtKind.Assign(swapIdent, Expr(expr.span, ExprKind.Var(arg)))
-                        )
-                        )
-                        offset(1) // only offset one because swap back is ahead of current position
+                        ))
+                        offset(1)
                         currentBlock.stmts.add(currentPosition + 1, Stmt(expr.span,
                             StmtKind.Assign(arg, Expr(expr.span, ExprKind.Var(swapIdent)))
-                        )
-                        )
+                        ))
                     }
 
                     currentBlock.stmts.add(currentPosition, Stmt(expr.span,
