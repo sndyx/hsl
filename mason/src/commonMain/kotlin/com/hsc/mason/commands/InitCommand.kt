@@ -33,7 +33,7 @@ class InitCommand : CliktCommand() {
             fs.write(path.resolve("src/example.hsl")) {
                 writeUtf8("""
                 fn example_function() {
-                    send_message("Hello from HSL!")
+                    message("Hello from HSL!")
                 }
                 """.trimIndent())
             }
