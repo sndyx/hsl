@@ -11,7 +11,7 @@ fun LoweringCtx.isTemp(ident: Ident): Boolean =
 
 fun LoweringCtx.firstAvailableTemp(fn: Fn, currentExpr: Expr): Ident {
     val visitor = TempVariablesInUseVisitor(this, currentExpr)
-    visitor.visitBlock(fn.block)
+    visitor.visitFn(fn)
 
     return fn.tempVariables
         .filterNot { it in visitor.variablesInUse }
@@ -31,7 +31,7 @@ fun LoweringCtx.createNewTempVariable(fn: Fn): Ident {
 
 fun LoweringCtx.isTempInUse(ident: Ident, fn: Fn, currentExpr: Expr): Boolean {
     val visitor = TempVariablesInUseVisitor(this, currentExpr)
-    visitor.visitBlock(fn.block)
+    visitor.visitFn(fn)
 
     return visitor.variablesInUse.contains(ident)
 }
@@ -41,6 +41,10 @@ private class TempVariablesInUseVisitor(val ctx: LoweringCtx, val currentExpr: E
     private var lock = false
     val variablesInUse = mutableSetOf<Ident>()
     val variablesReassigned = mutableSetOf<Ident>()
+
+    override fun visitFn(fn: Fn) {
+        variablesInUse.addAll(fn.sig.args)
+    }
 
     override fun visitStmt(stmt: Stmt) {
         stmt.assign()?.let {

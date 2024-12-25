@@ -67,7 +67,7 @@ fun Terminal.printDiagnostic(diagnostic: Diagnostic, sourceMap: SourceMap) {
             print(" ${bold("|")} ")
             println(
                 text.replace(
-                    Regex("\\s(else|enum|fn|for|if|in|match|while|break|continue|return|const)\\s"),
+                    Regex("\\s(else|enum|fn|for|if|in|match|while|break|continue|return|const|item)\\s"),
                     bold("\$0")
                 ).trimEnd() // sneaky newline characters! :-(
             )

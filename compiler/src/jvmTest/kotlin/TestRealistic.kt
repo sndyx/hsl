@@ -353,4 +353,139 @@ class TestRealistic {
 
     }
 
+    @Test
+    fun dungeons2() {
+        val result = interpret("""
+                fn main() {
+                    flag = true
+                    dgn_move(1, 3, 3)
+                }
+            
+                fn dgn_move(_door_id, _doors_in_room, _sampler_id) {
+
+                    if (flag == false) {
+                        exit()
+                    } else {
+                        flag = false
+                    }
+
+                    if (dcx_child_index == 0 && _doors_in_room > 2) { // no memory for children allocated yet
+                        dcx_alive += _doors_in_room - 2
+                        dcx_child_index = dcx_stack_size
+                        dcx_stack_size += _doors_in_room - 1
+                    }
+                    if (dcx_child_index == 0 && dcx_position == 3) {
+                        dcx_child_index = dcx_stack_size
+                        dcx_stack_size += _doors_in_room - 1
+                    }
+                    _prev_index = dcx_index
+
+                    _rel_id = _door_id - dcx_read_door(dcx_position, _sampler_id)
+
+                    if (_rel_id < 0) { // upon return, simply shifting back would lead to underflow, so fix that upon leaving
+                        _rel_id += _doors_in_room
+                        dcx_shift_door(dcx_position, _doors_in_room * -1)
+                    }
+
+                    if (_rel_id >= _doors_in_room) { // upon return, simply shifting back would lead to overflow, so fix that upon leaving
+                        _rel_id -= _doors_in_room
+                        dcx_shift_door(dcx_position, _doors_in_room)
+                    }
+
+                    if (_rel_id == 0 && dcx_position == 0) {
+                        // moving backwards at position 0
+
+                        dcx_read_ctx(dcx_parent_index) // read context from parent index
+
+                        _door_id = _prev_index - dcx_child_index + 1
+
+                        _door_id += dcx_read_door(dcx_position, _sampler_id) // apply difference from rel id to entrance id to get door id
+
+                    }
+
+                    if (_rel_id == 0) {
+                        // moving backwards
+                        dcx_position -= 1
+
+                        _door_id = dcx_read_door(dcx_position, _sampler_id) + 1
+
+                    }
+
+                    if (_rel_id == 1 && dcx_position < 3) {
+                        // moving forwards
+                        dcx_position += 1
+
+                        _door_id = dcx_read_door(dcx_position, _sampler_id)
+
+                    }
+
+                    if (dcx_child_index == 0 && dcx_stack_size == 31) {
+
+                    }
+
+                    // moving forwards into new context
+
+                    _index = dcx_child_index + _rel_id - 1
+                    dcx_read_ctx(_index)
+
+                    dcx_parent_index = _prev_index // update parent context
+
+                    _door_id = dcx_read_door(dcx_position, _sampler_id)
+                    message("%stat.player/_sampler_id%")
+                }
+
+
+                fn dgn_progress() {
+                    if (dcx_show_prog == false) {
+                        exit()
+                    }
+                    if (dcx_stack_min > dcx_stack_size) {
+                        _total = dcx_stack_min
+                    } else {
+                        _total = dcx_stack_size
+                    }
+                    _current = dcx_stack_size - dcx_alive
+                    _percent = _current * 100 / _total
+                    action_bar("&bDungeon Progress: &f%stat.player/_percent%%")
+                }
+                
+                fn dcx_read_ctx(_index) {
+                    @nothing = 0
+                }
+
+                fn dcx_write_ctx() {
+                    _dcx_buffer = 0 // ensure buffer is clear
+                }
+
+                fn dcx_read_door(_index, _sampler_id) {
+                    #for (i in 0..3) {
+                        if (_index == ${"\$"}i) { _door_id_2 = dcx_door_${"\$"}i }
+                    }
+
+                    if (_door_id_2 == 0) {
+                        // we need to generate this room
+
+                        _door_id_2 = output1
+                        dcx_write_door(dcx_position, _door_id_2)
+                    }
+                    return _door_id_2
+                }
+
+                fn dcx_write_door(_index, _door_id_3) {
+                    #for (i in 0..3) {
+                        if (_index == ${"\$"}i) { dcx_door_${"\$"}i = _door_id_3 }
+                    }
+                }
+
+                fn dcx_shift_door(_index, _amount) {
+                    #for (i in 0..3) {
+                        if (_index == ${"\$"}i) { dcx_door_${"\$"}i += _amount }
+                    }
+                }
+
+        """.trimIndent())
+
+        assertEquals("3", result, "Wrong result")
+    }
+
 }

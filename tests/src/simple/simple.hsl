@@ -1,3 +1,0 @@
-fn simple_test() {
-    message("Hello, world!")
-}

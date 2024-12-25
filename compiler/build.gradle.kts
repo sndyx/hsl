@@ -20,7 +20,6 @@ kotlin {
         freeCompilerArgs = listOf(
             "-opt-in=kotlin.RequiresOptIn",
             "-Xbackend-threads=0", // Multi-threaded compilation 😎
-            "-Xcontext-parameters"
         )
     }
 
@@ -79,14 +78,14 @@ kotlin {
             }
         }
 
-        val commonTest by sourceSets.getting {
+        val jvmMain by sourceSets.getting {
+            dependsOn(commonMain)
+        }
+
+        val jvmTest by sourceSets.getting {
             dependencies {
                 implementation(kotlin("test"))
             }
-        }
-
-        val jvmMain by sourceSets.getting {
-            dependsOn(commonMain)
         }
 
         val posixMain by sourceSets.creating {
@@ -122,4 +121,10 @@ kotlin {
         }
     }
 
+}
+
+tasks.withType<Test> {
+    this.testLogging {
+        this.showStandardStreams = true
+    }
 }
