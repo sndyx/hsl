@@ -43,7 +43,8 @@ private class TempVariablesInUseVisitor(val ctx: LoweringCtx, val currentExpr: E
     val variablesReassigned = mutableSetOf<Ident>()
 
     override fun visitFn(fn: Fn) {
-        variablesInUse.addAll(fn.sig.args)
+        variablesInUse.addAll(fn.sig.args.filter { ctx.isTemp(it) })
+        super.visitFn(fn)
     }
 
     override fun visitStmt(stmt: Stmt) {

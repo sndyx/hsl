@@ -488,4 +488,176 @@ class TestRealistic {
         assertEquals("3", result, "Wrong result")
     }
 
+    @Test
+    fun sampler() {
+        val result = interpret("""
+            fn sample() {
+                rand = "%random.int/0 100000000%"
+                rand %= sample_weight
+                rand += 1
+                
+                rand *= 1024
+                if (rand < sample_0 && found == false) {
+                    _return = read_bits(sample_0, 0, 10)
+                    found = true
+                }
+                if (rand < sample_1 && found == false) {
+                    _return = read_bits(sample_1, 0, 10)
+                    found = true
+                }
+                if (rand < sample_2 && found == false) {
+                    _return = read_bits(sample_2, 0, 10)
+                    found = true
+                }
+                if (rand < sample_3 && found == false) {
+                    _return = read_bits(sample_3, 0, 10)
+                    found = true
+                }
+                if (rand < sample_4 && found == false) {
+                    _return = read_bits(sample_4, 0, 10)
+                    found = true
+                }
+                if (rand < sample_5 && found == false) {
+                    _return = read_bits(sample_5, 0, 10)
+                    found = true
+                }
+                if (rand < sample_6 && found == false) {
+                    _return = read_bits(sample_6, 0, 10)
+                    found = true
+                }
+                if (rand < sample_7 && found == false) {
+                    _return = read_bits(sample_7, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_8 && found == false) {
+                    _return = read_bits(@sample_8, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_9 && found == false) {
+                    _return = read_bits(@sample_9, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_10 && found == false) {
+                    _return = read_bits(@sample_10, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_11 && found == false) {
+                    _return = read_bits(@sample_11, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_12 && found == false) {
+                    _return = read_bits(@sample_12, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_13 && found == false) {
+                    _return = read_bits(@sample_13, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_14 && found == false) {
+                    _return = read_bits(@sample_14, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_15 && found == false) {
+                    _return = read_bits(@sample_15, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_16 && found == false) {
+                    _return = read_bits(@sample_16, 0, 10)
+                    found = true
+                }
+                if (rand < @sample_17 && found == false) {
+                    _return = read_bits(@sample_17, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_18 && found == false) {
+                    _return = read_bits(temp.sample_18, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_19 && found == false) {
+                    _return = read_bits(temp.sample_19, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_20 && found == false) {
+                    _return = read_bits(temp.sample_20, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_21 && found == false) {
+                    _return = read_bits(temp.sample_21, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_22 && found == false) {
+                    _return = read_bits(temp.sample_22, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_23 && found == false) {
+                    _return = read_bits(temp.sample_23, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_24 && found == false) {
+                    _return = read_bits(temp.sample_24, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_25 && found == false) {
+                    _return = read_bits(temp.sample_25, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_26 && found == false) {
+                    _return = read_bits(temp.sample_26, 0, 10)
+                    found = true
+                }
+                if (rand < temp.sample_27 && found == false) {
+                    _return = read_bits(temp.sample_27, 0, 10)
+                    found = true
+                }
+                found = false
+                rand = 0
+                sample_0 = 0
+                sample_1 = 0
+                sample_2 = 0
+                sample_3 = 0
+                sample_4 = 0
+                sample_5 = 0
+                sample_6 = 0
+                sample_7 = 0
+                @sample_8 = 0
+                @sample_9 = 0
+                @sample_10 = 0
+                @sample_11 = 0
+                @sample_12 = 0
+                @sample_13 = 0
+                @sample_14 = 0
+                @sample_15 = 0
+                @sample_16 = 0
+                @sample_17 = 0
+                temp.sample_18 = 0
+                temp.sample_19 = 0
+                temp.sample_20 = 0
+                temp.sample_21 = 0
+                temp.sample_22 = 0
+                temp.sample_23 = 0
+                temp.sample_24 = 0
+                temp.sample_25 = 0
+                temp.sample_26 = 0
+                temp.sample_27 = 0
+            }
+            
+            #inline
+            fn read_bits(_stat, _offset, _bits) {
+              _temp = _stat
+              _temp /= 2^_offset
+              _temp %= 2^_bits
+              return _temp
+            }
+            
+            fn main() {
+                sample_0 = 5 + 1024 * 11
+                sample_weight = 10
+                result = sample()
+                message("%stat.player/result%")
+            }
+        """.trimIndent())
+
+        assertEquals("5", result, "Wong result")
+    }
+
 }
