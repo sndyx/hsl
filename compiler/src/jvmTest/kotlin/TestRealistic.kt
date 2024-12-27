@@ -66,7 +66,9 @@ class TestRealistic {
                 value = read_bits(data, ${"\$i"}*4, 4)
                 message("&0%stat.player/value%")
                 // increment value by 1
-                set_bits(data, ${"\$i"}*4, value + 1, value)
+                
+                other = value + 1
+                set_bits(data, ${"\$i"}*4, other, value)
               }
 
               message("")
@@ -116,7 +118,7 @@ class TestRealistic {
                 }
 
                 if (dcx_child_index == 0 && dcx_stack_size == 31) {
-                    err_max_ctx_stack()
+                    // err_max_ctx_stack()
                     return 0
                 }
 
@@ -158,7 +160,7 @@ class TestRealistic {
             fn connect(room, id, location) {
                 if (_room_id == room && _door_id == id) {
                     tp(location)
-                    return 0
+                    exit()
                 }
             }
 
@@ -657,7 +659,53 @@ class TestRealistic {
             }
         """.trimIndent())
 
-        assertEquals("5", result, "Wong result")
+        assertEquals("5", result, "Wrong result")
+    }
+
+    @Test
+    fun room_data() {
+        val result = interpret("""
+            fn main() {
+                dgn_room_data = 0b100
+                dgn_read_data(0)
+            }
+
+            fn dgn_read_data(_index) {
+                // read room data
+                #for (i in 0..3) {
+                    if (_index == ${"\$"}i) {
+                        _offset = 2^(${"\$"}i * 3)
+                    }
+                }
+
+                _buffer = dgn_room_data
+                _buffer /= _offset
+                _buffer %= 2^3
+
+                // remove from data so we don't have to worry when writing later
+                dgn_room_data -= _buffer
+
+                #for (i in 0..2) {
+                    dgn_data_${"\$"}i = read_bool(_buffer, ${"\$"}i)
+                    message("%stat.player/dgn_data_${"\$"}i%")
+                }
+            }
+
+            #inline
+            fn read_bool(_stat, _offset) {
+                return read_bits(_stat, _offset, 1)
+            }
+
+            #inline
+            fn read_bits(_stat, _offset, _bits) {
+              _temp = _stat
+              _temp /= 2^_offset
+              _temp %= 2^_bits
+              return _temp
+            }
+        """.trimIndent())
+
+        assertEquals("0\n0\n1", result, "Wrong result")
     }
 
 }

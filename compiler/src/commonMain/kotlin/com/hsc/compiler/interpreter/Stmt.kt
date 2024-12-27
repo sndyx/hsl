@@ -23,7 +23,7 @@ fun Player.executeStmt(stmt: Stmt) {
                 BinOpKind.Add -> a + b
                 BinOpKind.Sub -> a - b
                 BinOpKind.Mul -> a * b
-                BinOpKind.Div -> if (b == 0L) 0L else a / b
+                BinOpKind.Div -> if (b == 0L) a else a / b
                 else -> error("unreachable")
             }
             setStat(kind.ident, result)

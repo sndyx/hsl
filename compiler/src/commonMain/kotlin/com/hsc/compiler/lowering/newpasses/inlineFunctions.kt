@@ -3,6 +3,7 @@ package com.hsc.compiler.lowering.newpasses
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.firstAvailableTemp
+import com.hsc.compiler.lowering.getFunctionItems
 import com.hsc.compiler.lowering.getFunctions
 import com.hsc.compiler.lowering.walk
 import com.hsc.compiler.span.Span
@@ -42,6 +43,14 @@ fun inlineFunctions(ctx: LoweringCtx) = with(ctx) {
 
             val body = callee.block.deepCopy()
 
+            object : AstVisitor {
+                override fun visitStmt(stmt: Stmt) {
+                    stmt.ret()?.let { ret ->
+                        stmt.kind = StmtKind.Expr(ret.expr!!)
+                    }
+                }
+            }.visitBlock(body)
+
             // backwards inline args
             callee.sig.args.forEachIndexed { index, arg ->
                 // check if this arg is ever reassigned
@@ -51,7 +60,7 @@ fun inlineFunctions(ctx: LoweringCtx) = with(ctx) {
 
                 val param = call.args.args[index]
 
-                val replacement = if (isMutated) {
+                val replacement = if (isMutated && param.variable() == null) {
                     // mutated, replace all instances with a temp variable
                     val ident = firstAvailableTemp(fn, expr)
                     body.stmts.add(0, Stmt(Span.none, StmtKind.Assign(ident, param)))
@@ -61,14 +70,41 @@ fun inlineFunctions(ctx: LoweringCtx) = with(ctx) {
                     param.kind
                 }
 
-                walk(body) { expr ->
-                    if (expr.variable()?.ident == arg) {
-                        expr.kind = replacement
+                object : AstVisitor {
+                    override fun visitExpr(expr: Expr) {
+                        expr.variable()?.let { variable ->
+                            if (variable.ident == arg) expr.kind = replacement
+                        }
+                        super.visitExpr(expr)
                     }
-                }
+
+                    override fun visitStmt(stmt: Stmt) {
+                        stmt.assign()?.let { assign ->
+                            if (assign.ident == arg) assign.ident = (replacement as ExprKind.Var).ident
+                        }
+                        stmt.assignOp()?.let { assignOp ->
+                            if (assignOp.ident == arg) assignOp.ident = (replacement as ExprKind.Var).ident
+                        }
+                        super.visitStmt(stmt)
+                    }
+                }.visitBlock(body)
             }
 
             expr.kind = ExprKind.Block(body)
         }
     }
+
+    getFunctionItems().forEach { (item, fn) ->
+        if (fn.processors?.list?.contains("inline") == true) {
+            ctx.ast.items.remove(item)
+        }
+    }
+
+    // for legacy passes, unfortunately
+    clearQuery<Expr>()
+    clearQuery<Stmt>()
+    clearQuery<Block>()
+    clearQuery<Item>()
+    clearQuery<Fn>()
+    clearQuery<Lit>()
 }

@@ -10,7 +10,9 @@ import com.hsc.compiler.lowering.newpasses.PassWrapper
 import com.hsc.compiler.lowering.newpasses.checkLimits
 import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
 import com.hsc.compiler.lowering.newpasses.extendLimits
+import com.hsc.compiler.lowering.newpasses.inlineBlocks
 import com.hsc.compiler.lowering.newpasses.inlineFunctionParameters
+import com.hsc.compiler.lowering.newpasses.inlineFunctions
 import com.hsc.compiler.lowering.passes.*
 import com.hsc.compiler.pretty.prettyPrintAst
 import kotlinx.datetime.Clock
@@ -50,10 +52,10 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Optimize to listOf(
         NameItemsPass,
         CheckRedeclarationPass,
-        ReturnAssignPass,
         InlineConstPass,
         InlineEnumPass,
-        InlineFunctionPass,
+        PassWrapper(::inlineFunctions),
+        ReturnAssignPass, // should come after InlineFunctionPass
         FindTempVariablesPass, // earlier to allow all temp variables in ExpandComplexExpressionsPass
         FindLastVariableUsagePass,
         CheckTempVariablesAssignedBeforeUsePass, // after InlineFunctionPass, for several reasons
@@ -65,7 +67,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         RaiseUnaryMinusPass,
         PassWrapper(::inlineFunctionParameters),
         ConstantFoldingPass, // Before inline block, at least in optimize
-        InlineBlockPass,
+        PassWrapper(::inlineBlocks),
         PassWrapper(::expandComplexExpressions),
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,

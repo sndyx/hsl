@@ -95,4 +95,20 @@ class TestComplexExpressions {
         assertEquals("170", result, "Wrong result")
     }
 
+    @Test
+    fun complex_expression_6() {
+        val result = interpret("""
+            fn main() {
+                a = 5
+                b = 3
+                
+                result = 10
+                result %= (a + b) / 2
+                message("%stat.player/result%")
+            }
+        """.trimIndent())
+
+        assertEquals("2", result, "Wrong result")
+    }
+
 }
