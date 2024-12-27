@@ -83,10 +83,16 @@ data class Fn(
 
 data class Processors(
     val span: Span,
-    val list: List<String>,
+    val list: List<Processor>,
 ) {
     fun deepCopy(): Processors = copy(list = list.toList())
 }
+
+data class Processor(
+    val span: Span,
+    val ident: String,
+    val args: Args
+)
 
 data class FnSig(
     val span: Span,

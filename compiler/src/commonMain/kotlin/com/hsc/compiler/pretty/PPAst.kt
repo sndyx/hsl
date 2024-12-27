@@ -20,8 +20,13 @@ class PrettyPrintVisitor(private val t: Terminal) : AstVisitor {
     override fun visitItem(item: Item) {
         when (val kind = item.kind) {
             is ItemKind.Fn -> {
-                kind.fn.processors?.list?.forEach {
-                    t.println(brightYellow("#$it"))
+                kind.fn.processors?.list?.forEach { proc ->
+                    t.print(brightYellow("#${proc.ident}${white("(")}"))
+                    proc.args.args.forEachIndexed { idx, it ->
+                        visitExpr(it)
+                        if (idx != proc.args.args.size - 1) t.print(white(", "))
+                    }
+                    t.println(white(")"))
                 }
                 t.println("${blue("fn")} ${bold(item.ident.str)}${white("(")}${kind.fn.sig.args.joinToString { it.str }}${white(")")} ${white("{")}")
                 super.visitItem(item)

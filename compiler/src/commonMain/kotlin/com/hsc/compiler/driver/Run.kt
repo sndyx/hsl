@@ -7,6 +7,7 @@ fun runCompiler(opts: CompileOptions, fp: FileProvider) = runBlocking {
         DriverMode.Diagnostics -> DiagnosticDriver(opts)
         DriverMode.Interpreter -> InterpreterDriver(opts)
         DriverMode.Output -> OutputDriver(opts)
+        DriverMode.Result -> ResultDriver(opts)
     }
 
     driver.runCompiler(fp)

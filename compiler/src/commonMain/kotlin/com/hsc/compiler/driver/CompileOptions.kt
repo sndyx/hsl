@@ -34,4 +34,5 @@ enum class DriverMode(val label: String) {
     Diagnostics("diagnostics"),
     Interpreter("interpreter"),
     Output("output"),
+    Result("result"),
 }

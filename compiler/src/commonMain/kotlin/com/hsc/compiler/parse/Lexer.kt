@@ -15,10 +15,12 @@ class Lexer(
 
     val pos: Int get() = srcp.pos
 
-    fun isIdStart(char: Char): Boolean = char.isLetter() || char == '_' || char == '#'
+    fun isIdStart(char: Char): Boolean = char.isLetter() || char == '_' || char == '#' // I HATE THIS!!!
     fun isIdContinue(char: Char): Boolean =
         if (sess.opts.stupidDumbIdiotMode) char.isDigit() || char.isLetter() || char == '_' || char == '/'
         else char.isDigit() || char.isLetter() || char == '_'
+
+    var prev: TokenKind? = null
 
     fun advanceToken(): Token {
         eatWhile { it.isWhitespace() }

@@ -16,7 +16,7 @@ object InlineFunctionPass : AstPass {
             } while (visitor.changes != 0)
         }
         functions.forEach {
-            if ((it.kind as ItemKind.Fn).fn.processors?.list?.contains("inline") == true) {
+            if ((it.kind as ItemKind.Fn).fn.processors?.list?.any { it.ident == "inline" } == true) {
                 ctx.ast.items.remove(it)
             }
         }
@@ -59,7 +59,7 @@ private class InlineFunctionVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                 val callee = ctx.query<Item>().find { it.kind is ItemKind.Fn && it.ident.name == calleeName }
                 if (callee != null) {
                     val fn = (callee.kind as ItemKind.Fn).fn.deepCopy()
-                    if (fn.processors?.list?.contains("inline") == true) {
+                    if (fn.processors?.list?.any { it.ident == "inline" } == true) {
 
                         // deepCopy() to remove ref! Will otherwise link multiple parts badly
                         val inlineBlock = fn.block.deepCopy()

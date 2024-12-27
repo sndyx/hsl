@@ -6,10 +6,18 @@ import com.hsc.compiler.errors.Diagnostic
 import com.hsc.compiler.errors.Level
 import com.hsc.compiler.ir.action.Action
 import com.hsc.compiler.ir.action.Function
+import com.hsc.compiler.ir.action.FunctionProcessor
+import com.hsc.compiler.ir.action.ItemStack
+import com.hsc.compiler.ir.action.ItemStackSerializer
+import com.hsc.compiler.ir.action.Location
+import com.hsc.compiler.ir.action.Location.*
 import com.hsc.compiler.ir.action.StatOp
 import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.encodeToJsonElement
 
 class ActionTransformer(internal val sess: CompileSess) {
 
@@ -19,7 +27,69 @@ class ActionTransformer(internal val sess: CompileSess) {
         }.map { item ->
             val fn = (item.kind as ItemKind.Fn).fn
 
-            Function(item.ident.name, transformBlock(fn.block))
+            val processors = fn.processors?.let { transformProcessors(it.list) } ?: emptyList()
+            Function(item.ident.name, transformBlock(fn.block), processors)
+        }
+    }
+
+    fun transformProcessors(list: List<Processor>): List<FunctionProcessor> {
+        return list.map { proc ->
+            val args = proc.args.args.map { arg ->
+                if (arg.lit() == null) {
+                    throw sess.dcx().bug("processor arguments must be literals", arg.span)
+                }
+
+                val lit = arg.lit()!!.lit
+                when (lit) {
+                    is Lit.Location -> {
+                        val x = lit.x?.let(::expectFloat)
+                        val y = lit.y?.let(::expectFloat)
+                        val z = lit.z?.let(::expectFloat)
+                        val pitch = lit.pitch?.let(::expectFloat)
+                        val yaw = lit.yaw?.let(::expectFloat)
+                        val loc = Custom(
+                            lit.relX, lit.relY, lit.relZ, x, y, z, pitch?.toFloat(), yaw?.toFloat()
+                        )
+                        Json.encodeToJsonElement(loc)
+                    }
+                    is Lit.Str -> {
+                        JsonPrimitive(lit.value)
+                    }
+                    is Lit.I64 -> {
+                        JsonPrimitive(lit.value)
+                    }
+                    is Lit.F64 -> {
+                        JsonPrimitive(lit.value)
+                    }
+                    is Lit.Bool -> {
+                        JsonPrimitive(lit.value)
+                    }
+                    is Lit.Item -> {
+                        Json.encodeToJsonElement(ItemStackSerializer, ItemStack(lit.value.nbt, lit.value.name))
+                    }
+
+                    Lit.Null -> error("man")
+                }
+            }
+            FunctionProcessor(proc.ident, args)
+        }
+    }
+
+    private fun expectFloat(expr: Expr): Double {
+        return when (val kind = expr.kind) {
+            is ExprKind.Lit -> {
+                when (val lit = kind.lit) {
+                    is Lit.I64 -> lit.value.toDouble()
+                    is Lit.F64 -> lit.value.toDouble()
+                    else -> {
+                        throw sess.dcx().err("expected float, found ${lit.str()}")
+                    }
+                }
+            }
+
+            else -> {
+                throw sess.dcx().err("expected float, found ${kind.str()}")
+            }
         }
     }
 

@@ -39,7 +39,7 @@ fun inlineFunctions(ctx: LoweringCtx) = with(ctx) {
                 ?.kind as? ItemKind.Fn)?.fn ?: return@walk
 
             // make sure this is an inline function
-            callee.processors?.list?.find { it == "inline" } ?: return@walk
+            callee.processors?.list?.find { it.ident == "inline" } ?: return@walk
 
             val body = callee.block.deepCopy()
 
@@ -95,7 +95,7 @@ fun inlineFunctions(ctx: LoweringCtx) = with(ctx) {
     }
 
     getFunctionItems().forEach { (item, fn) ->
-        if (fn.processors?.list?.contains("inline") == true) {
+        if (fn.processors?.list?.any { it.ident == "inline" } == true) {
             ctx.ast.items.remove(item)
         }
     }

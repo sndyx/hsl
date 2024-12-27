@@ -48,7 +48,7 @@ class Parser(
     fun parseItem(): Item? {
         return if (check(TokenKind.Eof::class)) {
             null
-        } else if (check(TokenKind.Ident::class)) {
+        } else if (check(TokenKind.Ident("#")) || check(TokenKind.Ident::class)) {
             parseProcessorFnItem()
         } else if (eat(TokenKind.Kw(Keyword.Fn))) {
             parseFnItem()
@@ -63,9 +63,15 @@ class Parser(
 
     fun parseProcessorFnItem(): Item {
         val lo = prev.span.lo
+
+        // pound ident can't hurt you
+        // pound ident:
+        eat(TokenKind.Ident("#"))
+        // bottom text
+
         val processors = if (check(TokenKind.OpenDelim(Delimiter.Bracket))) {
             parseDelimitedCommaSequence(Delimiter.Bracket) {
-                removeMacroPrefix(parseIdent())
+                parseProcessor(false)
             }.getOrElse { e ->
                 if (e !is Diagnostic) throw e
                 e.note(Level.Hint, "processor lists are declared `#[...]`")
@@ -73,7 +79,7 @@ class Parser(
                 emptyList()
             }
         } else {
-            listOf(removeMacroPrefix(parseIdent()))
+            listOf(parseProcessor(true))
         }
         val hi = prev.span.hi
         return if (eat(TokenKind.Kw(Keyword.Fn))) {
@@ -83,6 +89,28 @@ class Parser(
         } else {
             unexpected()
         }
+    }
+
+    private fun parseProcessor(eatPound: Boolean): Processor {
+        val lo = token.span.lo
+        val ident = if (eatPound) {
+            removeMacroPrefix(parseIdent())
+        } else {
+            parseIdent().name
+        }
+        var args = emptyList<Expr>()
+
+        val lo2 = token.span.lo
+
+        if (check(TokenKind.OpenDelim(Delimiter.Parenthesis))) {
+            args = parseDelimitedCommaSequence(Delimiter.Parenthesis) {
+                parseExpr()
+            }.getOrThrow()
+        }
+
+        val hi = prev.span.hi
+
+        return Processor(Span(lo, hi, fid), ident, Args(Span(lo2, hi, fid), args.toMutableList()))
     }
 
     private fun removeMacroPrefix(ident: Ident): String {
