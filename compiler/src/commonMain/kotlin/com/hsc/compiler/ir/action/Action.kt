@@ -380,7 +380,7 @@ sealed class StatValue {
 }
 
 object ItemStackSerializer : KSerializer<ItemStack> {
-    override val descriptor: SerialDescriptor = JsonObject.serializer().descriptor
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ItemStack", PrimitiveKind.STRING)
 
     private val snbt = StringifiedNbt { }
     override fun deserialize(decoder: Decoder): ItemStack { error("not implemented!") }

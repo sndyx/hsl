@@ -23,8 +23,10 @@ object InlineFunctionCallAssignmentPass : AstPass {
     override fun run(ctx: LoweringCtx) {
         val functions = ctx.query<Item>().filter { it.kind is ItemKind.Fn }
         val visitor = InlineFunctionCallAssignmentVisitor(ctx)
-        functions.forEach {
-            visitor.visitItem(it)
+        functions.forEach { fn ->
+            if ((fn.kind as? ItemKind.Fn)?.fn?.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
+            visitor.visitItem(fn)
         }
         visitor.functionsUsedAsExpressions
             .map { it.first }

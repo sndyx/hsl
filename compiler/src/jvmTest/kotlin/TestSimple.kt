@@ -48,4 +48,16 @@ class TestSimple {
         assertEquals("1\n2", result, "Wrong result")
     }
 
+    @Test
+    fun test_strict() {
+        compile("""
+            #strict
+            fn main() {
+                _x = 5
+                _y = _x
+                _return = _y
+            }
+        """.trimIndent())
+    }
+
 }

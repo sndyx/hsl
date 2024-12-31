@@ -13,6 +13,8 @@ import com.hsc.compiler.lowering.getFunctions
 
 fun expandComplexExpressions(ctx: LoweringCtx) = with(ctx) {
     getFunctions().forEach { fn ->
+        if (fn.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
         val visitor = object : BlockAwareVisitor() {
             var changed = false
             var assignIdent: Ident? = null

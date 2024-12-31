@@ -20,8 +20,9 @@ import com.hsc.compiler.span.Span
 import kotlin.collections.set
 
 fun extendLimits(ctx: LoweringCtx) = with(ctx) {
-    getFunctionItems().forEach { (item, _) ->
+    getFunctionItems().forEach { (item, fn) ->
         if (item.ident.name == "main") return@forEach // don't optimize main
+        if (fn.processors?.list?.any { it.ident == "strict" } == true) return@forEach
 
         extendLimits(ctx, item)
     }

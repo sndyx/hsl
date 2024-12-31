@@ -24,6 +24,8 @@ object CollapseTempReassignPass : AstPass {
         ctx.query<Item>()
             .filter { it.kind is ItemKind.Fn }
             .forEach {
+                if ((it.kind as? ItemKind.Fn)?.fn?.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
                 CollapseTempReassignVisitor.visitItem(it)
             }
     }

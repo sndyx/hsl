@@ -11,6 +11,7 @@ import com.hsc.compiler.lowering.newpasses.checkLimits
 import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
 import com.hsc.compiler.lowering.newpasses.extendLimits
 import com.hsc.compiler.lowering.newpasses.inlineBlocks
+import com.hsc.compiler.lowering.newpasses.inlineConsts
 import com.hsc.compiler.lowering.newpasses.inlineFunctionParameters
 import com.hsc.compiler.lowering.newpasses.inlineFunctions
 import com.hsc.compiler.lowering.passes.*
@@ -52,12 +53,13 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
     Mode.Optimize to listOf(
         NameItemsPass,
         CheckRedeclarationPass,
-        InlineConstPass,
+        PassWrapper(::inlineConsts),
         InlineEnumPass,
         PassWrapper(::inlineFunctions),
         ReturnAssignPass, // should come after InlineFunctionPass
         FindTempVariablesPass, // earlier to allow all temp variables in ExpandComplexExpressionsPass
         FindLastVariableUsagePass,
+        // ignored in #strict
         CheckTempVariablesAssignedBeforeUsePass, // after InlineFunctionPass, for several reasons
         ExpandInPass,
         ExpandModPass,
@@ -65,20 +67,29 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
+        // ignored in #strict
         PassWrapper(::inlineFunctionParameters),
         ConstantFoldingPass, // Before inline block, at least in optimize
+        // ignored in #strict
         PassWrapper(::inlineBlocks),
+        // ignored in #strict
         PassWrapper(::expandComplexExpressions),
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
+        // ignored in #strict
         InlineFunctionCallAssignmentPass,
         ExpandIfExpressionPass,
+        // ignored in #strict
         CollapseTempReassignPass,
         CheckEmptyBlockPass,
         CheckOwnedRecursiveCallPass,
+        // ignored in #strict
         PassWrapper(::extendLimits),
+        // ignored in #strict
         CleanupTempVarsPass,
+        // ignored in #strict
         PassWrapper(::extendLimits),
+        // ignored in #strict
         PassWrapper(::checkLimits)
     ),
     Mode.Strict to listOf(

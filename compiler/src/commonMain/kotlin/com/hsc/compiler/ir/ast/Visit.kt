@@ -32,9 +32,11 @@ interface AstVisitor {
     fun visitRange(range: Range) {
         walkRange(this, range)
     }
+    fun visitProcessors(processors: Processors) {
+        walkProcessors(this, processors)
+    }
 
     fun visitCall(expr: ExprKind.Call) { /* Ignore */ }
-    fun visitProcessors(processors: Processors) { /* Ignore */ }
     fun visitFnSig(fnSig: FnSig) { /* Ignore */ }
     fun visitIdent(ident: Ident) { /* Ignore */ }
     fun visitLit(lit: Lit) {
@@ -205,6 +207,14 @@ fun walkArm(v: AstVisitor, arm: Arm) {
 fun walkRange(v: AstVisitor, range: Range) {
     v.visitExpr(range.lo)
     v.visitExpr(range.hi)
+}
+
+fun walkProcessors(v: AstVisitor, processors: Processors) {
+    processors.list.forEach { processor ->
+        processor.args.args.forEach { expr ->
+            v.visitExpr(expr)
+        }
+    }
 }
 
 // we are walking literals... the compiler is fine 😂

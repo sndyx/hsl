@@ -3,6 +3,7 @@ package com.hsc.compiler.lowering.newpasses
 import com.hsc.compiler.ir.ast.AstVisitor
 import com.hsc.compiler.ir.ast.BlockAwareVisitor
 import com.hsc.compiler.ir.ast.Expr
+import com.hsc.compiler.ir.ast.ItemKind
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.getItems
 import com.hsc.compiler.lowering.walkAware
@@ -25,6 +26,8 @@ import com.hsc.compiler.lowering.walkAware
  */
 fun inlineBlocks(ctx: LoweringCtx) = with(ctx) {
     getItems().forEach { item ->
+        if ((item.kind as? ItemKind.Fn)?.fn?.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
         object : BlockAwareVisitor() {
             override fun visitExpr(expr: Expr) {
                 super.visitExpr(expr) // we have to call this first so inner blocks get flattened first

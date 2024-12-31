@@ -16,6 +16,8 @@ object CleanupTempVarsPass : AstPass {
 
             val fn = (item.kind as ItemKind.Fn).fn
 
+            if (fn.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
             val visitor = CleanupTempVarsVisitor(ctx)
             visitor.visitBlock(fn.block)
 

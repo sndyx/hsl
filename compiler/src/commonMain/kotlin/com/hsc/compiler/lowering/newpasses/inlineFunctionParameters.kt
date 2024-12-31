@@ -25,6 +25,8 @@ import com.hsc.compiler.lowering.*
  */
 fun inlineFunctionParameters(ctx: LoweringCtx) = with(ctx) {
     getFunctions().forEach { fn ->
+        if (fn.processors?.list?.any { it.ident == "strict" } == true) return@forEach
+
         val alreadyInlined = mutableListOf<Expr>()
 
         var changed = true

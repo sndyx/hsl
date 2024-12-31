@@ -8,6 +8,7 @@ import com.hsc.compiler.ir.ast.Ident
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.lowering.LoweringCtx
+import com.hsc.compiler.lowering.getFunctions
 
 object ExpandIfExpressionPass : AstPass {
 

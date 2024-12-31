@@ -16,6 +16,7 @@ object CheckTempVariablesAssignedBeforeUsePass : AstPass {
             .filter { it.kind is ItemKind.Fn }
             .forEach {
                 val fn = (it.kind as ItemKind.Fn).fn
+                if (fn.processors?.list?.any { it.ident == "strict" } == true) return@forEach
                 val visitor = CheckTempVariablesAssignedBeforeUseVisitor(ctx, fn)
                 visitor.visitItem(it)
             }
