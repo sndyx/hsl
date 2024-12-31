@@ -6,6 +6,7 @@ import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.ArgParser
 import com.hsc.compiler.lowering.LoweringCtx
 import com.hsc.compiler.lowering.similar
+import com.hsc.compiler.lowering.statValueOf
 
 object MapActionsPass : AstPass {
 
@@ -21,6 +22,44 @@ object MapActionsPass : AstPass {
 private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() {
 
     lateinit var p: ArgParser
+
+    override fun visitStmt(stmt: Stmt) {
+        super.visitStmt(stmt)
+
+        val ident = stmt.assign()?.ident ?: stmt.assignOp()?.ident ?: return
+        if (!ident.isTeam || (ident as Ident.Team).team != "player") return
+
+        val name = ident.name
+        if (name != "health" && name != "hunger" && name != "max_health") return
+
+        val op = if (stmt.assign() != null) StatOp.Set
+        else {
+            when (stmt.assignOp()?.kind) {
+                BinOpKind.Add -> StatOp.Inc
+                BinOpKind.Sub -> StatOp.Dec
+                BinOpKind.Mul -> StatOp.Mul
+                BinOpKind.Div -> StatOp.Div
+                else -> error("wrong op")
+            }
+        }
+
+        val value = ctx.statValueOf(stmt.assign()?.expr ?: stmt.assignOp()!!.expr)
+
+        val action = when (ident.name) {
+            "health" -> {
+                Action.ChangeHealth(op, value)
+            }
+            "hunger" -> {
+                Action.ChangeHungerLevel(op, value)
+            }
+            "max_health" -> {
+                Action.ChangeMaxHealth(op, value, false)
+            }
+            else -> error("unreachable")
+        }
+
+        stmt.kind = StmtKind.Action(action)
+    }
 
     override fun visitExpr(expr: Expr) {
         when (val kind = expr.kind) {

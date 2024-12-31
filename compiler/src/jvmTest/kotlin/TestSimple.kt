@@ -49,7 +49,7 @@ class TestSimple {
     }
 
     @Test
-    fun test_strict() {
+    fun strict() {
         compile("""
             #strict
             fn main() {
@@ -58,6 +58,20 @@ class TestSimple {
                 _return = _y
             }
         """.trimIndent())
+    }
+
+    @Test
+    fun placeholder_requirement() {
+        val result = interpret("""
+            fn main() {
+                if ("%random.int/1 100%" < 1000) {
+                    message("IF")
+                } else {
+                    message("ELSE")
+                }
+            }
+        """.trimIndent())
+        assertEquals("IF", result, "Wrong result")
     }
 
 }

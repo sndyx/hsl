@@ -84,25 +84,7 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
 
     fun nextValue(): StatValue {
         val expr = bump()
-        return when (val kind = expr.kind) {
-            is ExprKind.Lit -> {
-                when (val lit = kind.lit) {
-                    is Lit.I64 -> StatValue.I64(lit.value)
-                    is Lit.F64 -> StatValue.I64(lit.value.toLong())
-                    is Lit.Str -> StatValue.Str(lit.value)
-                    else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
-                    }
-                }
-            }
-            is ExprKind.Var -> {
-                if (kind.ident.isGlobal) StatValue.Str("%stat.global/${kind.ident.name}%")
-                else StatValue.Str("%stat.player/${kind.ident.name}%")
-            }
-            else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
-            }
-        }
+        return ctx.statValueOf(expr)
     }
 
     fun nextBooleanLit(): Boolean {

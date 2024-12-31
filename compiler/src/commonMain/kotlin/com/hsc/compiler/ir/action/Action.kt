@@ -86,19 +86,19 @@ sealed class Action(
     @SerialName("CHANGE_HEALTH")
     data class ChangeHealth(
         @SerialName("mode") val op: StatOp,
-        @SerialName("health") val value: String
+        @SerialName("health") val value: StatValue
     ) : Action("CHANGE_HEALTH")
     @Serializable
     @SerialName("CHANGE_HUNGER_LEVEL")
     data class ChangeHungerLevel(
         @SerialName("mode") val op: StatOp,
-        @SerialName("hunger") val value: String
+        @SerialName("hunger") val value: StatValue
     ) : Action("CHANGE_HUNGER_LEVEL")
     @Serializable
     @SerialName("CHANGE_MAX_HEALTH")
     data class ChangeMaxHealth(
         @SerialName("mode") val op: StatOp,
-        @SerialName("max_health") val value: String,
+        @SerialName("max_health") val value: StatValue,
         @SerialName("heal_on_change") val heal: Boolean
     ) : Action("CHANGE_MAX_HEALTH")
     @Serializable

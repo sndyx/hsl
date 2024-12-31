@@ -44,9 +44,9 @@ fun Player.executeAction(action: Action) {
         is Action.ApplyPotionEffect -> TODO()
         Action.BalancePlayerTeam -> TODO()
         Action.CancelEvent -> { /* Do nothing */ }
-        is Action.ChangeHealth -> health = min(compute(action.op, health.toLong(), exprValue(action.value)).toInt(), maxHealth)
-        is Action.ChangeHungerLevel -> hunger = compute(action.op, hunger.toLong(), exprValue(action.value)).toInt()
-        is Action.ChangeMaxHealth -> maxHealth = compute(action.op, maxHealth.toLong(), exprValue(action.value)).toInt()
+        is Action.ChangeHealth -> health = min(compute(action.op, health.toLong(), statValue(action.value)).toInt(), maxHealth)
+        is Action.ChangeHungerLevel -> hunger = compute(action.op, hunger.toLong(), statValue(action.value)).toInt()
+        is Action.ChangeMaxHealth -> maxHealth = compute(action.op, maxHealth.toLong(), statValue(action.value)).toInt()
         is Action.ChangePlayerGroup -> group = action.group
         Action.ClearAllPotionEffects -> TODO()
         Action.CloseMenu -> { /* Do nothing */ }

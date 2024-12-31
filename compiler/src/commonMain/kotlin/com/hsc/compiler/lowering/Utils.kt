@@ -1,5 +1,6 @@
 package com.hsc.compiler.lowering
 
+import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.span.Span
 
@@ -101,4 +102,26 @@ fun walkAware(entity: Visitable, consumer: BlockAwareVisitor.(Expr) -> Unit) {
             super.visitExpr(expr)
         }
     })
+}
+
+fun LoweringCtx.statValueOf(expr: Expr): StatValue {
+    return when (val kind = expr.kind) {
+        is ExprKind.Lit -> {
+            when (val lit = kind.lit) {
+                is Lit.I64 -> StatValue.I64(lit.value)
+                is Lit.F64 -> StatValue.I64(lit.value.toLong())
+                is Lit.Str -> StatValue.Str(lit.value)
+                else -> {
+                    throw dcx().err("expected integer, found ${lit.str()}")
+                }
+            }
+        }
+        is ExprKind.Var -> {
+            if (kind.ident.isGlobal) StatValue.Str("%stat.global/${kind.ident.name}%")
+            else StatValue.Str("%stat.player/${kind.ident.name}%")
+        }
+        else -> {
+            throw dcx().err("expected integer, found ${kind.str()}")
+        }
+    }
 }

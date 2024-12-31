@@ -1,5 +1,6 @@
 package com.hsc.compiler.interpreter
 
+import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.Expr
 import com.hsc.compiler.ir.ast.ExprKind
 import com.hsc.compiler.ir.ast.Ident
@@ -57,4 +58,8 @@ fun Player.exprValue(expr: Expr): Long {
 
 fun Player.exprValue(expr: String): Long {
     return expr.toLongOrNull() ?: placeholderValue(expr.removeSurrounding("%"))
+}
+
+fun Player.statValue(value: StatValue): Long {
+    return if (value is StatValue.I64) value.value else exprValue((value as StatValue.Str).value)
 }
