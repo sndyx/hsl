@@ -5,6 +5,7 @@ import com.hsc.compiler.ir.ast.BlockAwareVisitor
 import com.hsc.compiler.ir.ast.Expr
 import com.hsc.compiler.ir.ast.ExprKind
 import com.hsc.compiler.ir.ast.Ident
+import com.hsc.compiler.ir.ast.Lit
 import com.hsc.compiler.ir.ast.Stmt
 import com.hsc.compiler.ir.ast.StmtKind
 import com.hsc.compiler.lowering.LoweringCtx
@@ -30,6 +31,9 @@ fun expandComplexExpressions(ctx: LoweringCtx) = with(ctx) {
                 if (binExpr.kind !in
                     listOf(BinOpKind.Add, BinOpKind.Sub, BinOpKind.Mul, BinOpKind.Div, BinOpKind.Rem)
                 ) return super.visitExpr(expr)
+
+                if (binExpr.a.lit()?.lit as? Lit.Str != null) return super.visitExpr(expr)
+                if (binExpr.b.lit()?.lit as? Lit.Str != null) return super.visitExpr(expr)
 
                 if (currentStmt.assign() != null) {
                     // we are in an assign, so we can just set this to the first term in the binary

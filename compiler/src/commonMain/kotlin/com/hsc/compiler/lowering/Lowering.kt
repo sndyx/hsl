@@ -8,8 +8,10 @@ import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
 import com.hsc.compiler.lowering.newpasses.PassWrapper
 import com.hsc.compiler.lowering.newpasses.checkLimits
+import com.hsc.compiler.lowering.newpasses.convertStrings
 import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
 import com.hsc.compiler.lowering.newpasses.extendLimits
+import com.hsc.compiler.lowering.newpasses.foldStrings
 import com.hsc.compiler.lowering.newpasses.inlineBlocks
 import com.hsc.compiler.lowering.newpasses.inlineConsts
 import com.hsc.compiler.lowering.newpasses.inlineFunctionParameters
@@ -51,6 +53,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         CheckLimitsPass,
     ),
     Mode.Optimize to listOf(
+        PassWrapper(::convertStrings),
         NameItemsPass,
         CheckRedeclarationPass,
         PassWrapper(::inlineConsts),
@@ -74,6 +77,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         PassWrapper(::inlineBlocks),
         // ignored in #strict
         PassWrapper(::expandComplexExpressions),
+        PassWrapper(::foldStrings),
         MapActionsPass, // Before call assignment, or will become valid expression
         MapConditionsPass,
         // ignored in #strict

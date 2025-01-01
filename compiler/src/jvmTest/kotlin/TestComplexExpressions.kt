@@ -111,4 +111,36 @@ class TestComplexExpressions {
         assertEquals("2", result, "Wrong result")
     }
 
+    @Test
+    fun complex_expression_7() {
+        val result = interpret("""
+            fn main() {
+                dmg = 5
+                add_dmg = 5
+                
+                dmg_pct = 100
+                add_dmg_pct = 100
+                
+                _dmg = dmg + add_dmg
+                _dmg *= dmg_pct + add_dmg_pct
+                _dmg /= 100
+                
+                message("${"\${_dmg}"}")
+            }
+        """.trimIndent())
+
+        assertEquals("20", result, "Wrong result")
+    }
+
+    @Test
+    fun complex_expression_8() {
+        val result = interpret("""
+            fn main() {
+                message("${"\${5 + 5 * 10}"}")
+            }
+        """.trimIndent())
+
+        assertEquals("55", result, "Wrong result")
+    }
+
 }

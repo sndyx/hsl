@@ -38,28 +38,6 @@ private class EvaluateConstantEquationsVisitor(val sess: CompileSess) : BlockAwa
                     }
                 }
 
-                if (
-                    kind.a.kind is ExprKind.Lit && kind.b.kind is ExprKind.Var
-                    || kind.a.kind is ExprKind.Var && kind.b.kind is ExprKind.Lit
-                ) {
-                    val exprA = (kind.a.lit() ?: kind.b.lit())!!
-                    val exprB = (kind.a.variable() ?: kind.b.variable())!!
-
-                    if (exprA.lit !is Lit.Str) return
-
-                    val varStr = when (val ident = exprB.ident) {
-                        is Ident.Player -> "%stat.player/${ident.name}%"
-                        is Ident.Global -> "%stat.global/${ident.name}%"
-                        is Ident.Team -> "%stat.team/${ident.name} ${ident.team}%"
-                    }
-
-                    val result = (exprA.lit as Lit.Str).value + varStr
-
-                    expr.kind = ExprKind.Lit(Lit.Str(result))
-                    changes++
-                    return
-                }
-
                 if (kind.a.kind is ExprKind.Lit && kind.b.kind is ExprKind.Lit) {
                     val exprA = kind.a.kind as ExprKind.Lit
                     val exprB = kind.b.kind as ExprKind.Lit
