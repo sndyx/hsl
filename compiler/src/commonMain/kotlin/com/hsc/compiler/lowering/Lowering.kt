@@ -6,16 +6,7 @@ import com.hsc.compiler.driver.CompileSess
 import com.hsc.compiler.driver.Mode
 import com.hsc.compiler.errors.DiagCtx
 import com.hsc.compiler.ir.ast.*
-import com.hsc.compiler.lowering.newpasses.PassWrapper
-import com.hsc.compiler.lowering.newpasses.checkLimits
-import com.hsc.compiler.lowering.newpasses.convertStrings
-import com.hsc.compiler.lowering.newpasses.expandComplexExpressions
-import com.hsc.compiler.lowering.newpasses.extendLimits
-import com.hsc.compiler.lowering.newpasses.foldStrings
-import com.hsc.compiler.lowering.newpasses.inlineBlocks
-import com.hsc.compiler.lowering.newpasses.inlineConsts
-import com.hsc.compiler.lowering.newpasses.inlineFunctionParameters
-import com.hsc.compiler.lowering.newpasses.inlineFunctions
+import com.hsc.compiler.lowering.newpasses.*
 import com.hsc.compiler.lowering.passes.*
 import com.hsc.compiler.pretty.prettyPrintAst
 import kotlinx.datetime.Clock
@@ -67,6 +58,7 @@ private val passes: Map<Mode, List<AstPass>> = mapOf(
         ExpandInPass,
         ExpandModPass,
         ExpandMatchPass,
+        PassWrapper(::expandComplexConditions),
         FlipNotConditionsPass,
         RaiseNotEqPass,
         RaiseUnaryMinusPass,
@@ -117,6 +109,8 @@ fun lower(ctx: LoweringCtx) {
         //println(Clock.System.now() - startTime)
         //prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
     }
+
+    // prettyPrintAst(Terminal(ansiLevel = AnsiLevel.ANSI256), ctx.ast)
 }
 
 class LoweringCtx(val ast: Ast, val sess: CompileSess) {

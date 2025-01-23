@@ -143,4 +143,31 @@ class TestComplexExpressions {
         assertEquals("55", result, "Wrong result")
     }
 
+    @Test
+    fun complex_condition_1() {
+        val result = interpret("""
+            fn main() {
+                a = 1
+                b = 2
+                c = 3
+                d = 4
+                e = 5
+                if ((a == 0 || b == 0 && c == 3) || d == 4 || e == 0) {
+                    message("Pass!")
+                } else {
+                    message("Fail!")
+                }
+                
+                d = -1                
+                if ((a == 0 || b == 0 && c == 3) || d == 4 || e == 0) {
+                    message("Pass!")
+                } else {
+                    message("Fail!")
+                }
+            }
+        """.trimIndent())
+
+        assertEquals("Pass!\nFail!", result, "Wrong result")
+    }
+
 }

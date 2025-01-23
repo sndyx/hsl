@@ -60,9 +60,17 @@ fun LoweringCtx.getExprs(): List<Expr> = buildList {
     }.visitAst(ast)
 }
 
+fun wrap(stmt: Stmt): Block {
+    return wrap(listOf(stmt))
+}
+
 fun wrap(stmts: List<Stmt>): Block {
     val span = Span(stmts.first().span.lo, stmts.last().span.hi, stmts.first().span.fid)
     return Block(span, stmts.toMutableList())
+}
+
+fun wrap(expr: Expr): Block {
+    return Block(expr.span, mutableListOf(Stmt(expr.span, StmtKind.Expr(expr))))
 }
 
 fun coalesce(stmts: List<Stmt>): Stmt {
