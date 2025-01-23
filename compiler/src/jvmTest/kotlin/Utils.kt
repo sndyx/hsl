@@ -26,7 +26,7 @@ fun interpret(src: String): String {
     assertTrue(result.isSuccess, "Compilation failed")
     val parts = newOut.toString().split("=====")
     println(parts[1].drop(1))
-    return parts[0].dropLast(1)
+    return parts[0].dropLast(1).trim().replace("\r", "")
 }
 
 fun compile(src: String) {

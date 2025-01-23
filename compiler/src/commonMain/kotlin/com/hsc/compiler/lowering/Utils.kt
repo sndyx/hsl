@@ -120,7 +120,7 @@ fun LoweringCtx.statValueOf(expr: Expr): StatValue {
                 is Lit.F64 -> StatValue.I64(lit.value.toLong())
                 is Lit.Str -> StatValue.Str(lit.value)
                 else -> {
-                    throw dcx().err("expected integer, found ${lit.str()}")
+                    throw dcx().err("expected integer, found ${lit.str()}", expr.span)
                 }
             }
         }
@@ -129,7 +129,7 @@ fun LoweringCtx.statValueOf(expr: Expr): StatValue {
             else StatValue.Str("%stat.player/${kind.ident.name}%")
         }
         else -> {
-            throw dcx().err("expected integer, found ${kind.str()}")
+            throw dcx().err("expected integer, found ${kind.str()}", expr.span)
         }
     }
 }

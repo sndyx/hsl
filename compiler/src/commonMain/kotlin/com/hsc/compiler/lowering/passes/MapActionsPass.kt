@@ -211,9 +211,11 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
     fun parsePlaySound(): Action {
         p.assertLength(4, "sound(<sound>, <volume>, <pitch>, <location>)")
         val soundString = p.nextStringLit()
-        val sound = Sound.entries.find { it.key.lowercase() == soundString.lowercase() } ?: run {
+        val sound = Sound.entries.find {
+            it.key.lowercase() == soundString.lowercase() || it.label.lowercase() == soundString.lowercase()
+        } ?: run {
             val err = ctx.dcx().err("invalid sound `$soundString`", p.args.span)
-            val options = Sound.entries.map { it.key }
+            val options = Sound.entries.map { it.label }
             similar(soundString, options).forEach {
                 err.note(Level.Hint, "did you mean `$it`?")
             }

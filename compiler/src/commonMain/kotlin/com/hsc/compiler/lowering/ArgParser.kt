@@ -33,12 +33,12 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                 when (val lit = kind.lit) {
                     is Lit.Str -> return lit.value
                     else -> {
-                        throw ctx.dcx().err("expected string, found ${lit.str()}")
+                        throw ctx.dcx().err("expected string, found ${lit.str()}", expr.span)
                     }
                 }
             }
             else -> {
-                throw ctx.dcx().err("expected string, found ${kind.str()}")
+                throw ctx.dcx().err("expected string, found ${kind.str()}", expr.span)
             }
         }
     }
@@ -51,13 +51,13 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                     is Lit.I64 -> lit.value
                     is Lit.F64 -> lit.value.toLong()
                     else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
+                        throw ctx.dcx().err("expected integer, found ${lit.str()}", expr.span)
                     }
                 }
             }
 
             else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
+                throw ctx.dcx().err("expected integer, found ${kind.str()}", expr.span)
             }
         }
     }
@@ -69,13 +69,13 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                     is Lit.I64 -> lit.value.toDouble()
                     is Lit.F64 -> lit.value.toDouble()
                     else -> {
-                        throw ctx.dcx().err("expected float, found ${lit.str()}")
+                        throw ctx.dcx().err("expected float, found ${lit.str()}", expr.span)
                     }
                 }
             }
 
             else -> {
-                throw ctx.dcx().err("expected float, found ${kind.str()}")
+                throw ctx.dcx().err("expected float, found ${kind.str()}", expr.span)
             }
         }
     }
@@ -94,12 +94,12 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                 when (val lit = kind.lit) {
                     is Lit.Bool -> return lit.value
                     else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
+                        throw ctx.dcx().err("expected boolean, found ${lit.str()}", expr.span)
                     }
                 }
             }
             else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
+                throw ctx.dcx().err("expected boolean, found ${kind.str()}", expr.span)
             }
         }
     }
@@ -111,12 +111,12 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                 when (val lit = kind.lit) {
                     is Lit.Item -> return lit.value
                     else -> {
-                        throw ctx.dcx().err("expected integer, found ${lit.str()}")
+                        throw ctx.dcx().err("expected item, found ${lit.str()}", expr.span)
                     }
                 }
             }
             else -> {
-                throw ctx.dcx().err("expected integer, found ${kind.str()}")
+                throw ctx.dcx().err("expected item, found ${kind.str()}", expr.span)
             }
         }
     }
@@ -141,16 +141,16 @@ class ArgParser(val ctx: LoweringCtx, val args: Args) {
                         "house_spawn" -> Location.HouseSpawn
                         "current_location" -> Location.CurrentLocation
                         "invokers_location" -> Location.InvokersLocation
-                        else -> throw ctx.dcx().err("expected location, found ${lit.str()}")
+                        else -> throw ctx.dcx().err("expected location, found ${lit.str()}", expr.span)
                     }
 
                     else -> {
-                        throw ctx.dcx().err("expected location, found ${lit.str()}")
+                        throw ctx.dcx().err("expected location, found ${lit.str()}", expr.span)
                     }
                 }
             }
             else -> {
-                throw ctx.dcx().err("expected location, found ${kind.str()}")
+                throw ctx.dcx().err("expected location, found ${kind.str()}", expr.span)
             }
         }
     }
