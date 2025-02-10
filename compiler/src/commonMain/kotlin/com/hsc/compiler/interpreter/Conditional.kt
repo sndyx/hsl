@@ -2,13 +2,21 @@ package com.hsc.compiler.interpreter
 
 import com.hsc.compiler.ir.action.Comparison
 import com.hsc.compiler.ir.action.Condition
-import com.hsc.compiler.ir.action.StatValue
 import com.hsc.compiler.ir.ast.BinOpKind
 import com.hsc.compiler.ir.ast.Expr
 import com.hsc.compiler.ir.ast.ExprKind
 import com.hsc.compiler.ir.ast.Lit
+import com.hsc.compiler.ir.ast.UnaryOpKind
 
 fun Player.matchesCondition(condition: Expr): Boolean {
+    return if (condition.unary()?.kind?.equals(UnaryOpKind.Not) == true) {
+        !matchesCondition0(condition.unary()!!.expr)
+    } else {
+        matchesCondition0(condition)
+    }
+}
+
+private fun Player.matchesCondition0(condition: Expr): Boolean {
     if (condition.kind is ExprKind.Lit) return ((condition.kind as ExprKind.Lit).lit as Lit.Bool).value
 
     when (condition.kind) {

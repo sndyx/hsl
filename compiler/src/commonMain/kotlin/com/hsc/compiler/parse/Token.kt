@@ -23,6 +23,9 @@ sealed class TokenKind {
     data object EqEq : TokenKind() {
         override fun toString(): String = "=="
     }
+    data object Ne : TokenKind() {
+        override fun toString(): String = "!="
+    }
     data object Gt : TokenKind() {
         override fun toString(): String = ">"
     }

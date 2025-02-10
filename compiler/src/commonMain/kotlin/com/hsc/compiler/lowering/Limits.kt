@@ -47,6 +47,9 @@ val limitsMap = mapOf(
     "SET_COMPASS_TARGET" to 5,
     "TELEPORT_PLAYER" to 5,
     "SEND_TO_LOBBY" to 1,
+    "LAUNCH_TO_TARGET" to 5,
+    "CHANGE_VELOCITY" to 5,
+    "DROP_ITEM" to 5,
     "" to 1000000000,
 )
 

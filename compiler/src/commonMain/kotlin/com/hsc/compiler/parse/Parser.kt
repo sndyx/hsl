@@ -345,8 +345,12 @@ class Parser(
         val lo = token.span.lo
 
         if (eat(TokenKind.BinOp(BinOpToken.Minus))) {
-            val expr = parseExpr00()
+            val expr = parseExpr0()
             return Expr(Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Neg, expr))
+        }
+        if (eat(TokenKind.Not)) {
+            val expr = parseExpr0()
+            return Expr(Span(lo, prev.span.hi, fid), ExprKind.Unary(UnaryOpKind.Not, expr))
         }
         if (check(TokenKind.Ident::class)) { // We are trolling with this one :-)
             if (token.kind.ident.value == "Item") {
@@ -393,7 +397,8 @@ class Parser(
                 || check(TokenKind.OrOr)
                 || ((check(TokenKind.Gt) || check(TokenKind.Ge)
                 || check(TokenKind.EqEq)
-                || check(TokenKind.Lt) || check(TokenKind.Le))
+                || check(TokenKind.Lt) || check(TokenKind.Le)
+                || check(TokenKind.Ne))
                 && parseCondition)
     }
 
@@ -415,6 +420,7 @@ class Parser(
             TokenKind.EqEq -> Pair(BinOpKind.Eq, 2)
             TokenKind.Lt -> Pair(BinOpKind.Lt, 2)
             TokenKind.Le -> Pair(BinOpKind.Le, 2)
+            TokenKind.Ne -> Pair(BinOpKind.Ne, 2)
             else -> error("unreachable bin op")
         }
         bump()

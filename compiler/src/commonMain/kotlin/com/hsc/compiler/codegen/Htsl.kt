@@ -44,7 +44,10 @@ private val actionMap = mapOf(
     "set_gamemode" to "gamemode",
     "set_compass_target" to "compassTarget",
     "teleport_player" to "tp",
-    "send_to_lobby" to "lobby"
+    "send_to_lobby" to "lobby",
+    "change_velocity" to "setVelocity",
+    "launch_to_target" to "launchTarget",
+    "drop_item" to "dropItem",
 )
 
 private val conditionMap = mapOf(
@@ -142,6 +145,7 @@ private fun generateHtslAction(sess: CompileSess, action: Action): String {
 
 private fun generateHtslCondition(sess: CompileSess, condition: Condition): String {
     val sb = StringBuilder()
+    if (condition.inverted) sb.append("!")
     when (condition) {
         is Condition.PlayerStatRequirement -> {
             sb.append("stat ${condition.stat} ${comparisonMap[condition.op]} ${statVal(condition.value)}")

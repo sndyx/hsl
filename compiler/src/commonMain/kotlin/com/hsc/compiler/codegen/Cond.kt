@@ -28,9 +28,12 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
         }
         is ExprKind.Var, is ExprKind.Lit -> true
         is ExprKind.Condition -> true
+        is ExprKind.Unary -> true
         else -> {
             // This should almost certainly never happen unless in `strict` mode.
             // But on the off chance it does, here's a bug that creates a bug!
+
+            // UPDATE 2/9/25: it created a bug :despair:
             strict(cond.expr.span) {
                 unsupported("complex expressions", cond.expr.span)
             }
@@ -74,7 +77,7 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
                     }
                 }
             }
-            is ExprKind.Condition, is ExprKind.Var, is ExprKind.Lit -> {
+            is ExprKind.Condition, is ExprKind.Var, is ExprKind.Lit, is ExprKind.Unary -> {
                 res.add(expr)
             }
             else -> {
@@ -87,6 +90,17 @@ fun ActionTransformer.transformCond(cond: ExprKind.If): Action {
 }
 
 private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
+    var new: Condition? = null
+    if (cond.unary()?.kind?.equals(UnaryOpKind.Not) == true) {
+        new = unwrapCond0(cond.unary()!!.expr)
+        new?.inverted = true
+    } else {
+        new = unwrapCond0(cond)
+    }
+    return new
+}
+
+private fun ActionTransformer.unwrapCond0(cond: Expr): Condition? {
     return when (val kind = cond.kind) {
         is ExprKind.Condition -> {
             kind.condition
@@ -102,7 +116,6 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
                     throw sess.dcx().bug("unexpected bin op", cond.span)
                 }
             }
-
 
             val ident = when (val a = kind.a.kind) {
                 is ExprKind.Var -> a.ident
@@ -156,57 +169,3 @@ private fun ActionTransformer.unwrapCond(cond: Expr): Condition? {
         }
     }
 }
-
-// Note: && holds higher precedence than || in parser
-// This should make the algorithm simpler.
-
-// BEWARE! PROCEED INTO RAMBLINGS WITH CAUTION!
-
-// x || y && z || w
-
-// if (x || y) -> temp = 1
-// if (z || w) -> temp++
-// if (temp == 2) -> hsl:if
-// else -> hsl:else
-
-// x && y || z || w
-
-// if (y || z || w) -> temp = 1
-// if (x && temp == 1) hsl:if
-// else -> hsl:else
-
-// x && y || z && w || a || b || c
-
-// if (y || z) -> temp = 1
-// if (w || a || b || c) -> temp++
-// if (x && temp == 2) hsl:if
-// else -> hsl:else
-
-// (x && y) || (z && w)
-
-// if (x && y) -> temp = 1
-// if (z && w) -> temp = 1
-// if (temp == 1) -> hsl:if
-// else -> hsl:else
-
-// (x && y) || z <-- single value end case
-
-// if (x && y) -> temp = 1
-// if (z || temp == 1) -> hsl:if
-// else -> hsl:else
-
-
-// if ((x && y) || z) && w || a
-
-// if (x && y) -> temp = 1
-// if (z || temp == 1) -> temp = 2
-// if (w || a) -> temp2 = 1
-// if (temp == 2 && temp2 == 1) -> hsl:if
-// else -> hsl:else
-
-// if ((x && y) || z) && w && a
-
-// if (x && y) -> temp = 1
-// if (z || temp == 1) -> temp = 2
-// if (w && a && temp == 2) -> hsl:if
-// else -> hsl:else

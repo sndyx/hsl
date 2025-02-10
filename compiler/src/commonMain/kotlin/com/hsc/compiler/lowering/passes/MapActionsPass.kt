@@ -96,6 +96,9 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
                     "set_compass_target" -> parseSetCompassTarget()
                     "tp" -> parseTeleportPlayer()
                     "send_to_lobby" -> parseSendToLobby()
+                    "drop_item" -> parseDropItem()
+                    "set_velocity" -> parseSetVelocity()
+                    "launch" -> parseLaunch()
                     else -> null
                 }
                 if (action != null) {
@@ -283,6 +286,32 @@ private class MapCallActionsVisitor(val ctx: LoweringCtx) : BlockAwareVisitor() 
             throw err
         }
         return Action.SendToLobby(lobby)
+    }
+
+    fun parseDropItem(): Action {
+        p.assertLength(6, "give_item(<item>, <location>, <drop_naturally>, <disable_merging>, <prioritize_player>, <inventory_fallback>)")
+        val item = p.nextItemLit()
+        val location = p.nextLocation()
+        val dropNaturally = p.nextBooleanLit()
+        val disableMerging = p.nextBooleanLit()
+        val prioritizePlayer = p.nextBooleanLit()
+        val inventoryFallback = p.nextBooleanLit()
+        return Action.DropItem(item, location, dropNaturally, disableMerging, prioritizePlayer, inventoryFallback)
+    }
+
+    fun parseSetVelocity(): Action {
+        p.assertLength(3, "set_velocity(<x>, <y>, <z>)")
+        val x = p.nextValue()
+        val y = p.nextValue()
+        val z = p.nextValue()
+        return Action.ChangeVelocity(x, y, z)
+    }
+
+    fun parseLaunch(): Action {
+        p.assertLength(2, "launch(<location>, <strength>)")
+        val location = p.nextLocation()
+        val strength = p.nextValue()
+        return Action.LaunchToTarget(location, strength)
     }
 
 }

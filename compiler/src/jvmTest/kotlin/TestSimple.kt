@@ -74,4 +74,48 @@ class TestSimple {
         assertEquals("IF", result, "Wrong result")
     }
 
+    @Test
+    fun placeholder_requirement_inverted() {
+        val result = interpret("""
+            fn main() {
+                if (!("%random.int/1 100%" < 1000)) {
+                    message("IF")
+                } else {
+                    message("ELSE")
+                }
+            }
+        """.trimIndent())
+        assertEquals("ELSE", result, "Wrong result")
+    }
+
+    @Test
+    fun comparison_inverted() {
+        val result = interpret("""
+            fn main() {
+                x = 1000
+                if (!(x == 1000)) {
+                    message("IF")
+                } else {
+                    message("ELSE")
+                }
+            }
+        """.trimIndent())
+        assertEquals("ELSE", result, "Wrong result")
+    }
+
+    @Test
+    fun comparison_inverted_2() {
+        val result = interpret("""
+            fn main() {
+                x = 999
+                if (x == 5 || x != 1000) {
+                    message("IF")
+                } else {
+                    message("ELSE")
+                }
+            }
+        """.trimIndent())
+        assertEquals("IF", result, "Wrong result")
+    }
+
 }

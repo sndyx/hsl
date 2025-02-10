@@ -15,10 +15,7 @@ object RaiseUnaryMinusPass : AstPass {
 }
 
 private fun raiseUnaryMinus(expr: Expr) {
-    when (val kind = expr.kind) {
-        is ExprKind.Unary -> {
-            expr.kind = ExprKind.Binary(BinOpKind.Mul, kind.expr, Expr(kind.expr.span, ExprKind.Lit(Lit.I64(-1))))
-        }
-        else -> {}
+    if (expr.unary()?.kind?.equals(UnaryOpKind.Neg) == true) {
+        expr.kind = ExprKind.Binary(BinOpKind.Mul, expr.unary()!!.expr, Expr(expr.unary()!!.expr.span, ExprKind.Lit(Lit.I64(-1))))
     }
 }

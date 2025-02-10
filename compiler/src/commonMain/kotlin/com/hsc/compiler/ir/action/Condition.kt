@@ -11,6 +11,8 @@ sealed class Condition(
     @Transient val conditionName: String = ""
 ) {
 
+    var inverted = false
+
     companion object {
         val builtins = setOf(
             "in_group",

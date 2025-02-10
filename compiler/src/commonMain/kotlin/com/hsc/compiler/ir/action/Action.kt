@@ -52,7 +52,10 @@ sealed class Action(
             "set_gamemode",
             "set_compass_target",
             "tp",
-            "send_to_lobby"
+            "send_to_lobby",
+            "set_velocity",
+            "drop_item",
+            "launch",
         )
     }
 
@@ -228,7 +231,29 @@ sealed class Action(
     @Serializable
     @SerialName("SEND_TO_LOBBY")
     data class SendToLobby(val location: Lobby) : Action("SEND_TO_LOBBY")
-
+    @Serializable
+    @SerialName("DROP_ITEM")
+    data class DropItem(
+        val item: ItemStack,
+        val location: Location,
+        @SerialName("drop_naturally") val dropNaturally: Boolean,
+        @SerialName("disable_merging") val disableMerging: Boolean,
+        @SerialName("prioritize_player") val prioritizePlayer: Boolean,
+        @SerialName("inventory_fallback") val inventoryFallback: Boolean,
+    ) : Action("DROP_ITEM")
+    @Serializable
+    @SerialName("CHANGE_VELOCITY")
+    data class ChangeVelocity(
+        val x: StatValue,
+        val y: StatValue,
+        val z: StatValue,
+    ) : Action("CHANGE_VELOCITY")
+    @Serializable
+    @SerialName("LAUNCH_TO_TARGET")
+    data class LaunchToTarget(
+        val location: Location,
+        val strength: StatValue
+    ) : Action("LAUNCH_TO_TARGET")
 }
 
 interface Keyed {
